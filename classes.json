@@ -1,5 +1,53 @@
 [
   {
+    "id": "6",
+    "name": "Class 6",
+    "icon": "📚",
+    "description": "Foundation Level",
+    "googleSheets": {
+      "enabled": true,
+      "configFile": "sheets/class6.json"
+    },
+    "subjects": [
+      {
+        "id": "mathematics",
+        "name": "Mathematics",
+        "icon": "🔢",
+        "description": "Basic Arithmetic & Geometry"
+      },
+      {
+        "id": "science",
+        "name": "Science",
+        "icon": "🔬",
+        "description": "Basic Physics, Chemistry, Biology"
+      }
+    ]
+  },
+  {
+    "id": "7",
+    "name": "Class 7",
+    "icon": "📚",
+    "description": "Intermediate Level",
+    "googleSheets": {
+      "enabled": true,
+      "configFile": "sheets/class7.json"
+    },
+    "subjects": [
+      {
+        "id": "mathematics",
+        "name": "Mathematics",
+        "icon": "📐",
+        "description": "Algebra & Basic Geometry"
+      },
+      {
+        "id": "science",
+        "name": "Science",
+        "icon": "🧪",
+        "description": "Physics, Chemistry, Biology"
+      }
+    ]
+  },
+  {
     "id": "8",
     "name": "Class 8",
     "icon": "📚",
