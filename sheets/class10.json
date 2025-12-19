@@ -1,0 +1,43 @@
+{
+  "mathematics": {
+    "sheetId": "YOUR_MATHEMATICS_SHEET_ID",
+    "chapters": {
+      "1. Real Numbers": "0",
+      "2. Polynomials": "100000002",
+      "3. Pair of Linear Equations in Two Variables": "200000002",
+      "4. Quadratic Equations": "300000002",
+      "5. Arithmetic Progressions": "400000002",
+      "6. Triangles": "500000002",
+      "7. Coordinate Geometry": "600000002",
+      "8. Introduction to Trigonometry": "700000002",
+      "9. Some Applications of Trigonometry": "800000002",
+      "10. Circles": "900000002",
+      "11. Constructions": "110000002",
+      "12. Areas Related to Circles": "120000002",
+      "13. Surface Areas and Volumes": "130000002",
+      "14. Statistics": "140000002",
+      "15. Probability": "150000002"
+    }
+  },
+  "science": {
+    "sheetId": "YOUR_SCIENCE_SHEET_ID",
+    "chapters": {
+      "1. Chemical Reactions and Equations": "0",
+      "2. Acids, Bases and Salts": "210000002",
+      "3. Metals and Non-metals": "220000002",
+      "4. Carbon and its Compounds": "230000002",
+      "5. Periodic Classification of Elements": "240000002",
+      "6. Life Processes": "250000002",
+      "7. Control and Coordination": "260000002",
+      "8. How do Organisms Reproduce": "270000002",
+      "9. Heredity and Evolution": "280000002",
+      "10. Light - Reflection and Refraction": "290000002",
+      "11. Human Eye and Colourful World": "310000002",
+      "12. Electricity": "320000002",
+      "13. Magnetic Effects of Electric Current": "330000002",
+      "14. Sources of Energy": "340000002",
+      "15. Our Environment": "350000002",
+      "16. Management of Natural Resources": "360000002"
+    }
+  }
+}
