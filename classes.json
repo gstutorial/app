@@ -6,7 +6,7 @@
     "description": "Mathematics & Science",
     "googleSheets": {
       "enabled": true,
-      "configFile": "sheets/class8.json"
+      "configFile": "sheets/class6.json"
     },
     "subjects": [
       {
@@ -22,7 +22,7 @@
     "description": "Mathematics & Science",
     "googleSheets": {
       "enabled": true,
-      "configFile": "sheets/class8.json"
+      "configFile": "sheets/class7.json"
     },
     "subjects": [
       {
