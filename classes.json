@@ -1,37 +1,5 @@
 [
   {
-    "id": "6",
-    "name": "Class 6",
-    "icon": "📚",
-    "description": "Mathematics & Science",
-    "googleSheets": {
-      "enabled": true,
-      "configFile": "sheets/class6.json"
-    },
-    "subjects": [
-      {
-        "id": "mathematics",
-        "name": "Mathematics",
-        "icon": "📐",
-        "description": "Algebra, Geometry, Mensuration"
-      },
-  {
-    "id": "7",
-    "name": "Class 7",
-    "icon": "📚",
-    "description": "Mathematics & Science",
-    "googleSheets": {
-      "enabled": true,
-      "configFile": "sheets/class7.json"
-    },
-    "subjects": [
-      {
-        "id": "mathematics",
-        "name": "Mathematics",
-        "icon": "📐",
-        "description": "Algebra, Geometry, Mensuration"
-      },
-  {
     "id": "8",
     "name": "Class 8",
     "icon": "📚",
