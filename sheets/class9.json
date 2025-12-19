@@ -1,0 +1,41 @@
+{
+  "mathematics": {
+    "sheetId": "1a_DRmKbBQU5j6NWz-XYzkg0eqxOYIJalZYEkrozqZZs",
+    "chapters": {
+      "1. Number Systems": "0",
+      "2. Polynomials": "1082366494",
+      "3. Coordinate Geometry": "1716755999",
+      "4. Linear Equations in Two Variables": "300000001",
+      "5. Introduction to Euclid's Geometry": "400000001",
+      "6. Lines and Angles": "500000001",
+      "7. Triangles": "600000001",
+      "8. Quadrilaterals": "700000001",
+      "9. Circles": "800000001",
+      "10. Heron's Formula": "900000001",
+      "11. Surface Areas and Volumes": "110000001",
+      "12. Statistics": "120000001",
+      "13. Probability (Optional)": "130000001",
+      "14. Constructions": "140000001"
+    }
+  },
+  "science": {
+    "sheetId": "YOUR_SCIENCE_SHEET_ID",
+    "chapters": {
+      "1. Matter in Our Surroundings": "0",
+      "2. Is Matter Around Us Pure": "210000001",
+      "3. Atoms and Molecules": "220000001",
+      "4. Structure of the Atom": "230000001",
+      "5. The Fundamental Unit of Life": "240000001",
+      "6. Tissues": "250000001",
+      "7. Diversity in Living Organisms": "260000001",
+      "8. Motion": "270000001",
+      "9. Force and Laws of Motion": "280000001",
+      "10. Gravitation": "290000001",
+      "11. Work and Energy": "310000001",
+      "12. Sound": "320000001",
+      "13. Why Do We Fall Ill": "330000001",
+      "14. Natural Resources": "340000001",
+      "15. Improvement in Food Resources": "350000001"
+    }
+  }
+}
