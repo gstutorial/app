@@ -23,26 +23,23 @@
     }
   },
   "science": {
-    "sheetId": "YOUR_SCIENCE_SHEET_ID",
+    "sheetId": "1bWahMIEo_4mLynNe7FvTAkgL_yBF874HrbguX28AYbc",
     "chapters": {
-      "1. Crop Production and Management": "0",
-      "2. Microorganisms: Friend and Foe": "210000000",
-      "3. Synthetic Fibres and Plastics": "220000000",
-      "4. Materials: Metals and Non-Metals": "230000000",
-      "5. Coal and Petroleum": "240000000",
-      "6. Combustion and Flame": "250000000",
-      "7. Conservation of Plants and Animals": "260000000",
-      "8. Cell - Structure and Functions": "270000000",
-      "9. Reproduction in Animals": "280000000",
-      "10. Reaching the Age of Adolescence": "290000000",
-      "11. Force and Pressure": "310000000",
-      "12. Friction": "320000000",
-      "13. Sound": "330000000",
-      "14. Chemical Effects of Electric Current": "340000000",
-      "15. Some Natural Phenomena": "350000000",
-      "16. Light": "360000000",
-      "17. Stars and the Solar System": "370000000",
-      "18. Pollution of Air and Water": "380000000"
+      "1. Crop Production and Management": "413864872",
+      "2. Microorganisms: Friend and Foe": "1057707324,
+      "3. Coal and Petroleum": "1949641889",
+      "4. Combustion and Flame": "1592453505",
+      "5. Conservation of Plants and Animals": "265368514",
+      "6. Reproduction in Animals": "251592430",
+      "7. Reaching the Age of Adolescence": "1707823680",
+      "8. Force and Pressure": "1837339807",
+      "9. Friction": "1441276520",
+      "10. Sound": "121948302",
+      "11. Chemical Effects of Electric Current": "1714755315",
+      "12. Some Natural Phenomena": "566418144",
+      "13. Light": "1882837396",
+     "Mock Test(CBSE)":"704145121",
+      "Mock Test(SEBA)":"864990974"
     }
   }
 }
