@@ -3248,7 +3248,9 @@
       const progressPercent = ((currentIndex + 1) / questions.length) * 100;
       progressBarFillEl.style.width = `${progressPercent}%`;
 
-      questionTextEl.innerHTML = q.question.replace(/\n/g, '<br>');
+      questionTextEl.innerHTML = q.question
+    .replace(/\r\n|\n|\r/g, '<br>')  // All types of newlines
+    .replace(/<br\s*\/?>/gi, '<br>'); // Also handle <br> tags if typed
 
       // Handle question image - INSTANT LOAD FROM CACHE
       if (q.imageUrl && q.imageUrl.trim() !== '') {
