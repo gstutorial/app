@@ -1,9 +1,11 @@
-const CACHE_NAME = 'gs-tutorial-v2.1';
+const CACHE_NAME = 'gs-tutorial-v2.2';
 const urlsToCache = [
   '/',
   '/index.html',
   '/config.js',
   '/classes.json',
+  '/sheets/class6.json',
+  '/sheets/class7.json',
   '/sheets/class8.json',
   '/sheets/class9.json',
   '/sheets/class10.json',
