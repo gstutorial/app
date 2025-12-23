@@ -1,12 +1,12 @@
 {
   "mechanical": {
-    "sheetId": "YOUR_MECHANICAL_SHEET_ID",
+    "sheetId": "1oRU7gtXnj3cQfq6GzpMvii3astly2B25zEdTYqr6LBY",
     "chapters": {
       "JE Mechanical Full Syllabus": "0"
     }
   },
   "electrical": {
-    "sheetId": "YOUR_ELECTRICAL_SHEET_ID",
+    "sheetId": "1oRU7gtXnj3cQfq6GzpMvii3astly2B25zEdTYqr6LBY",
     "chapters": {
       "JE Electrical Full Syllabus": "0"
     }
