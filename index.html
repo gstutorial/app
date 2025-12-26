@@ -1853,8 +1853,8 @@
         BOT_TOKEN: '',
         CHAT_ID: '',
         MESSAGE_TEMPLATE: {
-            LOGIN: "━━━━ 🔴 *User Login* 🔴 ━━━━\n\n🟠 Name: {name}\n🟠 Username: {username}\n🟠 Class: {class}\n🟠 Role: {role}\n\n📅 Date: {date}\n⏰ Time: {time}\n\n🌐 IP: {ip}",
-            QUIZ_RESULT: "━━━━ 🟠 *Quiz Result* 🟠 ━━━━\n\n🟢 Name: {name}\n🟢 Username: {username}\n🟢 Class: {class}\n🟢 Subject: {subject}\n\n📖 Chapter: {chapter}\n📋 Total Marks: {total}\n📝 Attempted: {attempted}\n✅ Correct: {correct}\n\n⏱️ Time Taken: {timeTaken}\n📈 Percentage: {percentage}%\n\n⏰ Time: {time}\n📅 Date: {date}"
+            LOGIN: "━━━━ 🔴 User Login 🔴 ━━━━\n\n🟠 Name: **{name}**\n🟠 Username: {username}\n🟠 Class: {class}\n🟠 Role: {role}\n\n📅 Date: {date}\n⏰ Time: {time}\n\n🌐 IP: {ip}",
+            QUIZ_RESULT: "━━━━ 🟠 Quiz Result 🟠 ━━━━\n\n🟢 Name: **{name}**\n🟢 Username: {username}\n🟢 Class: {class}\n🟢 Subject: {subject}\n\n📖 Chapter: {chapter}\n📋 Total Marks: {total}\n📝 Attempted: {attempted}\n✅ Correct: {correct}\n\n⏱️ Time Taken: {timeTaken}\n📈 Percentage: {percentage}%\n\n⏰ Time: {time}\n📅 Date: {date}"
         }
     };
     
@@ -2282,12 +2282,12 @@
         
         const now = new Date();
         const date = now.toLocaleDateString('en-IN');
-        const time = now.toLocaleTimeString('en-IN');
+        const time = now.toLocaleTimeString('en-IN', { hour12: true });
         
         const message = TELEGRAM_CONFIG.MESSAGE_TEMPLATE.LOGIN
             .replace('{username}', user.username)
             .replace('{name}', user.name)
-            .replace('{class}', user.class || 'Not assigned')
+            .replace('{class}', user.class ? `Class ${user.class}` : 'Not assigned')
             .replace('{role}', user.role)
             .replace('{date}', date)
             .replace('{time}', time)
@@ -2320,6 +2320,7 @@
         
         const now = new Date();
         const date = now.toLocaleDateString('en-IN');
+        const time = now.toLocaleTimeString('en-IN', { hour12: true });
         
         const message = TELEGRAM_CONFIG.MESSAGE_TEMPLATE.QUIZ_RESULT
             .replace('{username}', currentUser.username)
@@ -2329,9 +2330,10 @@
             .replace('{chapter}', currentTopicName)
             .replace('{correct}', stats.correct)
             .replace('{total}', stats.total)
-            .replace('{percentage}', stats.percentage)
-            .replace('{attempted}', stats.attempted) // Added attempted count
+            .replace('{percentage}', stats.percentage + '%')
+            .replace('{attempted}', stats.attempted)
             .replace('{timeTaken}', stats.timeTaken || "N/A")
+            .replace('{time}', time)
             .replace('{date}', date);
         
         console.log("📊 Quiz Result Notification:", message);
@@ -3304,13 +3306,10 @@
       
       const endTime = Date.now();
       const timeTaken = endTime - quizStartTime;
-      const hours = Math.floor(timeTaken / (1000 * 60 * 60));
-      const minutes = Math.floor((timeTaken % (1000 * 60 * 60)) / (1000 * 60));
+      const minutes = Math.floor(timeTaken / (1000 * 60));
       const seconds = Math.floor((timeTaken % (1000 * 60)) / 1000);
       
-      if (hours > 0) {
-        return `${hours}h ${minutes}m ${seconds}s`;
-      } else if (minutes > 0) {
+      if (minutes > 0) {
         return `${minutes}m ${seconds}s`;
       } else {
         return `${seconds}s`;
