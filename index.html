@@ -3222,7 +3222,18 @@
         const now = new Date();
         const date = now.toLocaleDateString('en-IN');
         
-       
+       const message = `━━━━ 🟠 Student Result 🟠 ━━━━\n\n` +
+          `🟢 Name: ${currentUser.name}\n` +
+          `🟢 Username: ${currentUser.username}\n` +
+          `🟢 Class: ${currentClass}\n` +
+          `🟢 Subject: ${currentSubject}\n\n` +
+          `📖 Chapter: ${currentTopicName}\n` +
+          `📋 Total Questions: ${stats.total}\n` +
+          `📝 Attempted: ${stats.attempted}\n` +
+          `✅ Correct: ${stats.correct}\n\n` +
+          `⏱️ Time Taken: ${stats.timeTaken || "N/A"}\n` +
+          `📈 Percentage: ${stats.percentage}%\n\n` +
+          `📅 Date: ${date}`;
         
         console.log("Quiz Result Notification:", message);
         
