@@ -3208,7 +3208,23 @@
             return;
         }
         
+        // Check admin notifications
+        if (currentUser.role === 'Admin') {
+            if (!ADMIN_CONFIG.NOTIFY_ON_QUIZ_RESULT) {
+                console.log("Admin quiz result notifications disabled");
+                return;
+            }
+        }
+        
+        if (!TELEGRAM_CONFIG.ENABLED) return;
+        if (!currentUser || !currentQuizStats) return;
+        
+        const now = new Date();
+        const date = now.toLocaleDateString('en-IN');
+        
        
+        
+        console.log("Quiz Result Notification:", message);
         
         // Send to Telegram
         await sendTelegramMessage(message);
