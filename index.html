@@ -2233,7 +2233,7 @@
         BOT_TOKEN: '',
         CHAT_ID: '',
         MESSAGE_TEMPLATE: {
-            LOGIN: "━━━━ 🔴 User Login 🔴 ━━━━\nName: {name}\n🟠 Username: {username}\n🟠 Class: {class}\n🟠 Role: {role}\n\n📅 Date: {date}\n⏰ Time: {time}\n\n🌐 IP: {ip}",
+            LOGIN: "━━━━ 🔴 User Login 🔴 ━━━━\n🟠 Name: {name}\n🟠 Username: {username}\n🟠 Class: {class}\n🟠 Role: {role}\n\n📅 Date: {date}\n⏰ Time: {time}\n\n🌐 IP: {ip}",
             QUIZ_RESULT: "━━━━ 🟠 Student Result 🟠 ━━━━\n🟢 Name: {name}\n🟢 Username: {username}\n🟢 Class: {class}\n🟢 Subject: {subject}\n📖 Ch: {chapter}\n📋 Total Questions: {total}\n📝 Attempted: {attempted}\n✅ Correct: {correct}\n⏱️ Time Taken: {timeTaken}\n📈 Percentage: {percentage}%\n📅 Date: {date}"
         }
     };
@@ -2679,18 +2679,18 @@
         const date = now.toLocaleDateString('en-IN');
         
         // Send only one message with the format you specified
-        const message = `Student Result\n\n` +
-          `Name: ${currentUser.name}\n` +
-          `Username: ${currentUser.username}\n` +
-          `Class: ${currentClass}\n` +
-          `Subject: ${currentSubject}\n\n` +
-          `Chapter: ${currentTopicName}\n` +
-          `Total Questions: ${stats.total}\n` +
-          `Attempted: ${stats.attempted}\n` +
-          `Correct: ${stats.correct}\n\n` +
-          `Time Taken: ${stats.timeTaken || "N/A"}\n` +
-          `Percentage: ${stats.percentage}%\n\n` +
-          `Date: ${date}\n\n` +
+        const message = `━━━━ 🟠 Student Result 🟠 ━━━━\n\n` +
+          `🟢 Name: ${currentUser.name}\n` +
+          `🟢 Username: ${currentUser.username}\n` +
+          `🟢 Class: ${currentClass}\n` +
+          `🟢 Subject: ${currentSubject}\n\n` +
+          `📖 Chapter: ${currentTopicName}\n` +
+          `📋 Total Questions: ${stats.total}\n` +
+          `📝 Attempted: ${stats.attempted}\n` +
+          `✅ Correct: ${stats.correct}\n\n` +
+          `⏱️ Time Taken: ${stats.timeTaken || "N/A"}\n` +
+          `📈 Percentage: ${stats.percentage}%\n\n` +
+          `📅 Date: ${date}\n\n` +
           `_A detailed PDF report has been generated and is attached._`;
         
         // Send text message
@@ -3208,34 +3208,7 @@
             return;
         }
         
-        // Check admin notifications
-        if (currentUser.role === 'Admin') {
-            if (!ADMIN_CONFIG.NOTIFY_ON_QUIZ_RESULT) {
-                console.log("Admin quiz result notifications disabled");
-                return;
-            }
-        }
-        
-        if (!TELEGRAM_CONFIG.ENABLED) return;
-        if (!currentUser || !currentQuizStats) return;
-        
-        const now = new Date();
-        const date = now.toLocaleDateString('en-IN');
-        
-        const message = `Student Result\n\n` +
-          `Name: ${currentUser.name}\n` +
-          `Username: ${currentUser.username}\n` +
-          `Class: ${currentClass}\n` +
-          `Subject: ${currentSubject}\n\n` +
-          `Chapter: ${currentTopicName}\n` +
-          `Total Questions: ${stats.total}\n` +
-          `Attempted: ${stats.attempted}\n` +
-          `Correct: ${stats.correct}\n\n` +
-          `Time Taken: ${stats.timeTaken || "N/A"}\n` +
-          `Percentage: ${stats.percentage}%\n\n` +
-          `Date: ${date}`;
-        
-        console.log("Quiz Result Notification:", message);
+       
         
         // Send to Telegram
         await sendTelegramMessage(message);
@@ -3252,19 +3225,19 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    chat_id: TELEGRAM_CONFIG.CHAT_ID,
+                    chat_id: _CONFIG.CHAT_ID,
                     text: message,
                     parse_mode: 'Markdown'
                 })
             });
             
             if (response.ok) {
-                console.log("Telegram notification sent");
+                console.log(" notification sent");
             } else {
-                console.error("Telegram API error:", await response.text());
+                console.error(" API error:", await response.text());
             }
         } catch (error) {
-            console.error("Error sending Telegram message:", error);
+            console.error("Error sending  message:", error);
         }
     }
 
@@ -4995,7 +4968,7 @@
       
       console.log("Current Configuration:");
       console.log("- Google Sheets ID:", GOOGLE_SHEETS_CONFIG.SHEET_ID);
-      console.log("- Telegram Enabled:", TELEGRAM_CONFIG.ENABLED);
+      console.log("-  Enabled:", _CONFIG.ENABLED);
       console.log("- Admin Login Notifications:", ADMIN_CONFIG.NOTIFY_ON_LOGIN);
       console.log("- Admin Quiz Notifications:", ADMIN_CONFIG.NOTIFY_ON_QUIZ_RESULT);
       console.log("- Classes Loaded:", CLASSES_CONFIG.length);
