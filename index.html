@@ -2642,7 +2642,7 @@
         // Horizontal line
         doc.setDrawColor(59, 130, 246);
         doc.setLineWidth(0.5);
-        doc.line(20, 60, 190, 60);
+        doc.line(20, 60, 190, 50);
         
         // Report title
         doc.setFontSize(20);
@@ -2975,29 +2975,29 @@ async function generateQuestionsAnswersPDF() {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(22);
     doc.setTextColor(59, 130, 246);
-    doc.text("G.S. Tutorial", 50, 20);
+    doc.text("G.S. Tutorial", 50, 15);
     
     doc.setFontSize(12);
     doc.setTextColor(148, 163, 184);
-    doc.text("Interactive Learning App", 50, 28);
+    doc.text("Interactive Learning App", 50, 23);
     
     // NEW: App Created by line
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setTextColor(226, 232, 240);
-    doc.text("App Created by Gobind Sharma", 50, 36);
+    doc.text("App Created by Gobind Sharma", 50, 30);
     
     // Contact info
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.text("Mobile: 9706195457", 50, 44);
+    doc.text("Mobile: 9706195457", 50, 35);
     doc.setFont('helvetica', 'normal');
-    doc.text("Email: gobind.bngn@gmail.com", 50, 49);
-    doc.text("App Link: https://gstutorial.github.io/app", 50, 54);
+    doc.text("Email: gobind.bngn@gmail.com", 50, 40);
+    doc.text("App Link: https://gstutorial.github.io/app", 50, 45);
     
     // Horizontal line
     doc.setDrawColor(59, 130, 246);
     doc.setLineWidth(0.5);
-    doc.line(20, 60, 190, 60);
+    doc.line(20, 60, 190, 50);
     
     // Document title
     doc.setFontSize(24);
