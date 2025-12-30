@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="maintenance.gif" alt="Site under maintenance" width="350">
+</p>
+
 # 🔧 G.S. Tutorial – Maintenance Mode
 
 🚧 **We’re currently updating the app** 🚧  
