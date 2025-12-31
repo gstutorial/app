@@ -3018,41 +3018,49 @@
           chapterY += 8;
         });
         
-        // Student info box - CLEAN & BALANCED
-const boxX = 35;
-const boxY = chapterY + 10;
-const boxWidth = 140;
-const boxHeight = 42; // Perfect height for 5 lines
-
+        // Student info box - OPTIMIZED SIZE
 doc.setFillColor(30, 41, 59);
-doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 3, 3, 'F');
+doc.roundedRect(35, chapterY + 10, 140, 45, 3, 3, 'F'); // Reduced height to 45mm
 doc.setDrawColor(59, 130, 246);
 doc.setLineWidth(0.5);
-doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 3, 3, 'S');
+doc.roundedRect(35, chapterY + 10, 140, 45, 3, 3, 'S');
 
-// Header
-doc.setFontSize(11);
+doc.setFontSize(12);
 doc.setTextColor(59, 130, 246);
-doc.text("STUDENT INFORMATION", 105, boxY + 8, { align: 'center' });
+doc.text("STUDENT INFORMATION", 105, chapterY + 18, { align: 'center' });
 
-// Content - Simple vertical list
-doc.setFontSize(9.5);
+doc.setFontSize(10);
 doc.setTextColor(226, 232, 240);
 
-const lines = [
+// Student details in two columns
+const leftColumn = [
   `Name: ${currentUser.name}`,
   `Class: ${currentClass}`,
-  `Subject: ${currentSubject}`,
+  `Subject: ${currentSubject}`
+];
+
+const rightColumn = [
   `Date: ${date}`,
   `Time: ${time}`
 ];
 
-const startY = boxY + 18;
-const lineHeight = 5; // Perfect spacing for 5 lines in 42mm height
+// Reduced spacing for compact layout
+let infoY = chapterY + 28; // Adjusted starting position
+const lineHeight = 6; // Reduced from 7mm
 
-lines.forEach((line, index) => {
-  doc.text(line, 45, startY + (index * lineHeight));
-});
+for (let i = 0; i < 3; i++) {
+  // Left column
+  if (leftColumn[i]) {
+    doc.text(leftColumn[i], 45, infoY);
+  }
+  
+  // Right column (only first 2 entries)
+  if (i < 2 && rightColumn[i]) {
+    doc.text(rightColumn[i], 110, infoY);
+  }
+  
+  infoY += lineHeight;
+}
         
         // Footer for cover page
         doc.setFontSize(8);
