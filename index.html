@@ -2601,7 +2601,7 @@
           });
           
           // Add logo to PDF - INCREASED SIZE
-          doc.addImage(img, 'PNG', 15, 12, 35, 35);
+          doc.addImage(img, 'PNG', 10, 8, 35, 35);
         } catch (error) {
           console.log("Could not load logo, using text fallback");
           // Fallback to text logo
@@ -2965,7 +2965,7 @@
             img.src = logoUrl;
           });
           
-          doc.addImage(img, 'PNG', 15, 12, 35, 35);
+          doc.addImage(img, 'PNG', 10, 8, 35, 35);
         } catch (error) {
           console.log("Could not load logo, using text fallback");
           doc.setFillColor(59, 130, 246);
