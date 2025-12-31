@@ -3018,46 +3018,61 @@
           chapterY += 8;
         });
         
-        // Student info box - INCREASED SIZE
+        // Student info box - PERFECTLY BALANCED
+const boxWidth = 135;
+const boxHeight = 48;
+const boxX = (210 - boxWidth) / 2;
+const boxY = chapterY + 10;
+
 doc.setFillColor(30, 41, 59);
-doc.roundedRect(35, chapterY + 10, 140, 60, 3, 3, 'F'); // Width: 140 (was 130), Height: 60 (was 40)
+doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 3, 3, 'F');
 doc.setDrawColor(59, 130, 246);
 doc.setLineWidth(0.5);
-doc.roundedRect(35, chapterY + 10, 140, 60, 3, 3, 'S');
+doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 3, 3, 'S');
 
-doc.setFontSize(12);
+// Header
+doc.setFontSize(11);
 doc.setTextColor(59, 130, 246);
-doc.text("STUDENT INFORMATION", 105, chapterY + 20, { align: 'center' });
+doc.setFont('helvetica', 'bold');
+doc.text("STUDENT INFORMATION", 105, boxY + 8, { align: 'center' });
 
-doc.setFontSize(10);
+// Content - Grid layout (3x2)
+doc.setFontSize(9);
 doc.setTextColor(226, 232, 240);
 
-// Student details in two columns for better organization
-const leftColumn = [
-  `Name: ${currentUser.name}`,
-  `Class: ${currentClass}`,
-  `Subject: ${currentSubject}`
+const gridMargin = 10;
+const cellWidth = (boxWidth - (3 * gridMargin)) / 2;
+const cellHeight = (boxHeight - 25) / 3; // 25px for header + margins
+
+const gridData = [
+  [
+    { label: "Name:", value: currentUser.name },
+    { label: "Date:", value: date }
+  ],
+  [
+    { label: "Class:", value: currentClass },
+    { label: "Time:", value: time }
+  ],
+  [
+    { label: "Subject:", value: currentSubject },
+    { label: "", value: "" } // Empty cell for alignment
+  ]
 ];
 
-const rightColumn = [
-  `Date: ${date}`,
-  `Time: ${time}`
-];
-
-let infoY = chapterY + 30;
-for (let i = 0; i < 3; i++) {
-  // Left column
-  if (leftColumn[i]) {
-    doc.text(leftColumn[i], 45, infoY); // Adjusted from 50
-  }
-  
-  // Right column (only first 2 entries)
-  if (i < 2 && rightColumn[i]) {
-    doc.text(rightColumn[i], 110, infoY); // Position for right column
-  }
-  
-  infoY += 7; // Spacing between lines
-}
+// Draw grid
+gridData.forEach((row, rowIndex) => {
+  row.forEach((cell, colIndex) => {
+    if (cell.label && cell.value) {
+      const x = boxX + gridMargin + (colIndex * (cellWidth + gridMargin));
+      const y = boxY + 20 + (rowIndex * cellHeight);
+      
+      doc.setFont('helvetica', 'bold');
+      doc.text(cell.label, x, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(cell.value, x + 20, y); // Value starts 20mm after label
+    }
+  });
+});
         
         // Footer for cover page
         doc.setFontSize(8);
