@@ -2601,7 +2601,7 @@
           });
           
           // Add logo to PDF - INCREASED SIZE
-          doc.addImage(img, 'PNG', 10, 8, 35, 35);
+          doc.addImage(img, 'PNG', 8, 8, 35, 35);
         } catch (error) {
           console.log("Could not load logo, using text fallback");
           // Fallback to text logo
@@ -2965,7 +2965,7 @@
             img.src = logoUrl;
           });
           
-          doc.addImage(img, 'PNG', 10, 8, 35, 35);
+          doc.addImage(img, 'PNG', 8, 8, 35, 35);
         } catch (error) {
           console.log("Could not load logo, using text fallback");
           doc.setFillColor(59, 130, 246);
@@ -3018,11 +3018,11 @@
           chapterY += 8;
         });
         
-        // Student info box - PERFECTLY BALANCED
-const boxWidth = 135;
-const boxHeight = 48;
-const boxX = (210 - boxWidth) / 2;
+        // Student info box - CLEAN & BALANCED
+const boxX = 35;
 const boxY = chapterY + 10;
+const boxWidth = 140;
+const boxHeight = 42; // Perfect height for 5 lines
 
 doc.setFillColor(30, 41, 59);
 doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 3, 3, 'F');
@@ -3033,45 +3033,25 @@ doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 3, 3, 'S');
 // Header
 doc.setFontSize(11);
 doc.setTextColor(59, 130, 246);
-doc.setFont('helvetica', 'bold');
 doc.text("STUDENT INFORMATION", 105, boxY + 8, { align: 'center' });
 
-// Content - Grid layout (3x2)
-doc.setFontSize(9);
+// Content - Simple vertical list
+doc.setFontSize(9.5);
 doc.setTextColor(226, 232, 240);
 
-const gridMargin = 10;
-const cellWidth = (boxWidth - (3 * gridMargin)) / 2;
-const cellHeight = (boxHeight - 25) / 3; // 25px for header + margins
-
-const gridData = [
-  [
-    { label: "Name:", value: currentUser.name },
-    { label: "Date:", value: date }
-  ],
-  [
-    { label: "Class:", value: currentClass },
-    { label: "Time:", value: time }
-  ],
-  [
-    { label: "Subject:", value: currentSubject },
-    { label: "", value: "" } // Empty cell for alignment
-  ]
+const lines = [
+  `Name: ${currentUser.name}`,
+  `Class: ${currentClass}`,
+  `Subject: ${currentSubject}`,
+  `Date: ${date}`,
+  `Time: ${time}`
 ];
 
-// Draw grid
-gridData.forEach((row, rowIndex) => {
-  row.forEach((cell, colIndex) => {
-    if (cell.label && cell.value) {
-      const x = boxX + gridMargin + (colIndex * (cellWidth + gridMargin));
-      const y = boxY + 20 + (rowIndex * cellHeight);
-      
-      doc.setFont('helvetica', 'bold');
-      doc.text(cell.label, x, y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(cell.value, x + 20, y); // Value starts 20mm after label
-    }
-  });
+const startY = boxY + 18;
+const lineHeight = 5; // Perfect spacing for 5 lines in 42mm height
+
+lines.forEach((line, index) => {
+  doc.text(line, 45, startY + (index * lineHeight));
 });
         
         // Footer for cover page
