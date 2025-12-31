@@ -3018,22 +3018,46 @@
           chapterY += 8;
         });
         
-        // Student info box
-        doc.setFillColor(30, 41, 59);
-        doc.roundedRect(40, chapterY + 10, 130, 40, 3, 3, 'F');
-        doc.setDrawColor(59, 130, 246);
-        doc.setLineWidth(0.5);
-        doc.roundedRect(40, chapterY + 10, 130, 40, 3, 3, 'S');
-        
-        doc.setFontSize(12);
-        doc.setTextColor(59, 130, 246);
-        doc.text("STUDENT INFORMATION", 105, chapterY + 20, { align: 'center' });
-        
-        doc.setFontSize(10);
-        doc.setTextColor(226, 232, 240);
-        doc.text(`Name: ${currentUser.name}`, 50, chapterY + 30);
-        doc.text(`Class: ${currentClass} | Subject: ${currentSubject}`, 50, chapterY + 37);
-        doc.text(`Generated on: ${date} at ${time}`, 50, chapterY + 44);
+        // Student info box - INCREASED SIZE
+doc.setFillColor(30, 41, 59);
+doc.roundedRect(35, chapterY + 10, 140, 60, 3, 3, 'F'); // Width: 140 (was 130), Height: 60 (was 40)
+doc.setDrawColor(59, 130, 246);
+doc.setLineWidth(0.5);
+doc.roundedRect(35, chapterY + 10, 140, 60, 3, 3, 'S');
+
+doc.setFontSize(12);
+doc.setTextColor(59, 130, 246);
+doc.text("STUDENT INFORMATION", 105, chapterY + 20, { align: 'center' });
+
+doc.setFontSize(10);
+doc.setTextColor(226, 232, 240);
+
+// Student details in two columns for better organization
+const leftColumn = [
+  `Name: ${currentUser.name}`,
+  `Class: ${currentClass}`,
+  `Subject: ${currentSubject}`
+];
+
+const rightColumn = [
+  `Date: ${date}`,
+  `Time: ${time}`
+];
+
+let infoY = chapterY + 30;
+for (let i = 0; i < 3; i++) {
+  // Left column
+  if (leftColumn[i]) {
+    doc.text(leftColumn[i], 45, infoY); // Adjusted from 50
+  }
+  
+  // Right column (only first 2 entries)
+  if (i < 2 && rightColumn[i]) {
+    doc.text(rightColumn[i], 110, infoY); // Position for right column
+  }
+  
+  infoY += 7; // Spacing between lines
+}
         
         // Footer for cover page
         doc.setFontSize(8);
