@@ -3039,9 +3039,8 @@ function formatDisplayDate(val) {
            `👤 *Name:* ${currentUser.name} (${currentUser.username})\n` +
           `🏫 *Class:* ${currentClass}\n\n` +
           `📚 *Subject:* ${currentSubject}\n` +
-          `📖 *Chapter:* ${currentTopicName}\n\n` +
-          `🔢 *Question No.:* ${currentQuestionNumber}\n` +          
-          `❓ *Question:* ${q.question}\n\n` +
+          `📖 *Chapter:* ${currentTopicName}\n\n` +         
+          `*Question No*${currentQuestionNumber}*: * ${q.question}\n\n` +
           `📝 *Options:*\n${optionsText}\n` +
           `✅ *Correct Answer:* ${String.fromCharCode(65 + q.correctIndex)}. ${q.options[q.correctIndex]}\n\n` +
           `📋 *My Concern:* `;
