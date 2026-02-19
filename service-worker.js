@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gs-tutorial-v2.0.0'; // Increment version
+const CACHE_NAME = 'gs-tutorial-v2.1.0'; // Increment version
 const urlsToCache = [
   '/',
   '/index.html',
