@@ -4881,40 +4881,71 @@
           creator: 'G.S. Tutorial App'
         });
 
-        // Cover page
+       // ========== PAGE 1: COVER ==========
+        updatePDFStatus("Creating cover page...");
+        
+        // Background color - consistent dark blue
         doc.setFillColor(15, 23, 42);
         doc.rect(0, 0, 210, 297, 'F');
-
+        
+        // Header with gradient effect
         doc.setFillColor(30, 41, 59);
         doc.rect(0, 0, 210, 50, 'F');
-
+        
+        // Logo image
+        try {
+          const logoUrl = 'logo.png';
+          const img = new Image();
+          img.crossOrigin = 'Anonymous';
+          
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = logoUrl;
+          });
+          
+          doc.addImage(img, 'PNG', 8, 8, 35, 35);
+        } catch (error) {
+          console.log("Could not load logo, using text fallback");
+          doc.setFillColor(59, 130, 246);
+          doc.circle(27, 24, 18, 'F');
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(18);
+          doc.text("GS", 22, 28);
+        }
+        
+        // Title
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(22);
         doc.setTextColor(59, 130, 246);
         doc.text("G.S. Tutorial", 50, 15);
-
+        
         doc.setFontSize(12);
         doc.setTextColor(148, 163, 184);
         doc.text("Interactive Learning App", 50, 23);
-
+        
+        // NEW: App Created by line
         doc.setFontSize(9);
         doc.setTextColor(226, 232, 240);
         doc.text("App Created by Gobind Sharma", 50, 30);
-
+        
+        // Contact info
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
         doc.text("Mobile: 9706195457", 50, 35);
         doc.setFont('helvetica', 'normal');
         doc.text("Email: gobind.bngn@gmail.com", 50, 40);
         doc.text("App Link: https://gstutorial.github.io/app", 50, 45);
-
+        
+        // Horizontal line
         doc.setDrawColor(59, 130, 246);
         doc.setLineWidth(0.5);
         doc.line(0, 50, 210, 50);
-
+        
+        // Document title
         doc.setFontSize(24);
         doc.setTextColor(226, 232, 240);
-        doc.text("QUESTIONS & ANSWERS", 105, 80, { align: 'center' });
+        doc.text("QUESTIONS & ANSWERS", 105, 80, { align: 'center' });;
 
         doc.setFontSize(18);
         doc.setTextColor(34, 197, 94);
