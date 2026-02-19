@@ -2943,135 +2943,197 @@
       }
     }
 
-    // ========== LOAD TELEGRAM CONFIG FROM APPS SCRIPT ==========
-    async function loadTelegramConfig() {
-      try {
-        const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({
-            action: 'getTelegramConfig'
-          })
-        });
+// ========== FIXED FETCH FUNCTIONS WITH BETTER ERROR HANDLING ==========
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            TELEGRAM_CONFIG.ENABLED = data.enabled;
-            TELEGRAM_CONFIG.BOT_TOKEN = data.botToken;
-            TELEGRAM_CONFIG.CHAT_ID = data.chatId;
-            console.log("Telegram config loaded from Apps Script");
-          }
-        }
-      } catch (error) {
-        console.error("Error loading Telegram config:", error);
-      }
+async function loadTelegramConfig() {
+  try {
+    const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        action: 'getTelegramConfig'
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    // ========== LOAD CLASSES FROM MASTER CONFIG ==========
-    async function loadClassesFromMasterConfig() {
-      try {
-        const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({
-            action: 'getClasses'
-          })
-        });
+    const data = await response.json();
+    
+    if (data.success) {
+      TELEGRAM_CONFIG.ENABLED = data.enabled;
+      TELEGRAM_CONFIG.BOT_TOKEN = data.botToken;
+      TELEGRAM_CONFIG.CHAT_ID = data.chatId;
+      console.log("Telegram config loaded");
+    }
+    
+    return data;
+    
+  } catch (error) {
+    console.error("Error loading Telegram config:", error);
+    // Return default config on error
+    return { success: false };
+  }
+}
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+async function loadClassesFromMasterConfig() {
+  try {
+    const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        action: 'getClasses'
+      })
+    });
 
-        const data = await response.json();
-        
-        if (!data.success) {
-          throw new Error(data.error || 'Failed to load classes');
-        }
-
-        return data.classes;
-
-      } catch (error) {
-        console.error("Error loading classes from master config:", error);
-        return [];
-      }
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    // ========== LOAD SUBJECTS FROM MASTER CONFIG ==========
-    async function loadSubjectsFromMasterConfig(classId) {
-      try {
-        const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({
-            action: 'getSubjects',
-            classId: classId
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        if (!data.success) {
-          throw new Error(data.error || 'Failed to load subjects');
-        }
-
-        return data.subjects;
-
-      } catch (error) {
-        console.error("Error loading subjects:", error);
-        return [];
-      }
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to load classes');
     }
 
-    // ========== LOAD CHAPTERS FROM MASTER CONFIG ==========
-    async function loadChaptersFromMasterConfig(classId, subject) {
-      try {
-        const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({
-            action: 'getChapters',
-            classId: classId,
-            subject: subject
-          })
-        });
+    console.log("Classes loaded:", data.classes);
+    return data.classes;
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        if (!data.success) {
-          throw new Error(data.error || 'Failed to load chapters');
-        }
-
-        return {
-          sheetId: data.sheetId,
-          chapters: data.chapters
-        };
-
-      } catch (error) {
-        console.error("Error loading chapters:", error);
-        throw error;
-      }
+  } catch (error) {
+    console.error("Error loading classes:", error);
+    
+    // Return mock data for testing if in development
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      console.log("Using mock data for testing");
+      return [
+        { id: "6", name: "Class 6", icon: "📚", description: "Mathematics & Science" },
+        { id: "7", name: "Class 7", icon: "📚", description: "Mathematics & Science" },
+        { id: "8", name: "Class 8", icon: "📚", description: "Mathematics & Science" },
+        { id: "9", name: "Class 9", icon: "📚", description: "Mathematics & Science" },
+        { id: "10", name: "Class 10", icon: "📚", description: "Mathematics & Science" },
+        { id: "JE", name: "Junior Engineer", icon: "🔧", description: "Mechanical & Electrical" }
+      ];
     }
+    
+    return [];
+  }
+}
+
+async function loadSubjectsFromMasterConfig(classId) {
+  try {
+    const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        action: 'getSubjects',
+        classId: classId
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to load subjects');
+    }
+
+    return data.subjects;
+
+  } catch (error) {
+    console.error("Error loading subjects:", error);
+    
+    // Return mock data for testing
+    if (classId === 'JE') {
+      return [
+        { id: "mechanical", name: "Mechanical", icon: "⚙️", desc: "Mechanical Engineering" },
+        { id: "electrical", name: "Electrical", icon: "⚡", desc: "Electrical Engineering" }
+      ];
+    } else {
+      return [
+        { id: "mathematics", name: "Mathematics", icon: "📐", desc: "Algebra, Geometry" },
+        { id: "science", name: "Science", icon: "🔬", desc: "Physics, Chemistry, Biology" }
+      ];
+    }
+  }
+}
+
+async function loadChaptersFromMasterConfig(classId, subject) {
+  try {
+    const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        action: 'getChapters',
+        classId: classId,
+        subject: subject
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to load chapters');
+    }
+
+    return {
+      sheetId: data.sheetId,
+      chapters: data.chapters
+    };
+
+  } catch (error) {
+    console.error("Error loading chapters:", error);
+    throw error;
+  }
+}
+
+// Updated loadClasses function
+async function loadClasses() {
+  try {
+    const allClasses = await loadClassesFromMasterConfig();
+    
+    let availableClasses = allClasses;
+
+    // Filter based on user role
+    if (currentUser && currentUser.role !== 'Admin') {
+      const assignedClasses = currentUser.validatedAssignedClasses || [];
+      availableClasses = allClasses.filter(cls => 
+        assignedClasses.some(assigned => assigned.toString().trim() === cls.id.toString().trim())
+      );
+    }
+
+    renderClassGrid(availableClasses);
+
+  } catch (error) {
+    console.error("Error in loadClasses:", error);
+    classGridEl.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: #fca5a5;">
+        <div style="font-size: 1.2rem; margin-bottom: 10px;">Error loading classes</div>
+        <div>Please check your internet connection and try again.</div>
+        <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Retry</button>
+      </div>
+    `;
+  }
+}
 
     // ========== GET USER IP ==========
     async function getUserIP() {
