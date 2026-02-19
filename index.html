@@ -15,7 +15,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   <style>
     /* Your existing CSS - keep all the styles from your original file */
-    /* I'm including the complete CSS from your original file */
     * {
       box-sizing: border-box;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -2570,6 +2569,7 @@
 
   <script>
     // ========== APPS SCRIPT CONFIGURATION ==========
+    // Your specific Apps Script URLs
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx06h9aa6wDmtDz3jBwNgOuoiz7-NZY1nJaEwts3A7vIHRkWfAU5O3N4UNUooCwvEm7Lw/exec';
     const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw2CCk6wZgSWwLVyi4-6izf0DNIvcG-E64_jfsT0TgclHZ_PIevnAEdLq6B2Ccc6ABK/exec';
 
@@ -4481,6 +4481,15 @@
       navigationToggleBtn.innerHTML = '<i>▼</i> Hide Navigation';
       navigationToggleBtn.classList.remove('collapsed');
       updateQuestionNavigation();
+
+      // Make sure all answers are visible in review mode
+      for (let i = 0; i < questions.length; i++) {
+        if (userAnswers[i] !== undefined) {
+          const selectedIndex = userAnswers[i];
+          const isCorrect = (selectedIndex === questions[i].correctIndex);
+          // The renderQuestion function will handle showing the answers
+        }
+      }
     }
 
     function showFinalResultWithoutNotification() {
