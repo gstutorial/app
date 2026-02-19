@@ -32,7 +32,6 @@
       align-items: center;
     }
 
-    /* ===== FIXED HEADER ===== */
     .fixed-header {
       position: fixed;
       top: 0;
@@ -161,7 +160,6 @@
       transform: translateY(-1px);
     }
 
-    /* ===== MAIN CONTENT AREA ===== */
     .main-content {
       width: 100%;
       max-width: 720px;
@@ -172,7 +170,6 @@
       gap: 20px;
     }
 
-    /* ===== LOGIN STYLES ===== */
     #login-container {
       width: 100%;
       display: flex;
@@ -364,7 +361,6 @@
       text-align: center;
     }
 
-    /* ===== ACCOUNT CONFIGURATION ERROR SCREEN ===== */
     .account-config-error {
       background: #020617;
       border-radius: 18px;
@@ -434,7 +430,6 @@
       color: #fca5a5;
     }
 
-    /* WhatsApp Button Styles */
     .whatsapp-btn {
       background: linear-gradient(to right, #25d366, #128c7e);
       color: white;
@@ -466,7 +461,6 @@
       object-fit: contain;
     }
 
-    /* Subscription Expired Screen */
     .subscription-expired {
       background: #020617;
       border-radius: 18px;
@@ -562,7 +556,6 @@
       text-align: center;
     }
 
-    /* Request Login Credentials Button */
     .request-credentials-btn {
       background: linear-gradient(to right, #25d366, #128c7e);
       color: white;
@@ -595,7 +588,6 @@
       object-fit: contain;
     }
 
-    /* ===== CLASS SELECTION SCREEN ===== */
     .class-selection {
       background: #020617;
       border-radius: 18px;
@@ -676,7 +668,6 @@
       margin-top: 5px;
     }
 
-    /* ===== SUBJECT SELECTION SCREEN ===== */
     .subject-selection {
       background: #020617;
       border-radius: 18px;
@@ -752,7 +743,6 @@
       transform: translateY(-1px);
     }
 
-    /* ===== QUIZ STYLES ===== */
     .quiz-container {
       background: #020617;
       border-radius: 18px;
@@ -1827,7 +1817,6 @@
       max-width: 400px;
     }
 
-    /* Responsive styles */
     @media (max-width: 700px) {
       .fixed-header {
         padding: 8px 12px;
@@ -2580,9 +2569,9 @@
 
   <script>
     // ========== APPS SCRIPT CONFIGURATION ==========
-    // Replace with your deployed Apps Script URLs
+    // REPLACE THESE WITH YOUR ACTUAL APPS SCRIPT URLs
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-b7W0ogH7YWOBAXWntiLZIQCbdiw-CXarcyltJ7hEJ5DAt2se21jHzF5HxOIa2heIig/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxG9EVlFBddGfJ6OGIGU9htQqTLMjJnjcQy2ogregfz1uVg3G_aWfB-ENDuhuaU_0Cf/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyWbGZXL0zkKBt_qaLvGTuAiAeG5ce_SmF7_UX8X8IRYuG7nWvpFILX_Df1SnBVnE2Q/exec';
 
     // ========== GLOBAL VARIABLES ==========
     let questions = [];
@@ -2634,7 +2623,7 @@
     let hasSentQuizResultNotification = false;
     let currentQuizSessionId = null;
 
-    // Telegram config (loaded from Apps Script)
+    // Telegram config
     let TELEGRAM_CONFIG = {
         ENABLED: false,
         BOT_TOKEN: '',
@@ -2943,197 +2932,136 @@
       }
     }
 
-// ========== FIXED FETCH FUNCTIONS WITH BETTER ERROR HANDLING ==========
+    // ========== LOAD TELEGRAM CONFIG FROM APPS SCRIPT ==========
+    async function loadTelegramConfig() {
+      try {
+        const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            action: 'getTelegramConfig'
+          })
+        });
 
-async function loadTelegramConfig() {
-  try {
-    const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        action: 'getTelegramConfig'
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            TELEGRAM_CONFIG.ENABLED = data.enabled;
+            TELEGRAM_CONFIG.BOT_TOKEN = data.botToken;
+            TELEGRAM_CONFIG.CHAT_ID = data.chatId;
+            console.log("Telegram config loaded");
+          }
+        }
+      } catch (error) {
+        console.error("Error loading Telegram config:", error);
+      }
     }
 
-    const data = await response.json();
-    
-    if (data.success) {
-      TELEGRAM_CONFIG.ENABLED = data.enabled;
-      TELEGRAM_CONFIG.BOT_TOKEN = data.botToken;
-      TELEGRAM_CONFIG.CHAT_ID = data.chatId;
-      console.log("Telegram config loaded");
-    }
-    
-    return data;
-    
-  } catch (error) {
-    console.error("Error loading Telegram config:", error);
-    // Return default config on error
-    return { success: false };
-  }
-}
+    // ========== LOAD CLASSES FROM MASTER CONFIG ==========
+    async function loadClassesFromMasterConfig() {
+      try {
+        const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            action: 'getClasses'
+          })
+        });
 
-async function loadClassesFromMasterConfig() {
-  try {
-    const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        action: 'getClasses'
-      })
-    });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to load classes');
+        }
+
+        console.log("Classes loaded:", data.classes);
+        return data.classes;
+
+      } catch (error) {
+        console.error("Error loading classes:", error);
+        return [];
+      }
     }
 
-    const data = await response.json();
-    
-    if (!data.success) {
-      throw new Error(data.error || 'Failed to load classes');
+    // ========== LOAD SUBJECTS FROM MASTER CONFIG ==========
+    async function loadSubjectsFromMasterConfig(classId) {
+      try {
+        const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            action: 'getSubjects',
+            classId: classId
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to load subjects');
+        }
+
+        return data.subjects;
+
+      } catch (error) {
+        console.error("Error loading subjects:", error);
+        return [];
+      }
     }
 
-    console.log("Classes loaded:", data.classes);
-    return data.classes;
+    // ========== LOAD CHAPTERS FROM MASTER CONFIG ==========
+    async function loadChaptersFromMasterConfig(classId, subject) {
+      try {
+        const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            action: 'getChapters',
+            classId: classId,
+            subject: subject
+          })
+        });
 
-  } catch (error) {
-    console.error("Error loading classes:", error);
-    
-    // Return mock data for testing if in development
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      console.log("Using mock data for testing");
-      return [
-        { id: "6", name: "Class 6", icon: "📚", description: "Mathematics & Science" },
-        { id: "7", name: "Class 7", icon: "📚", description: "Mathematics & Science" },
-        { id: "8", name: "Class 8", icon: "📚", description: "Mathematics & Science" },
-        { id: "9", name: "Class 9", icon: "📚", description: "Mathematics & Science" },
-        { id: "10", name: "Class 10", icon: "📚", description: "Mathematics & Science" },
-        { id: "JE", name: "Junior Engineer", icon: "🔧", description: "Mechanical & Electrical" }
-      ];
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to load chapters');
+        }
+
+        return {
+          sheetId: data.sheetId,
+          chapters: data.chapters
+        };
+
+      } catch (error) {
+        console.error("Error loading chapters:", error);
+        throw error;
+      }
     }
-    
-    return [];
-  }
-}
-
-async function loadSubjectsFromMasterConfig(classId) {
-  try {
-    const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        action: 'getSubjects',
-        classId: classId
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (!data.success) {
-      throw new Error(data.error || 'Failed to load subjects');
-    }
-
-    return data.subjects;
-
-  } catch (error) {
-    console.error("Error loading subjects:", error);
-    
-    // Return mock data for testing
-    if (classId === 'JE') {
-      return [
-        { id: "mechanical", name: "Mechanical", icon: "⚙️", desc: "Mechanical Engineering" },
-        { id: "electrical", name: "Electrical", icon: "⚡", desc: "Electrical Engineering" }
-      ];
-    } else {
-      return [
-        { id: "mathematics", name: "Mathematics", icon: "📐", desc: "Algebra, Geometry" },
-        { id: "science", name: "Science", icon: "🔬", desc: "Physics, Chemistry, Biology" }
-      ];
-    }
-  }
-}
-
-async function loadChaptersFromMasterConfig(classId, subject) {
-  try {
-    const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        action: 'getChapters',
-        classId: classId,
-        subject: subject
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (!data.success) {
-      throw new Error(data.error || 'Failed to load chapters');
-    }
-
-    return {
-      sheetId: data.sheetId,
-      chapters: data.chapters
-    };
-
-  } catch (error) {
-    console.error("Error loading chapters:", error);
-    throw error;
-  }
-}
-
-// Updated loadClasses function
-async function loadClasses() {
-  try {
-    const allClasses = await loadClassesFromMasterConfig();
-    
-    let availableClasses = allClasses;
-
-    // Filter based on user role
-    if (currentUser && currentUser.role !== 'Admin') {
-      const assignedClasses = currentUser.validatedAssignedClasses || [];
-      availableClasses = allClasses.filter(cls => 
-        assignedClasses.some(assigned => assigned.toString().trim() === cls.id.toString().trim())
-      );
-    }
-
-    renderClassGrid(availableClasses);
-
-  } catch (error) {
-    console.error("Error in loadClasses:", error);
-    classGridEl.innerHTML = `
-      <div style="text-align: center; padding: 40px; color: #fca5a5;">
-        <div style="font-size: 1.2rem; margin-bottom: 10px;">Error loading classes</div>
-        <div>Please check your internet connection and try again.</div>
-        <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Retry</button>
-      </div>
-    `;
-  }
-}
 
     // ========== GET USER IP ==========
     async function getUserIP() {
@@ -3674,7 +3602,7 @@ async function loadClasses() {
         let availableClasses = allClasses;
 
         // Filter based on user role
-        if (currentUser.role !== 'Admin') {
+        if (currentUser && currentUser.role !== 'Admin') {
           const assignedClasses = currentUser.validatedAssignedClasses || [];
           availableClasses = allClasses.filter(cls => 
             assignedClasses.some(assigned => assigned.toString().trim() === cls.id.toString().trim())
@@ -3684,10 +3612,12 @@ async function loadClasses() {
         renderClassGrid(availableClasses);
 
       } catch (error) {
-        console.error("Error loading classes:", error);
+        console.error("Error in loadClasses:", error);
         classGridEl.innerHTML = `
           <div style="text-align: center; padding: 40px; color: #fca5a5;">
-            Error loading classes. Please refresh the page.
+            <div style="font-size: 1.2rem; margin-bottom: 10px;">Error loading classes</div>
+            <div>Please check your internet connection and try again.</div>
+            <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Retry</button>
           </div>
         `;
       }
