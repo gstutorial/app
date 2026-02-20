@@ -1,73 +1,59 @@
 // service-worker.js
-const CACHE_NAME = 'gs-tutorial-v2.0.0';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/config.js',
-  '/manifest.json',
+const CACHE_NAME = 'gs-static-cache';
+const STATIC_ASSETS = [
   '/logo.png',
   '/whatsapp.png',
   '/icon-192.png',
-  '/icon-512.png'
+  '/icon-512.png',
+  '/gobind.png'
 ];
 
 self.addEventListener('install', event => {
-  console.log('Service Worker installing...');
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache).catch(error => {
-          console.error('Failed to cache some files:', error);
-        });
-      })
-  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-  
-  // Skip API calls
-  if (event.request.url.includes('docs.google.com') ||
-      event.request.url.includes('script.google.com') ||
-      event.request.url.includes('api.telegram.org') ||
-      event.request.url.includes('api.ipify.org')) {
-    event.respondWith(fetch(event.request));
+
+  const url = new URL(event.request.url);
+
+  // Skip external APIs
+  if (
+    url.hostname.includes('google') ||
+    url.hostname.includes('telegram') ||
+    url.hostname.includes('ipify')
+  ) {
     return;
   }
-  
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) return response;
-        return fetch(event.request).then(response => {
-          if (response && response.status === 200 && response.type === 'basic') {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, responseToCache);
-            });
-          }
-          return response;
-        });
-      })
-  );
-});
 
-self.addEventListener('activate', event => {
-  console.log('Service Worker activating...');
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => {
-      console.log('Service Worker activated successfully');
-      return self.clients.claim();
-    })
-  );
+  // ✅ HTML files → Network First (always fresh)
+  if (event.request.headers.get('accept').includes('text/html')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => response)
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // ✅ Static files → Cache First
+  if (STATIC_ASSETS.some(asset => url.pathname.endsWith(asset))) {
+    event.respondWith(
+      caches.match(event.request).then(response => {
+        return (
+          response ||
+          fetch(event.request).then(fetchResponse => {
+            return caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, fetchResponse.clone());
+              return fetchResponse;
+            });
+          })
+        );
+      })
+    );
+  }
 });
