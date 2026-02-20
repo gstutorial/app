@@ -1,59 +1,77 @@
 // service-worker.js
-const CACHE_NAME = 'gs-static-cache';
-const STATIC_ASSETS = [
+const CACHE_NAME = 'gs-tutorial-v2.0.1';   // version updated
+
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/config.js',
+  '/manifest.json',
   '/logo.png',
   '/whatsapp.png',
   '/icon-192.png',
   '/icon-512.png',
-  '/gobind.png'
+  '/gobind.png'   // ✅ added
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', event => {
-  event.waitUntil(self.clients.claim());
+  console.log('Service Worker installing...');
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
+  );
+  self.skipWaiting();   // force activate immediately
 });
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
-  const url = new URL(event.request.url);
-
-  // Skip external APIs
-  if (
-    url.hostname.includes('google') ||
-    url.hostname.includes('telegram') ||
-    url.hostname.includes('ipify')
-  ) {
+  // Skip API calls
+  if (event.request.url.includes('docs.google.com') ||
+      event.request.url.includes('script.google.com') ||
+      event.request.url.includes('api.telegram.org') ||
+      event.request.url.includes('api.ipify.org')) {
+    event.respondWith(fetch(event.request));
     return;
   }
 
-  // ✅ HTML files → Network First (always fresh)
-  if (event.request.headers.get('accept').includes('text/html')) {
+  // ✅ Always fetch fresh index.html (Network First)
+  if (event.request.url.endsWith('index.html') || 
+      event.request.url === location.origin + '/') {
+
     event.respondWith(
       fetch(event.request)
-        .then(response => response)
-        .catch(() => caches.match(event.request))
+        .then(response => {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put('/index.html', responseClone);
+          });
+          return response;
+        })
+        .catch(() => caches.match('/index.html'))
     );
     return;
   }
 
-  // ✅ Static files → Cache First
-  if (STATIC_ASSETS.some(asset => url.pathname.endsWith(asset))) {
-    event.respondWith(
-      caches.match(event.request).then(response => {
-        return (
-          response ||
-          fetch(event.request).then(fetchResponse => {
-            return caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, fetchResponse.clone());
-              return fetchResponse;
-            });
-          })
-        );
+  // ✅ Other files → Cache First
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        return response || fetch(event.request);
       })
-    );
-  }
+  );
+});
+
+self.addEventListener('activate', event => {
+  console.log('Service Worker activating...');
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
 });
