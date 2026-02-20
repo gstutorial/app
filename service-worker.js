@@ -1,5 +1,5 @@
 // service-worker.js
-const CACHE_NAME = 'gs-tutorial-v2.0.1';   // version updated
+const CACHE_NAME = 'gs-tutorial-v3.0.1';   // version updated
 
 const urlsToCache = [
   '/',
