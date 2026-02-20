@@ -6151,7 +6151,10 @@
 
     document.addEventListener("DOMContentLoaded", initializeApp);
   </script>
-  
-  <!-- No service worker registration - prevents caching issues -->
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
+  </script>
 </body>
 </html>
