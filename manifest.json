@@ -2,7 +2,7 @@
   "name": "G.S Tutorial - Interactive Learning App",
   "short_name": "G.S.Tutorial",
   "description": "Interactive Learning App for Students",
-  "start_url": "/",
+ "start_url": ".",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
