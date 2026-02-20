@@ -254,7 +254,10 @@ I have a question about this question:
 
 // Class Icons Mapping (dynamic - will be enhanced by Apps Script)
 const CLASS_ICONS = {
-    'JE': '🔧',
+    'JE': '🛠️',
+    'Class 8': '🎓',
+    'Class 9': '📖',
+     'Class 10': '✎',
     'default': '📚'
 };
 
