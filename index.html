@@ -5418,8 +5418,8 @@
           
           // Check for marks in column 9 (index 9) - Marks column
           let marks = 1; // Default marks
-          if (row.c[9]?.v) {
-            const marksValue = row.c[9].v.toString().trim();
+          if (row.c[7]?.v) {
+            const marksValue = row.c[7].v.toString().trim();
             if (marksValue && !isNaN(marksValue)) {
               marks = parseFloat(marksValue);
             }
