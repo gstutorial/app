@@ -727,7 +727,7 @@
       font-weight: 600;
     }
 
-    /* ===== BUTTON GROUPS STYLING - No labels, just depth ===== */
+    /* ===== BUTTON GROUPS STYLING - No labels, just depth, center aligned text ===== */
     .button-groups-container {
       display: flex;
       flex-direction: column;
@@ -769,7 +769,8 @@
     .group-btn {
       margin: 0 !important;
       width: 100%;
-      text-align: left;
+      text-align: center !important;
+      justify-content: center !important;
       padding: 12px 16px !important;
       font-size: 0.95rem !important;
       display: flex !important;
@@ -3603,9 +3604,9 @@
     let timerNotification = null;
     let isReviewMode = false;
     let isIncorrectReviewMode = false;
-    let isReattemptMode = false; // NEW: Reattempt incorrect questions mode
+    let isReattemptMode = false;
     let incorrectQuestionIndices = [];
-    let reattemptQuestions = []; // NEW: Store questions for reattempt
+    let reattemptQuestions = [];
     let reattemptUserAnswers = [];
     let reattemptUserMarks = [];
     
@@ -3995,28 +3996,16 @@
     // ========== UNICODE TEXT HANDLING FOR PDF ==========
     function getUnicodeSafeText(text) {
       if (!text) return '';
-      
-      // Convert text to string if it isn't already
       const textStr = String(text);
-      
-      // Check if text contains Hindi/Unicode characters (range for Devanagari)
       const hasDevanagari = /[\u0900-\u097F]/.test(textStr);
-      
       if (hasDevanagari) {
-        // For Hindi text, we need to ensure proper rendering
-        // Return as is - jsPDF with standard fonts may not render Hindi correctly
-        // Consider using a custom font for better Hindi support
         return textStr;
       }
-      
       return textStr;
     }
 
-    // Function to add text with proper encoding
     function addUnicodeText(doc, text, x, y, options = {}) {
       const safeText = getUnicodeSafeText(text);
-      
-      // Default options
       const opts = {
         fontSize: options.fontSize || 11,
         fontStyle: options.fontStyle || 'normal',
@@ -4037,7 +4026,7 @@
       if (opts.maxWidth) {
         const lines = doc.splitTextToSize(safeText, opts.maxWidth);
         doc.text(lines, x, y, { align: opts.align });
-        return lines.length * (opts.fontSize * 0.35); // Return height used
+        return lines.length * (opts.fontSize * 0.35);
       } else {
         doc.text(safeText, x, y, { align: opts.align });
         return opts.fontSize * 0.35;
@@ -5099,7 +5088,6 @@
       }
     }
 
-    // NEW: Show incorrect questions review
     function showIncorrectQuestionsReview() {
       collectIncorrectQuestionIndices();
       if (incorrectQuestionIndices.length === 0) {
@@ -5144,7 +5132,6 @@
       topicSection.parentNode.insertBefore(headerDiv, topicSection.nextSibling);
     }
 
-    // NEW: Reattempt incorrect questions
     function reattemptIncorrectQuestions() {
       collectIncorrectQuestionIndices();
       if (incorrectQuestionIndices.length === 0) {
@@ -5152,7 +5139,6 @@
         return;
       }
 
-      // Create reattempt questions array
       reattemptQuestions = incorrectQuestionIndices.map(idx => ({
         ...questions[idx],
         originalIndex: idx
@@ -5207,7 +5193,6 @@
       questionCounterEl.textContent = `Incorrect Q${currentIndex + 1}/${incorrectQuestionIndices.length}`;
       progressBarFillEl.style.width = `${((currentIndex + 1) / incorrectQuestionIndices.length) * 100}%`;
 
-      // Add marks badge
       const marksHtml = `<span class="question-marks-badge">${q.marks || 1} mark${(q.marks || 1) > 1 ? 's' : ''}</span>`;
       questionTextEl.innerHTML = q.question
         .replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>')
@@ -5298,7 +5283,6 @@
       questionCounterEl.textContent = `Q${currentIndex + 1}/${reattemptQuestions.length}`;
       progressBarFillEl.style.width = `${((currentIndex + 1) / reattemptQuestions.length) * 100}%`;
 
-      // Add marks badge
       const marksHtml = `<span class="question-marks-badge">${q.marks || 1} mark${(q.marks || 1) > 1 ? 's' : ''}</span>`;
       questionTextEl.innerHTML = q.question
         .replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>')
@@ -5363,7 +5347,6 @@
           li.appendChild(labelDiv);
           li.appendChild(contentDiv);
 
-          // IMPORTANT FIX: Make options clickable in reattempt mode
           li.addEventListener("click", (e) => {
             e.stopPropagation();
             if (hasAnswered || isReviewMode) return;
@@ -5380,14 +5363,11 @@
         feedbackEl.innerHTML = "";
       }
 
-      // Reset hasAnswered for reattempt mode when rendering new question
       hasAnswered = false;
       
-      // If this question was already answered in reattempt, show the result
       if (reattemptUserAnswers[currentIndex] !== undefined) {
         const selectedIdx = reattemptUserAnswers[currentIndex];
         if (q.isSubjective) {
-          // Handle subjective answer display
           if (selectedIdx === 'correct') {
             subjectiveCorrectBtn.classList.add('selected-correct');
             feedbackEl.textContent = `Marked as Correct! (${q.marks || 1} marks)`;
@@ -5419,7 +5399,6 @@
             exp.innerHTML = `<strong>Explanation:</strong> ${q.explanation}`;
             feedbackEl.appendChild(exp);
           }
-          // Highlight correct and selected options
           document.querySelectorAll(".option").forEach((optEl, idx) => {
             optEl.classList.remove("correct", "incorrect");
             if (idx === q.correctIndex) {
@@ -5533,12 +5512,10 @@
         const rawQuestions = [];
         let timerFromSheet = 0;
 
-        // Read timer from row 2 (index 1), column 7 (Timer)
         if (rows.length > 1 && rows[1].c && rows[1].c[7]?.v) {
           timerFromSheet = parseInt(rows[1].c[7].v) || 0;
         }
 
-        // Start from row 3 (index 2) - actual questions
         for (let i = 2; i < rows.length; i++) {
           const row = rows[i];
           if (!row.c || row.c.length < 6) continue;
@@ -5552,8 +5529,7 @@
           const explanation = row.c[6]?.v?.toString().trim() || '';
           const imageUrl = row.c[8]?.v?.toString().trim() || '';
           
-          // Check for marks in column H (index 7) - Marks column
-          let marks = 1; // Default marks
+          let marks = 1;
           if (row.c[7]?.v) {
             const marksValue = row.c[7].v.toString().trim();
             if (marksValue && !isNaN(marksValue)) {
@@ -5561,11 +5537,8 @@
             }
           }
 
-          // Check for subjective question (if all options are empty but question and answer exist)
           const isSubjective = !option1 && !option2 && !option3 && !option4 && question && answer;
 
-          // For subjective questions, the answer column contains the expected answer/explanation
-          // For subjective questions, we'll use the explanation column for additional info
           const options = [];
           const optionImages = [];
           
@@ -5575,7 +5548,6 @@
             if (option3) options.push(option3);
             if (option4) options.push(option4);
 
-            // Option images in columns I-L (index 8-11)
             if (row.c[8]) optionImages.push(row.c[8].v?.toString().trim() || '');
             if (row.c[9]) optionImages.push(row.c[9].v?.toString().trim() || '');
             if (row.c[10]) optionImages.push(row.c[10].v?.toString().trim() || '');
@@ -5792,7 +5764,6 @@
       questionCounterEl.textContent = `Q${currentIndex + 1}/${questions.length}`;
       progressBarFillEl.style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
 
-      // Add marks badge to question text
       const marksHtml = `<span class="question-marks-badge">${q.marks || 1} mark${(q.marks || 1) > 1 ? 's' : ''}</span>`;
       questionTextEl.innerHTML = q.question
         .replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>')
@@ -5835,7 +5806,6 @@
           subjectiveIncorrectBtn.classList.add('selected-incorrect');
         }
         
-        // Setup subjective buttons
         subjectiveCorrectBtn.onclick = () => {
           if (hasAnswered) return;
           resetInactivityTimer();
@@ -6026,7 +5996,6 @@
           currentIndex++;
           renderReattemptQuestion();
         } else {
-          // Loop back to first
           currentIndex = 0;
           renderReattemptQuestion();
         }
@@ -6185,7 +6154,6 @@
 
       finalScoreEl.style.display = "block";
 
-      // Create button groups with professional styling - NO LABELS, just depth
       finalScoreEl.innerHTML = `
         <div class="result-header">Results - ${currentTopicName}</div>
         <div class="result-stats">
@@ -6200,7 +6168,7 @@
         </div>
         <div class="result-message">${getPerformanceRemark(parseFloat(stats.percentage))}</div>
         
-        <!-- Button Groups - NO LABELS, just depth -->
+        <!-- Button Groups - No labels, just depth, center aligned -->
         <div class="button-groups-container">
           
           <!-- Group 1: Document & Restart -->
@@ -6293,10 +6261,6 @@
 
       finalScoreEl.style.display = "block";
 
-      let reviewSection = questions.length ? `<div class="result-summary"><button class="review-btn" onclick="showQuestionReview()">Review All Questions with Explanations</button></div>` : '';
-      let incorrectReviewSection = stats.incorrect ? `<div class="result-summary"><button class="review-incorrect-btn" onclick="showIncorrectQuestionsReview()">❌ Review ${stats.incorrect} Incorrect Questions</button></div>` : '';
-      let reattemptSection = stats.incorrect ? `<div class="result-summary"><button class="reattempt-incorrect-btn" onclick="reattemptIncorrectQuestions()">🔄 Reattempt ${stats.incorrect} Incorrect Questions</button></div>` : '';
-
       finalScoreEl.innerHTML = `
         <div class="result-header">Results - ${currentTopicName}</div>
         <div class="result-stats">
@@ -6310,11 +6274,39 @@
           <div class="stat-item"><div class="stat-label">Time Taken</div><div class="stat-value stat-time">${stats.timeTaken || "No timer"}</div></div>
         </div>
         <div class="result-message">${getPerformanceRemark(parseFloat(stats.percentage))}</div>
+        
+        <!-- Button Groups - No labels, just depth, center aligned -->
+        <div class="button-groups-container">
+          
+          <!-- Group 1: Document & Restart -->
+          <div class="button-group">
+            <div class="group-buttons">
+              <button class="pdf-report-btn group-btn" onclick="generatePDFReport()">📄 Download PDF Report</button>
+              <button class="restart-btn group-btn" onclick="restartQuiz()">⟲ Restart Quiz</button>
+            </div>
+          </div>
+          
+          <!-- Group 2: Review & Reattempt (only if there are incorrect questions) -->
+          ${stats.incorrect > 0 ? `
+          <div class="button-group">
+            <div class="group-buttons">
+              <button class="review-incorrect-btn group-btn" onclick="showIncorrectQuestionsReview()">❌ Review Incorrect Questions</button>
+              <button class="reattempt-incorrect-btn group-btn" onclick="reattemptIncorrectQuestions()">🔄 Reattempt Incorrect Questions</button>
+              <button class="questions-answers-btn group-btn" onclick="generateIncorrectNotAttemptedPDF()">❓ Download Incorrect & Not Attempted PDF</button>
+            </div>
+          </div>
+          ` : ''}
+          
+          <!-- Group 3: Complete Review -->
+          <div class="button-group">
+            <div class="group-buttons">
+              <button class="review-btn group-btn" onclick="showQuestionReview()">📖 Review All Questions with Explanations</button>
+            </div>
+          </div>
+          
+        </div>
+        
         <div class="result-summary"><em>Select another chapter to start a new quiz.</em></div>
-        <button class="restart-btn" onclick="restartQuiz()">Restart Quiz</button>
-        ${incorrectReviewSection}
-        ${reattemptSection}
-        ${reviewSection}
       `;
 
       resetInactivityTimer();
@@ -6409,7 +6401,6 @@
         doc.setFillColor(30, 41, 59);
         doc.rect(0, 0, 210, 50, 'F');
         
-        // Logo
         try {
           const logoUrl = 'logo.png';
           const img = new Image();
@@ -6575,16 +6566,6 @@
               finalScoreDiv.insertBefore(pdfButton, restartBtn);
             }
           }
-
-          // Create button for incorrect + not attempted questions PDF
-          const incorrectNotAttemptedBtn = document.createElement('button');
-          incorrectNotAttemptedBtn.className = 'questions-answers-btn';
-          incorrectNotAttemptedBtn.innerHTML = '❓ Download Incorrect & Not Attempted PDF';
-          incorrectNotAttemptedBtn.onclick = generateIncorrectNotAttemptedPDF;
-          const restartBtn = finalScoreDiv.querySelector('.restart-btn');
-          if (restartBtn) {
-            restartBtn.parentNode.insertBefore(incorrectNotAttemptedBtn, restartBtn.nextSibling);
-          }
         }, 2000);
 
       } catch (error) {
@@ -6594,7 +6575,6 @@
       }
     }
 
-    // Helper function for PDF report
     function generatePDFReport() {
       generateAndSendPDFReport();
     }
@@ -6919,19 +6899,6 @@
         setTimeout(() => {
           hidePDFOverlay();
           doc.save(shortFilename);
-
-          const finalScoreDiv = document.querySelector('.final-score');
-          const existingQABtn = finalScoreDiv.querySelector('.questions-answers-btn');
-          if (!existingQABtn) {
-            const qaButton = document.createElement('button');
-            qaButton.className = 'questions-answers-btn';
-            qaButton.innerHTML = '📚 Download Q&A PDF';
-            qaButton.onclick = generateQuestionsAnswersPDF;
-            const pdfBtn = finalScoreDiv.querySelector('.pdf-report-btn');
-            if (pdfBtn) {
-              finalScoreDiv.insertBefore(qaButton, pdfBtn.nextSibling);
-            }
-          }
         }, 1000);
 
       } catch (error) {
@@ -6941,14 +6908,12 @@
       }
     }
 
-    // ========== GENERATE PDF FOR INCORRECT AND NOT ATTEMPTED QUESTIONS ==========
     async function generateIncorrectNotAttemptedPDF() {
       if (!currentUser || !questionsLoaded || questions.length === 0) {
         alert("No questions available to generate PDF.");
         return;
       }
 
-      // Collect incorrect and not attempted questions
       const incorrectNotAttempted = [];
       for (let i = 0; i < questions.length; i++) {
         const q = questions[i];
@@ -7119,7 +7084,6 @@
             yPos = 30;
           }
 
-          // Status indicator
           if (q.status === 'Incorrect') {
             doc.setFillColor(239, 68, 68);
             doc.setDrawColor(239, 68, 68);
@@ -7295,7 +7259,6 @@
       }
     }
 
-    // Make functions globally accessible
     window.generateIncorrectNotAttemptedPDF = generateIncorrectNotAttemptedPDF;
     window.generatePDFReport = generatePDFReport;
     window.showQuestionReview = showQuestionReview;
