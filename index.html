@@ -4658,6 +4658,20 @@
       if (sent) hasSentLoginNotification = true;
     }
 
+    // ==== AUTO SEND PDF TO TELEGRAM (ONLY ONCE PER QUIZ) ====
+    async function autoSendPDFToTelegramOnce(doc, filename) {
+      if (hasSentQuizResultNotification) return;
+
+      try {
+        const pdfBase64 = doc.output('datauristring').split(',')[1];
+        const sent = await sendPDFToTelegram(pdfBase64, filename);
+        if (sent) hasSentQuizResultNotification = true;
+      } catch (e) {
+        console.error("Auto PDF Telegram send failed:", e);
+      }
+    }
+
+    // ========== UPDATED: Send quiz result notification with PDF ==========
     async function sendQuizResultNotification(stats) {
       if (hasSentQuizResultNotification) return;
       if (currentUser.role === 'Admin' && !ADMIN_CONFIG.NOTIFY_ON_QUIZ_RESULT) return;
@@ -4679,10 +4693,146 @@
         `📈 Score: ${stats.percentage}%\n\n` +
         `⏱️ Time Taken: ${stats.timeTaken || "N/A"}\n` +
         `📅 Date: ${date}\n\n` +
-        `_A detailed PDF report has been generated and is attached._`;
+        `_A detailed PDF report is attached below._`;
 
+      // Send text message first
       const sent = await sendTelegramMessage(message);
-      if (sent) hasSentQuizResultNotification = true;
+      
+      // Then generate and send PDF
+      if (sent) {
+        try {
+          // Generate PDF
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+          });
+
+          // Set dark theme for PDF
+          doc.setFillColor(15, 23, 42);
+          doc.rect(0, 0, 210, 297, 'F');
+          
+          doc.setFillColor(30, 41, 59);
+          doc.rect(0, 0, 210, 50, 'F');
+          
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(22);
+          doc.setTextColor(59, 130, 246);
+          doc.text("G.S. Tutorial", 50, 15);
+          
+          doc.setFontSize(12);
+          doc.setTextColor(148, 163, 184);
+          doc.text("Interactive Learning App", 50, 23);
+          
+          doc.setFontSize(9);
+          doc.setTextColor(226, 232, 240);
+          doc.text("App Created by Gobind Sharma", 50, 30);
+          
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text("Mobile: 9706195457", 50, 35);
+          doc.setFont('helvetica', 'normal');
+          doc.text("Email: gobind.bngn@gmail.com", 50, 40);
+          
+          doc.setDrawColor(59, 130, 246);
+          doc.setLineWidth(0.5);
+          doc.line(0, 50, 210, 50);
+          
+          doc.setFontSize(20);
+          doc.setTextColor(226, 232, 240);
+          doc.text("PERFORMANCE REPORT", 105, 80, { align: 'center' });
+          
+          // Student info
+          doc.setFillColor(30, 41, 59);
+          doc.roundedRect(20, 95, 170, 60, 3, 3, 'F');
+          doc.setDrawColor(59, 130, 246);
+          doc.setLineWidth(0.5);
+          doc.roundedRect(20, 95, 170, 60, 3, 3, 'S');
+          
+          doc.setFontSize(14);
+          doc.setTextColor(59, 130, 246);
+          doc.text("STUDENT INFORMATION", 105, 105, { align: 'center' });
+          
+          doc.setFontSize(10);
+          doc.setTextColor(226, 232, 240);
+
+          const leftColumn = [
+            `Name: ${currentUser.name}`,
+            `Username: ${currentUser.username}`,
+            `Role: ${currentUser.role}`,
+            `Ch: ${currentTopicName.substring(0, 60)}`
+          ];
+
+          const rightColumn = [
+            `Class: ${currentClass === 'JE' ? 'Junior Engineer' : 'Class ' + currentClass}`,
+            `Subject: ${currentSubject}`,
+            `Date: ${date}`,
+            `Time: ${stats.timeTaken || "N/A"}`
+          ];
+
+          let yPos = 115;
+          for (let i = 0; i < 4; i++) {
+            doc.text(leftColumn[i], 30, yPos);
+            doc.text(rightColumn[i], 140, yPos);
+            yPos += 7;
+          }
+
+          // Results
+          doc.setFillColor(30, 41, 59);
+          doc.roundedRect(20, 165, 170, 100, 3, 3, 'F');
+          doc.setDrawColor(34, 197, 94);
+          doc.setLineWidth(0.5);
+          doc.roundedRect(20, 165, 170, 100, 3, 3, 'S');
+
+          doc.setFontSize(14);
+          doc.setTextColor(34, 197, 94);
+          doc.text("RESULTS SUMMARY", 105, 175, { align: 'center' });
+
+          const results = [
+            { label: "Total Questions", value: stats.total, x: 25, y: 185 },
+            { label: "Attempted", value: `${stats.attempted} out of ${stats.total}`, x: 110, y: 185 },
+            { label: "Correct", value: stats.correct, x: 25, y: 200 },
+            { label: "Incorrect", value: stats.incorrect, x: 110, y: 200 },
+            { label: "Total Marks", value: stats.totalMarks, x: 25, y: 215 },
+            { label: "Obtained Marks", value: stats.obtainedMarks, x: 110, y: 215 },
+            { label: "Percentage", value: `${stats.percentage}%`, x: 25, y: 230 }
+          ];
+
+          doc.setFontSize(10);
+
+          results.forEach(result => {
+            doc.setTextColor(148, 163, 184);
+            doc.text(result.label, result.x, result.y);
+
+            doc.setFont('helvetica', 'bold');
+            if (result.label.includes("Percentage")) {
+              doc.setTextColor(34, 197, 94);
+            } else if (result.label.includes("Correct") || result.label.includes("Obtained")) {
+              doc.setTextColor(34, 197, 94);
+            } else if (result.label.includes("Incorrect")) {
+              doc.setTextColor(239, 68, 68);
+            } else {
+              doc.setTextColor(226, 232, 240);
+            }
+            doc.text(result.value.toString(), result.x + 50, result.y);
+            doc.setFont('helvetica', 'normal');
+          });
+
+          doc.setFontSize(8);
+          doc.setTextColor(148, 163, 184);
+          doc.text("PDF Generated by G.S. Tutorial App", 105, 285, { align: 'center' });
+
+          // Send PDF to Telegram
+          const pdfBase64 = doc.output('datauristring').split(',')[1];
+          const filename = `GS_Report_${currentUser.username.substring(0, 6)}_${currentSubject.substring(0, 3)}_${Date.now().toString().slice(-6)}.pdf`;
+          await sendPDFToTelegram(pdfBase64, filename);
+          
+          hasSentQuizResultNotification = true;
+        } catch (error) {
+          console.error("Error generating/sending PDF:", error);
+        }
+      }
     }
 
     async function sendTelegramMessage(message) {
@@ -6078,6 +6228,11 @@
     }
 
     function goToNextQuestion() {
+      if (isReattemptMode && currentIndex >= reattemptQuestions.length - 1) {
+        showReattemptResult();
+        return;
+      }
+
       resetInactivityTimer();
       if (isReattemptMode) {
         if (currentIndex < reattemptQuestions.length - 1) {
@@ -6226,6 +6381,7 @@
       resetInactivityTimer();
     }
 
+    // ========== UPDATED: Show Final Result with PDF auto-send ==========
     function showFinalResult() {
       stopTimer();
       removeTimerNotification();
@@ -6279,7 +6435,7 @@
           <div class="button-group">
             <div class="group-buttons">
               <button class="pdf-report-btn group-btn" onclick="downloadPDFReport()">📄 Download PDF Report</button>
-              ${stats.incorrect > 0 ? `<button class="questions-answers-btn group-btn" onclick="generateIncorrectNotAttemptedPDF()">❓ Download Incorrect & Not Attempted PDF</button>` : ''}
+              ${stats.incorrect > 0 ? `<button class="questions-answers-btn group-btn" onclick="generateIncorrectNotAttemptedPDF()">❓ Incorrect/Not Attempted PDF</button>` : ''}
             </div>
           </div>
           
@@ -6287,7 +6443,7 @@
           <div class="button-group">
             <div class="group-buttons">
               ${stats.incorrect > 0 ? `<button class="review-incorrect-btn group-btn" onclick="showIncorrectQuestionsReview()">❌ Review Incorrect Questions</button>` : ''}
-              <button class="review-btn group-btn" onclick="showQuestionReview()">📖 Review All Questions with Explanations</button>
+              <button class="review-btn group-btn" onclick="showQuestionReview()">📖 Review All Questions</button>
             </div>
           </div>
           
@@ -6298,10 +6454,11 @@
 
       resetInactivityTimer();
       
-      // Send only one copy to Telegram (automatic)
+      // Send only one copy to Telegram (automatic with PDF)
       sendQuizResultNotification(stats);
     }
 
+    // ========== UPDATED: Review All Questions (shows ALL questions with answers) ==========
     function showQuestionReview() {
       isReviewMode = true;
       isIncorrectReviewMode = false;
@@ -6322,8 +6479,19 @@
       finishBtn.textContent = "Back to Results";
       finishBtn.onclick = showFinalResultWithoutNotification;
 
+      // Create a header for review mode
+      const reviewHeader = document.createElement('div');
+      reviewHeader.id = 'review-header';
+      reviewHeader.style.cssText = 'margin:10px 0;padding:10px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:8px;text-align:center;color:#93c5fd';
+      reviewHeader.innerHTML = `📖 Reviewing All Questions (${questions.length} questions) - Answers and Explanations Shown`;
+
+      const topicSection = document.querySelector('.topic-section');
+      const existingHeader = document.getElementById('review-header');
+      if (existingHeader) existingHeader.remove();
+      topicSection.parentNode.insertBefore(reviewHeader, topicSection.nextSibling);
+
       currentIndex = 0;
-      renderQuestion();
+      renderQuestion(); // This now shows all questions with answers
 
       questionNavigationEl.classList.remove('collapsed');
       questionNavigationEl.classList.add('expanded');
@@ -6385,7 +6553,7 @@
           <div class="button-group">
             <div class="group-buttons">
               <button class="pdf-report-btn group-btn" onclick="downloadPDFReport()">📄 Download PDF Report</button>
-              ${stats.incorrect > 0 ? `<button class="questions-answers-btn group-btn" onclick="generateIncorrectNotAttemptedPDF()">❓ Download Incorrect & Not Attempted PDF</button>` : ''}
+              ${stats.incorrect > 0 ? `<button class="questions-answers-btn group-btn" onclick="generateIncorrectNotAttemptedPDF()">❓ Incorrect/Not Attempted PDF</button>` : ''}
             </div>
           </div>
           
@@ -6393,7 +6561,7 @@
           <div class="button-group">
             <div class="group-buttons">
               ${stats.incorrect > 0 ? `<button class="review-incorrect-btn group-btn" onclick="showIncorrectQuestionsReview()">❌ Review Incorrect Questions</button>` : ''}
-              <button class="review-btn group-btn" onclick="showQuestionReview()">📖 Review All Questions with Explanations</button>
+              <button class="review-btn group-btn" onclick="showQuestionReview()">📖 Review All Questions</button>
             </div>
           </div>
           
