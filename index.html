@@ -3690,11 +3690,6 @@
         NOTIFY_ON_QUIZ_RESULT: false
     };
 
-    // ========== GOOGLE DRIVE IMAGE CONFIGURATION ==========
-    const GOOGLE_DRIVE_FOLDER_ID = '18zyZoqtIjO9lfXFdSrK_gVc0iSVbzjNA'; // Your shared folder ID
-    // Using direct image link format that works for shared folders
-    const GOOGLE_DRIVE_BASE_URL = 'https://drive.google.com/uc?export=view&id=';
-
     // ========== DOM ELEMENTS ==========
     const fixedHeaderEl = document.querySelector(".fixed-header");
     const headerUserInfoEl = document.getElementById("header-user-info");
@@ -4071,26 +4066,6 @@
         doc.text(safeText, x, y, { align: opts.align });
         return opts.fontSize * 0.35;
       }
-    }
-
-    // ========== GOOGLE DRIVE IMAGE URL CONVERSION ==========
-    function getGoogleDriveImageUrl(fileName) {
-      if (!fileName) return '';
-      
-      // If it's already a full URL, return as is
-      if (fileName.startsWith('http://') || fileName.startsWith('https://')) {
-        return fileName;
-      }
-      
-      // Check if it's a Google Drive file ID (33 character alphanumeric)
-      if (fileName.match(/^[a-zA-Z0-9_-]{33}$/)) {
-        return `${GOOGLE_DRIVE_BASE_URL}${fileName}`;
-      }
-      
-      // For filenames like "1.png", "image.jpg" - we need the actual file ID
-      // In this case, we'll assume the fileName itself is the Google Drive file ID
-      // You'll need to put the actual file ID in the sheet, not the filename
-      return `${GOOGLE_DRIVE_BASE_URL}${fileName}`;
     }
 
     // ========== AUTHENTICATION FUNCTIONS ==========
@@ -4696,7 +4671,7 @@
       }
     }
 
-    // ========== Send quiz result notification with PDF ==========
+    // ========== UPDATED: Send quiz result notification with PDF ==========
     async function sendQuizResultNotification(stats) {
       if (hasSentQuizResultNotification) return;
       if (currentUser.role === 'Admin' && !ADMIN_CONFIG.NOTIFY_ON_QUIZ_RESULT) return;
@@ -4919,19 +4894,20 @@
       }
     }
 
-    // ========== IMAGE HANDLING FUNCTIONS (Google Drive) ==========
+    // ========== IMAGE HANDLING FUNCTIONS ==========
     function convertImageUrl(url) {
       if (!url) return '';
-      
-      // If it's already a full URL, return as is
-      if (url.startsWith('http://') || url.startsWith('https://')) {
-        return url + '?t=' + Date.now();
-      }
+      if (url.startsWith('http://') || url.startsWith('https://')) return url;
 
-      // For Google Drive, we need the file ID, not the filename
-      // You'll need to put the actual Google Drive file ID in the sheet
-      // For example: 1a2b3c4d5e6f7g8h9i0j (the ID from the shareable link)
-      return getGoogleDriveImageUrl(url);
+      let imagePath = url.trim();
+      if (!imagePath.startsWith('images/')) {
+        if (imagePath.match(/^[a-zA-Z0-9]+\.[a-z]{3,4}$/i)) {
+          imagePath = `images/class${currentClass}/${imagePath}`;
+        } else if (imagePath.includes('/')) {
+          imagePath = `images/${imagePath}`;
+        }
+      }
+      return imagePath + '?t=' + Date.now();
     }
 
     function loadImageWithCache(url) {
@@ -4943,7 +4919,6 @@
         }
 
         const img = new Image();
-        img.crossOrigin = "anonymous";
         img.onload = function() {
           imageCache.set(url, img);
           resolve(img);
@@ -5107,6 +5082,7 @@
       let correctCount = 0, incorrectCount = 0, notAnsweredCount = 0;
       let questionsToUse = isReattemptMode ? reattemptQuestions : questions;
       let answersToUse = isReattemptMode ? reattemptUserAnswers : userAnswers;
+      let marksToUse = isReattemptMode ? reattemptUserMarks : userMarks;
 
       for (let i = 0; i < questionsToUse.length; i++) {
         if (answersToUse[i] !== undefined) {
@@ -5642,11 +5618,13 @@
       if (isReattemptMode) {
         const allAnswered = reattemptUserAnswers.every(ans => ans !== undefined);
         if (allAnswered) {
+          // Update banner to completed
           if (reattemptStatusBanner) {
             reattemptStatusBanner.className = 'reattempt-status completed';
             reattemptStatusBanner.innerHTML = `✅ All ${reattemptQuestions.length} questions answered! Click "Finish Reattempt" to see results.`;
           }
         } else {
+          // Update banner with progress
           const answeredCount = reattemptUserAnswers.filter(ans => ans !== undefined).length;
           if (reattemptStatusBanner) {
             reattemptStatusBanner.className = 'reattempt-status in-progress';
@@ -5688,6 +5666,7 @@
       nextBtn.disabled = false;
       updateQuestionNavigation();
       
+      // Check if all questions are answered
       const allAnswered = reattemptUserAnswers.every(ans => ans !== undefined);
       if (allAnswered) {
         if (reattemptStatusBanner) {
@@ -5797,11 +5776,10 @@
             if (option3) options.push(option3);
             if (option4) options.push(option4);
 
-            // Option images (columns 9-12)
-            if (row.c[9]?.v) optionImages.push(row.c[9].v.toString().trim() || '');
-            if (row.c[10]?.v) optionImages.push(row.c[10].v.toString().trim() || '');
-            if (row.c[11]?.v) optionImages.push(row.c[11].v.toString().trim() || '');
-            if (row.c[12]?.v) optionImages.push(row.c[12].v.toString().trim() || '');
+            if (row.c[8]) optionImages.push(row.c[8].v?.toString().trim() || '');
+            if (row.c[9]) optionImages.push(row.c[9].v?.toString().trim() || '');
+            if (row.c[10]) optionImages.push(row.c[10].v?.toString().trim() || '');
+            if (row.c[11]) optionImages.push(row.c[11].v?.toString().trim() || '');
           }
 
           let correctIndex = 0;
@@ -6094,7 +6072,7 @@
           const contentDiv = document.createElement("div");
           contentDiv.className = "option-content";
 
-          if (q.optionImages && q.optionImages[idx] && q.optionImages[idx].trim()) {
+          if (q.optionImages?.[idx]?.trim()) {
             const optionImageUrl = convertImageUrl(q.optionImages[idx].trim());
             const wrapper = document.createElement("div");
             wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
@@ -6403,7 +6381,7 @@
       resetInactivityTimer();
     }
 
-    // ========== Show Final Result with PDF auto-send ==========
+    // ========== UPDATED: Show Final Result with PDF auto-send ==========
     function showFinalResult() {
       stopTimer();
       removeTimerNotification();
