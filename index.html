@@ -6846,7 +6846,24 @@
           }
         }
 
-        if (rawQuestions.length === 0) throw new Error("No valid questions found.");
+       if (validQuestions.length === 0) {
+
+  questions = [];
+  currentQuestionIndex = 0;
+
+  quizContainer.style.display = "block";
+
+  questionTextEl.innerHTML =
+  "⚠ No questions found in this chapter.<br><br>Admin can add a new question.";
+
+  optionsListEl.innerHTML = "";
+
+  nextBtn.disabled = true;
+  previousBtn.disabled = true;
+  finishBtn.disabled = true;
+
+  return;
+}
 
         if (timerFromSheet > 0) timerDuration = timerFromSheet * 60 * 1000;
 
