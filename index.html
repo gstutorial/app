@@ -7572,7 +7572,7 @@
     }
 
     function showFinalResultWithoutNotification() {
-      if (!isQuizActive) return;
+      stopTimer();
       
       stopTimer();
       removeTimerNotification();
