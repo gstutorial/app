@@ -6755,7 +6755,19 @@
         const jsonData = JSON.parse(data.substring(47).slice(0, -2));
         const rows = jsonData.table.rows;
 
-        if (rows.length === 0) throw new Error("No questions found.");
+       if (rows.length === 0) {
+  questions = [];
+  questionsLoaded = true;
+
+  questionTextEl.innerHTML = "⚠ No questions found in this chapter.<br><br>Admin can add a new question.";
+  optionsListEl.innerHTML = "";
+
+  nextBtn.disabled = true;
+  previousBtn.disabled = true;
+  finishBtn.disabled = true;
+
+  return;
+}
 
         const rawQuestions = [];
         let timerFromSheet = 0;
