@@ -12,7 +12,44 @@
   <meta http-equiv="Expires" content="0">
   
   <!-- Include jsPDF library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+/* ===== Google Drive Upload Helper (Added) ===== */
+async function uploadImage(file, uploadId){
+  const reader = new FileReader();
+  reader.onload = async function(e){
+    const payload = {
+      action: "uploadImage",
+      fileName: file.name,
+      mimeType: file.type,
+      fileData: e.target.result,
+      username: (window.currentUser && currentUser.username) ? currentUser.username : "admin",
+      role: "Admin",
+      uploadId: uploadId
+    };
+    try{
+      await fetch(APPS_SCRIPT_URL,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(payload)
+      });
+    }catch(err){
+      console.error("Upload failed",err);
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+/* receive Drive URL from Apps Script */
+window.addEventListener("message",function(event){
+  const d = event.data;
+  if(!d) return;
+  if(d.success && d.fileUrl){
+    const el = document.querySelector('[data-upload="'+d.uploadId+'"]');
+    if(el) el.value = d.fileUrl;
+  }
+});
+
+</script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <!-- Include html2canvas for capturing screenshots -->
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
@@ -8972,63 +9009,6 @@
     }
 
     document.addEventListener("DOMContentLoaded", initializeApp);
-  
-// ===== IMAGE UPLOAD SUPPORT (Added) =====
-async function uploadImage(file, uploadId) {
-  const reader = new FileReader();
-  reader.onload = async function(e) {
-    const base64Data = e.target.result;
-    const payload = {
-      action: "uploadImage",
-      fileName: file.name,
-      mimeType: file.type,
-      fileData: base64Data,
-      username: (window.currentUser && currentUser.username) ? currentUser.username : "admin",
-      role: (window.currentUser && currentUser.role) ? currentUser.role : "Admin",
-      uploadId: uploadId
-    };
-    try {
-      const response = await fetch(APPS_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const text = await response.text();
-      console.log("Upload response:", text);
-    } catch(err){
-      console.error("Upload failed:", err);
-      alert("Image upload failed");
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-// Receive response from Apps Script (postMessage)
-window.addEventListener("message", function(event){
-  const data = event.data;
-  if(!data) return;
-  if(data.success){
-    console.log("Image uploaded:", data.fileUrl);
-    const input = document.querySelector('[data-upload="'+data.uploadId+'"]');
-    if(input){
-      input.value = data.fileUrl;
-    }
-  } else if(data.error){
-    console.error("Upload error:", data.error);
-  }
-});
-
-// Trigger upload when selecting file
-document.addEventListener("change", function(e){
-  if(e.target && e.target.matches('.upload-area input[type="file"]')){
-    const file = e.target.files[0];
-    if(!file) return;
-    const uploadId = Date.now();
-    e.target.setAttribute("data-upload", uploadId);
-    uploadImage(file, uploadId);
-  }
-});
-
   </script>
   
   <!-- NO SERVICE WORKER REGISTRATION - Completely disabled -->
