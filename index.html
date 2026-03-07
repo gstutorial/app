@@ -4357,7 +4357,7 @@
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx06h9aa6wDmtDz3jBwNgOuoiz7-NZY1nJaEwts3A7vIHRkWfAU5O3N4UNUooCwvEm7Lw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyM2qfQ_gVYHswoSg12HuUVYBcnXzvGWP6gpwkiHOjkCzyJ9O-rgFZc9tC2gF2cXJi3/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwr5E8fr8BcNn9a81L8UNVRuyPz_wxWAnIPHClufqaK5uc-9r_R7DPFX0QhH9iUpOL2/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -8972,6 +8972,63 @@
     }
 
     document.addEventListener("DOMContentLoaded", initializeApp);
+  
+// ===== IMAGE UPLOAD SUPPORT (Added) =====
+async function uploadImage(file, uploadId) {
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    const base64Data = e.target.result;
+    const payload = {
+      action: "uploadImage",
+      fileName: file.name,
+      mimeType: file.type,
+      fileData: base64Data,
+      username: (window.currentUser && currentUser.username) ? currentUser.username : "admin",
+      role: (window.currentUser && currentUser.role) ? currentUser.role : "Admin",
+      uploadId: uploadId
+    };
+    try {
+      const response = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const text = await response.text();
+      console.log("Upload response:", text);
+    } catch(err){
+      console.error("Upload failed:", err);
+      alert("Image upload failed");
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+// Receive response from Apps Script (postMessage)
+window.addEventListener("message", function(event){
+  const data = event.data;
+  if(!data) return;
+  if(data.success){
+    console.log("Image uploaded:", data.fileUrl);
+    const input = document.querySelector('[data-upload="'+data.uploadId+'"]');
+    if(input){
+      input.value = data.fileUrl;
+    }
+  } else if(data.error){
+    console.error("Upload error:", data.error);
+  }
+});
+
+// Trigger upload when selecting file
+document.addEventListener("change", function(e){
+  if(e.target && e.target.matches('.upload-area input[type="file"]')){
+    const file = e.target.files[0];
+    if(!file) return;
+    const uploadId = Date.now();
+    e.target.setAttribute("data-upload", uploadId);
+    uploadImage(file, uploadId);
+  }
+});
+
   </script>
   
   <!-- NO SERVICE WORKER REGISTRATION - Completely disabled -->
