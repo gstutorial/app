@@ -4548,16 +4548,31 @@
 
     // ========== PDF OVERLAY FUNCTIONS ==========
     function showPDFOverlay(message = "Processing...") {
-      if (pdfStatusEl) pdfStatusEl.textContent = message;
+      console.log('Showing overlay with message:', message);
+      const pdfStatusEl = document.getElementById('pdf-status');
+      const pdfSubstatusEl = document.getElementById('pdf-substatus');
+      const pdfOverlayEl = document.getElementById('pdf-overlay');
+      
+      if (pdfStatusEl) {
+        pdfStatusEl.textContent = message;
+        console.log('Set status to:', message);
+      }
       if (pdfSubstatusEl) pdfSubstatusEl.textContent = "Please wait...";
-      if (pdfOverlayEl) pdfOverlayEl.style.display = 'flex';
+      if (pdfOverlayEl) {
+        pdfOverlayEl.style.display = 'flex';
+        console.log('Overlay displayed');
+      }
     }
 
     function hidePDFOverlay() {
+      const pdfOverlayEl = document.getElementById('pdf-overlay');
       if (pdfOverlayEl) pdfOverlayEl.style.display = 'none';
+      console.log('Overlay hidden');
     }
 
     function updatePDFStatus(status, substatus) {
+      const pdfStatusEl = document.getElementById('pdf-status');
+      const pdfSubstatusEl = document.getElementById('pdf-substatus');
       if (pdfStatusEl) pdfStatusEl.textContent = status;
       if (pdfSubstatusEl) pdfSubstatusEl.textContent = substatus || '';
     }
@@ -5246,6 +5261,7 @@
         return;
       }
 
+      console.log('Showing delete overlay');
       showPDFOverlay('Deleting question...');
 
       try {
@@ -5531,6 +5547,7 @@
       
       // Show appropriate message based on mode
       const actionMessage = editMode === 'new' ? 'Adding new question...' : 'Saving changes...';
+      console.log('Showing overlay with message:', actionMessage);
       showPDFOverlay(actionMessage);
       
       try {
