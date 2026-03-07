@@ -4729,53 +4729,44 @@
       }
     }
 
-    function uploadImageToDrive(fileName, fileData, mimeType) {
-      return new Promise((resolve, reject) => {
-        const callbackName = 'uploadCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        
-        const script = document.createElement('script');
-        
-        const timeoutId = setTimeout(() => {
-          if (window[callbackName]) {
-            delete window[callbackName];
-            if (script.parentNode) document.body.removeChild(script);
-            reject({ error: 'Upload timeout after 30 seconds' });
-          }
-        }, 30000);
-        
-        window[callbackName] = function(data) {
-          clearTimeout(timeoutId);
-          delete window[callbackName];
-          if (script.parentNode) document.body.removeChild(script);
-          
-          if (data && data.success) {
-            resolve(data);
-          } else {
-            reject({ error: data?.error || 'Unknown error occurred' });
-          }
-        };
-        
-        script.onerror = function() {
-          clearTimeout(timeoutId);
-          delete window[callbackName];
-          if (script.parentNode) document.body.removeChild(script);
-          reject({ error: 'Network error - failed to load script' });
-        };
-        
-        let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?';
-        url += 'action=uploadImage';
-        url += '&fileName=' + encodeURIComponent(fileName);
-        url += '&fileData=' + encodeURIComponent(fileData);
-        url += '&mimeType=' + encodeURIComponent(mimeType);
-        url += '&username=' + encodeURIComponent(currentUser ? currentUser.username : '');
-        url += '&role=' + encodeURIComponent(currentUser ? currentUser.role : '');
-        url += '&callback=' + encodeURIComponent(callbackName);
-        url += '&_t=' + Date.now();
-        
-        script.src = url;
-        document.body.appendChild(script);
-      });
+ // ========== UPLOAD IMAGE TO GOOGLE DRIVE (POST version) ==========
+async function uploadImageToDrive(fileName, fileData, mimeType) {
+  try {
+    console.log('🚀 Starting POST upload...', { fileName, mimeType });
+    
+    const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'uploadImage',
+        fileName: fileName,
+        fileData: fileData,
+        mimeType: mimeType,
+        username: currentUser ? currentUser.username : '',
+        role: currentUser ? currentUser.role : ''
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+    
+    const data = await response.json();
+    console.log('📥 Upload response:', data);
+    
+    if (data && data.success) {
+      return data;
+    } else {
+      throw new Error(data.error || 'Unknown error occurred');
+    }
+    
+  } catch (error) {
+    console.error('❌ Upload failed:', error);
+    throw error;
+  }
+}
 
     function clearImageUpload(previewId, inputId) {
       const preview = document.getElementById(previewId);
