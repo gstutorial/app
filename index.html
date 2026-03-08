@@ -20,7 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   
   <style>
-    /* All your existing styles remain exactly the same */
+    /* ===== ORIGINAL STYLES - COMPLETELY PRESERVED ===== */
     * {
       box-sizing: border-box;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -49,6 +49,7 @@
       color: #1f2937;
     }
 
+    /* ===== LOADING ANIMATIONS ===== */
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
@@ -64,6 +65,11 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    @keyframes shimmer {
+      0% { background-position: -1000px 0; }
+      100% { background-position: 1000px 0; }
+    }
+
     .loading-spinner {
       border: 4px solid rgba(59, 130, 246, 0.2);
       border-top: 4px solid #3b82f6;
@@ -74,6 +80,112 @@
       margin: 20px auto;
     }
 
+    .loading-spinner-small {
+      border: 3px solid rgba(59, 130, 246, 0.2);
+      border-top: 3px solid #3b82f6;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    .loading-pulse {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .loading-shimmer {
+      background: linear-gradient(90deg, 
+        rgba(30, 41, 59, 0.3) 0%, 
+        rgba(30, 41, 59, 0.5) 50%, 
+        rgba(30, 41, 59, 0.3) 100%);
+      background-size: 1000px 100%;
+      animation: shimmer 2s infinite;
+    }
+
+    .loading-container {
+      text-align: center;
+      padding: 40px;
+      color: #9ca3af;
+      grid-column: 1/-1;
+    }
+
+    .loading-text {
+      font-size: 1.1rem;
+      margin-top: 15px;
+      color: #93c5fd;
+    }
+
+    .loading-subtext {
+      font-size: 0.9rem;
+      margin-top: 8px;
+      color: #6b7280;
+    }
+
+    /* Skeleton loading */
+    .skeleton-card {
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 12px;
+      padding: 20px;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(75, 85, 99, 0.3);
+    }
+
+    .skeleton-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: rgba(75, 85, 99, 0.5);
+      margin-bottom: 10px;
+      animation: pulse 1.5s infinite;
+    }
+
+    .skeleton-title {
+      width: 80px;
+      height: 20px;
+      background: rgba(75, 85, 99, 0.5);
+      border-radius: 4px;
+      margin-bottom: 8px;
+      animation: pulse 1.5s infinite;
+    }
+
+    .skeleton-desc {
+      width: 120px;
+      height: 16px;
+      background: rgba(75, 85, 99, 0.5);
+      border-radius: 4px;
+      animation: pulse 1.5s infinite;
+    }
+
+    /* Card animations */
+    .class-card, .subject-card {
+      transition: all 0.2s ease;
+      opacity: 0;
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    .class-card:nth-child(1) { animation-delay: 0.05s; }
+    .class-card:nth-child(2) { animation-delay: 0.1s; }
+    .class-card:nth-child(3) { animation-delay: 0.15s; }
+    .class-card:nth-child(4) { animation-delay: 0.2s; }
+    .class-card:nth-child(5) { animation-delay: 0.25s; }
+    .class-card:nth-child(6) { animation-delay: 0.3s; }
+    .class-card:nth-child(7) { animation-delay: 0.35s; }
+    .class-card:nth-child(8) { animation-delay: 0.4s; }
+
+    .subject-card:nth-child(1) { animation-delay: 0.05s; }
+    .subject-card:nth-child(2) { animation-delay: 0.1s; }
+    .subject-card:nth-child(3) { animation-delay: 0.15s; }
+    .subject-card:nth-child(4) { animation-delay: 0.2s; }
+    .subject-card:nth-child(5) { animation-delay: 0.25s; }
+    .subject-card:nth-child(6) { animation-delay: 0.3s; }
+
+    /* ===== FIXED HEADER - Mobile optimized ===== */
     .fixed-header {
       position: fixed;
       top: 0;
@@ -110,6 +222,7 @@
       flex: 1;
     }
 
+    /* INCREASED LOGO SIZE */
     .logo-header {
       width: 90px !important;
       height: 90px !important;
@@ -136,6 +249,7 @@
       flex: 1;
     }
 
+    /* INCREASED TITLE SIZE - Left aligned */
     .header-title {
       font-size: 1.5rem !important;
       font-weight: 700;
@@ -152,6 +266,7 @@
       text-align: left;
     }
 
+    /* SUBTITLE - Smaller, left aligned */
     .header-subtitle {
       font-size: 0.85rem !important;
       color: #9ca3af;
@@ -174,6 +289,7 @@
       flex-shrink: 0;
     }
 
+    /* Menu toggle - right aligned */
     .menu-toggle {
       width: 48px;
       height: 48px;
@@ -205,6 +321,7 @@
       background: #1f2937;
     }
 
+    /* ===== SIDE MENU - Optimized spacing ===== */
     .side-menu {
       position: fixed;
       top: 76px;
@@ -413,6 +530,7 @@
       background: rgba(239, 68, 68, 0.1);
     }
 
+    /* ===== QUESTION NAVIGATION BUTTON COLORS ===== */
     .question-number-btn {
       width: 40px;
       height: 40px;
@@ -453,10 +571,22 @@
       box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
     }
 
+    body.light-mode .question-number-btn.current {
+      background: #3b82f6 !important;
+      border-color: #3b82f6 !important;
+      color: white !important;
+    }
+
     .question-number-btn.answered {
       background: rgba(34, 197, 94, 0.2) !important;
       border-color: #22c55e !important;
       color: #22c55e !important;
+    }
+
+    body.light-mode .question-number-btn.answered {
+      background: #dcfce7 !important;
+      border-color: #22c55e !important;
+      color: #166534 !important;
     }
 
     .question-number-btn.incorrect {
@@ -465,12 +595,25 @@
       color: #ef4444 !important;
     }
 
+    body.light-mode .question-number-btn.incorrect {
+      background: #fee2e2 !important;
+      border-color: #ef4444 !important;
+      color: #991b1b !important;
+    }
+
     .question-number-btn.not-answered {
       background: rgba(75, 85, 99, 0.2) !important;
       border-color: rgba(75, 85, 99, 0.5) !important;
       color: #9ca3af !important;
     }
 
+    body.light-mode .question-number-btn.not-answered {
+      background: #f3f4f6 !important;
+      border-color: #d1d5db !important;
+      color: #9ca3af !important;
+    }
+
+    /* ===== SUBJECTIVE QUESTION STYLES ===== */
     .subjective-container {
       margin: 15px 0;
       padding: 15px;
@@ -540,6 +683,14 @@
       box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.5);
     }
 
+    .marks-indicator {
+      font-size: 0.9rem;
+      color: #f59e0b;
+      margin-left: 10px;
+      font-weight: 600;
+    }
+
+    /* ===== BUTTON GROUPS STYLING - No labels, just depth, center aligned text ===== */
     .button-groups-container {
       display: flex;
       flex-direction: column;
@@ -568,6 +719,10 @@
       border-color: rgba(59, 130, 246, 0.5);
     }
 
+    body.light-mode .button-group:hover {
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+    }
+
     .group-buttons {
       display: flex;
       flex-direction: column;
@@ -592,6 +747,7 @@
       transform: translateX(5px) !important;
     }
 
+    /* Reattempt status banner */
     .reattempt-status {
       margin: 10px 0;
       padding: 12px;
@@ -613,6 +769,19 @@
       color: #fdba74;
     }
 
+    body.light-mode .reattempt-status.completed {
+      background: #dcfce7;
+      color: #166534;
+      border-color: #22c55e;
+    }
+
+    body.light-mode .reattempt-status.in-progress {
+      background: #fff3e0;
+      color: #b45309;
+      border-color: #f97316;
+    }
+
+    /* ===== ADMIN EDITING STYLES ===== */
     .question-edit-icon {
       position: absolute;
       top: 10px;
@@ -643,6 +812,7 @@
       filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
     }
 
+    /* Delete button styles - positioned where WhatsApp icon would be */
     .question-delete-icon {
       position: absolute;
       top: 10px;
@@ -701,6 +871,7 @@
       box-shadow: 0 10px 22px rgba(16, 185, 129, 0.5);
     }
 
+    /* Toggle switch for image URLs */
     .image-toggle-row {
       display: flex;
       align-items: center;
@@ -730,6 +901,7 @@
       color: #9ca3af;
     }
 
+    /* Image URL sections */
     .image-url-section {
       transition: all 0.3s ease;
       overflow: hidden;
@@ -739,6 +911,7 @@
       display: none !important;
     }
 
+    /* Image Upload Styles */
     .image-upload-container {
       margin: 15px 0;
       padding: 15px;
@@ -893,6 +1066,7 @@
       opacity: 1;
     }
 
+    /* Modal Styles */
     .modal {
       position: fixed;
       top: 0;
@@ -1056,6 +1230,102 @@
       background: #111827;
     }
 
+    body.light-mode .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+
+    /* Mobile responsiveness for admin controls */
+    @media (max-width: 700px) {
+      .question-edit-icon {
+        top: 8px;
+        right: 45px;
+        width: 22px;
+        height: 22px;
+      }
+      
+      .question-edit-icon img {
+        width: 22px;
+        height: 22px;
+      }
+
+      .question-delete-icon {
+        top: 8px;
+        right: 10px;
+        width: 22px;
+        height: 22px;
+      }
+
+      .question-delete-icon img {
+        width: 22px;
+        height: 22px;
+      }
+      
+      .modal-content {
+        padding: 15px;
+        width: 95%;
+      }
+      
+      .modal-footer {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .btn-primary,
+      .btn-secondary,
+      .btn-success {
+        width: 100%;
+        padding: 10px 16px;
+        font-size: 0.95rem;
+      }
+      
+      .upload-area {
+        padding: 15px;
+      }
+      
+      .upload-icon {
+        font-size: 30px;
+      }
+      
+      .upload-text {
+        font-size: 0.9rem;
+      }
+      
+      .upload-hint {
+        font-size: 0.75rem;
+      }
+      
+      .upload-buttons {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .question-edit-icon {
+        top: 6px;
+        right: 40px;
+        width: 20px;
+        height: 20px;
+      }
+      
+      .question-edit-icon img {
+        width: 20px;
+        height: 20px;
+      }
+
+      .question-delete-icon {
+        top: 6px;
+        right: 10px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .question-delete-icon img {
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    /* ===== REST OF ORIGINAL STYLES ===== */
     .main-content {
       width: 100%;
       max-width: 720px;
@@ -1110,10 +1380,18 @@
       letter-spacing: 0.5px;
     }
 
+    body.light-mode .login-title {
+      color: #1f2937;
+    }
+
     .login-subtitle {
       font-size: 0.95rem;
       color: #9ca3af;
       text-align: center;
+    }
+
+    body.light-mode .login-subtitle {
+      color: #6b7280;
     }
 
     .login-form {
@@ -1133,6 +1411,10 @@
       font-size: 0.9rem;
       color: #d1d5db;
       font-weight: 500;
+    }
+
+    body.light-mode .form-group label {
+      color: #4b5563;
     }
 
     .form-input {
@@ -1157,6 +1439,10 @@
       outline: none;
       border-color: #3b82f6;
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .form-input::placeholder {
+      color: #6b7280;
     }
 
     .password-input-wrapper {
@@ -1184,6 +1470,10 @@
 
     .password-toggle:hover {
       color: #60a5fa;
+    }
+
+    .password-toggle:active {
+      transform: translateY(-50%) scale(0.95);
     }
 
     .attempt-counter {
@@ -1285,6 +1575,10 @@
       color: #e5e7eb;
       text-align: center;
       margin-bottom: 5px;
+    }
+
+    body.light-mode .error-subtitle {
+      color: #1f2937;
     }
 
     .error-user-info {
@@ -1450,6 +1744,10 @@
       text-align: center;
     }
 
+    body.light-mode .config-info {
+      color: #2563eb;
+    }
+
     .request-credentials-btn {
       background: linear-gradient(to right, #25d366, #128c7e);
       color: white;
@@ -1515,6 +1813,11 @@
       width: 100%;
     }
 
+    body.light-mode .class-selection {
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
     .screen-header {
       text-align: center;
       margin-bottom: 30px;
@@ -1530,6 +1833,10 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
       letter-spacing: 0.5px;
+    }
+
+    body.light-mode .screen-title {
+      color: #1f2937;
     }
 
     .screen-subtitle {
@@ -1561,11 +1868,21 @@
       min-height: 120px;
     }
 
+    body.light-mode .class-card {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+    }
+
     .class-card:hover {
       transform: translateY(-4px);
       background: rgba(31, 41, 55, 0.9);
       border-color: #3b82f6;
       box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    }
+
+    body.light-mode .class-card:hover {
+      background: #ffffff;
+      border-color: #3b82f6;
     }
 
     .class-icon {
@@ -1577,6 +1894,10 @@
       font-size: 1.1rem;
       font-weight: 600;
       color: #e5e7eb;
+    }
+
+    body.light-mode .class-name {
+      color: #1f2937;
     }
 
     .class-desc {
@@ -1593,6 +1914,11 @@
       border: 1px solid rgba(148, 163, 184, 0.3);
       display: none;
       width: 100%;
+    }
+
+    body.light-mode .subject-selection {
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.1);
     }
 
     .subject-grid {
@@ -1617,10 +1943,19 @@
       min-height: 140px;
     }
 
+    body.light-mode .subject-card {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+    }
+
     .subject-card:hover {
       transform: translateY(-4px);
       background: rgba(31, 41, 55, 0.9);
       box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    }
+
+    body.light-mode .subject-card:hover {
+      background: #ffffff;
     }
 
     .subject-icon {
@@ -1632,6 +1967,10 @@
       font-size: 1.2rem;
       font-weight: 600;
       color: #e5e7eb;
+    }
+
+    body.light-mode .subject-name {
+      color: #1f2937;
     }
 
     .subject-desc {
@@ -1655,6 +1994,12 @@
       gap: 6px;
     }
 
+    body.light-mode .back-btn {
+      color: #4b5563;
+      border: 1px solid #e5e7eb;
+      background: #f3f4f6;
+    }
+
     .back-btn:hover {
       background: rgba(75, 85, 99, 0.25);
       transform: translateY(-1px);
@@ -1670,12 +2015,22 @@
       width: 100%;
     }
 
+    body.light-mode .quiz-container {
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
     .topic-section {
       margin-bottom: 20px;
       padding: 15px;
       background: rgba(15, 23, 42, 0.7);
       border-radius: 12px;
       border: 1px solid rgba(75, 85, 99, 0.5);
+    }
+
+    body.light-mode .topic-section {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
     }
 
     .topic-info {
@@ -1701,6 +2056,11 @@
       flex-wrap: wrap;
     }
 
+    body.light-mode .current-path {
+      color: #2563eb;
+      background: rgba(59, 130, 246, 0.1);
+    }
+
     .path-separator {
       color: #6b7280;
       margin: 0 4px;
@@ -1715,6 +2075,10 @@
 
     .path-link:hover {
       color: #60a5fa;
+    }
+
+    body.light-mode .path-link {
+      color: #2563eb;
     }
 
     .topic-name {
@@ -1754,6 +2118,12 @@
       min-width: 200px;
     }
 
+    body.light-mode .topic-select {
+      background: #ffffff;
+      color: #1f2937;
+      border: 1px solid #d1d5db;
+    }
+
     .start-btn {
       border-radius: 999px;
       border: none;
@@ -1788,6 +2158,11 @@
       display: block;
     }
 
+    body.light-mode .question-navigation {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+    }
+
     .question-navigation.collapsed {
       padding: 12px 15px;
     }
@@ -1816,6 +2191,10 @@
 
     .navigation-title i {
       font-size: 1rem;
+    }
+
+    body.light-mode .navigation-title {
+      color: #2563eb;
     }
 
     .question-grid {
@@ -1908,6 +2287,10 @@
       color: #cbd5f5;
       margin-bottom: 10px;
       flex-wrap: wrap;
+    }
+
+    body.light-mode .toggle-row {
+      color: #4b5563;
     }
 
     .toggle-row.hidden {
@@ -2028,6 +2411,10 @@
       gap: 8px;
     }
 
+    body.light-mode .progress {
+      color: #6b7280;
+    }
+
     .progress.hidden {
       display: none;
     }
@@ -2038,6 +2425,10 @@
       background: rgba(15, 23, 42, 0.7);
       border-radius: 999px;
       overflow: hidden;
+    }
+
+    body.light-mode .progress-bar {
+      background: #e5e7eb;
     }
 
     .progress-bar-fill {
@@ -2058,6 +2449,11 @@
       border: 1px solid rgba(59, 130, 246, 0.2);
     }
 
+    body.light-mode .timer-container {
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+    }
+
     .timer-container.hidden {
       display: none;
     }
@@ -2069,6 +2465,10 @@
       margin-right: 10px;
     }
 
+    body.light-mode .timer-label {
+      color: #2563eb;
+    }
+
     .timer-display {
       font-size: 1.1rem;
       font-weight: 700;
@@ -2076,6 +2476,10 @@
       font-family: 'Courier New', monospace;
       letter-spacing: 1px;
       white-space: nowrap;
+    }
+
+    body.light-mode .timer-display {
+      color: #2563eb;
     }
 
     .timer-warning {
@@ -2116,6 +2520,11 @@
       position: relative;
     }
 
+    body.light-mode .question-box {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+    }
+
     .question-text {
       font-size: 1rem;
       font-weight: 500;
@@ -2125,6 +2534,11 @@
       margin-bottom: 8px;
     }
 
+    body.light-mode .question-text {
+      color: #1f2937;
+    }
+
+    /* Question marks badge */
     .question-marks-badge {
       display: inline-block;
       background: rgba(245, 158, 11, 0.2);
@@ -2136,6 +2550,12 @@
       font-weight: 600;
       margin-left: 10px;
       white-space: nowrap;
+    }
+
+    body.light-mode .question-marks-badge {
+      background: #fef3c7;
+      color: #b45309;
+      border-color: #fbbf24;
     }
 
     .question-whatsapp-icon {
@@ -2201,6 +2621,12 @@
       overflow: hidden;
     }
 
+    body.light-mode .option {
+      background: #ffffff;
+      color: #1f2937;
+      border: 1px solid #d1d5db;
+    }
+
     .option-label {
       display: flex;
       align-items: center;
@@ -2212,6 +2638,12 @@
       color: #93c5fd;
       padding: 8px;
       flex-shrink: 0;
+    }
+
+    body.light-mode .option-label {
+      background: #e5e7eb;
+      color: #2563eb;
+      border-right: 1px solid #d1d5db;
     }
 
     .option-content {
@@ -2227,6 +2659,10 @@
       transform: translateY(-1px);
     }
 
+    body.light-mode .option:hover:not(.disabled):not(.in-reattempt-locked) {
+      background: #f3f4f6;
+    }
+
     .option.correct {
       background: rgba(22, 163, 74, 0.25);
       border-color: #22c55e;
@@ -2237,6 +2673,15 @@
       color: #86efac;
     }
 
+    body.light-mode .option.correct {
+      background: #dcfce7;
+    }
+
+    body.light-mode .option.correct .option-label {
+      background: #bbf7d0;
+      color: #166534;
+    }
+
     .option.incorrect {
       background: rgba(220, 38, 38, 0.2);
       border-color: #f97373;
@@ -2245,6 +2690,15 @@
     .option.incorrect .option-label {
       background: rgba(220, 38, 38, 0.3);
       color: #fca5a5;
+    }
+
+    body.light-mode .option.incorrect {
+      background: #fee2e2;
+    }
+
+    body.light-mode .option.incorrect .option-label {
+      background: #fecaca;
+      color: #991b1b;
     }
 
     .option.disabled {
@@ -2282,6 +2736,12 @@
       color: #fca5a5;
     }
 
+    /* Style for reattempt mode options */
+    .in-reattempt-mode .option:not(.disabled):hover {
+      background: rgba(31, 41, 55, 0.9);
+      transform: translateY(-1px);
+    }
+
     .feedback {
       min-height: 22px;
       font-size: 0.9rem;
@@ -2297,10 +2757,20 @@
       border: 1px solid rgba(22, 163, 74, 0.2);
     }
 
+    body.light-mode .feedback.correct {
+      color: #166534;
+      background: #dcfce7;
+    }
+
     .feedback.incorrect {
       color: #fb7185;
       background: rgba(220, 38, 38, 0.1);
       border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+
+    body.light-mode .feedback.incorrect {
+      color: #991b1b;
+      background: #fee2e2;
     }
 
     .explanation {
@@ -2312,6 +2782,10 @@
       font-size: 0.9rem;
       color: #93c5fd;
       animation: fadeIn 0.3s ease-in;
+    }
+
+    body.light-mode .explanation {
+      color: #2563eb;
     }
 
     .explanation strong {
@@ -2345,6 +2819,10 @@
       flex: 1;
     }
 
+    button {
+      transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.1s ease;
+    }
+
     #previous-btn {
       border: none;
       border-radius: 999px;
@@ -2356,6 +2834,12 @@
       color: #e5e7eb;
       border: 1px solid rgba(75, 85, 99, 0.8);
       min-width: 120px;
+    }
+
+    body.light-mode #previous-btn {
+      background: #f3f4f6;
+      color: #1f2937;
+      border: 1px solid #d1d5db;
     }
 
     #previous-btn:hover:enabled {
@@ -2378,6 +2862,12 @@
       color: #e5e7eb;
       border: 1px solid rgba(75, 85, 99, 0.8);
       min-width: 120px;
+    }
+
+    body.light-mode #next-btn {
+      background: #f3f4f6;
+      color: #1f2937;
+      border: 1px solid #d1d5db;
     }
 
     #next-btn:hover:enabled {
@@ -2418,6 +2908,10 @@
       color: #e5e7eb;
     }
 
+    body.light-mode .score-box {
+      color: #1f2937;
+    }
+
     .final-score {
       margin-top: 10px;
       padding: 15px;
@@ -2425,6 +2919,11 @@
       background: rgba(15, 23, 42, 0.7);
       border: 1px solid rgba(75, 85, 99, 0.7);
       font-size: 0.9rem;
+    }
+
+    body.light-mode .final-score {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
     }
 
     .result-header {
@@ -2455,11 +2954,20 @@
       min-height: 40px;
     }
 
+    body.light-mode .stat-item {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+    }
+
     .stat-label {
       font-size: 0.8rem;
       color: #9ca3af;
       flex-shrink: 0;
       min-width: 100px;
+    }
+
+    body.light-mode .stat-label {
+      color: #6b7280;
     }
 
     .stat-value {
@@ -2469,6 +2977,10 @@
       text-align: right;
       flex: 1;
       padding-left: 8px;
+    }
+
+    body.light-mode .stat-value {
+      color: #1f2937;
     }
 
     .stat-percentage {
@@ -2490,6 +3002,11 @@
       color: #9ca3af;
     }
 
+    body.light-mode .result-summary {
+      background: #f9fafb;
+      color: #6b7280;
+    }
+
     .result-message {
       font-size: 0.9rem;
       color: #e5e7eb;
@@ -2499,6 +3016,10 @@
       background: rgba(59, 130, 246, 0.1);
       border: 1px solid rgba(59, 130, 246, 0.2);
       text-align: center;
+    }
+
+    body.light-mode .result-message {
+      color: #1f2937;
     }
 
     .restart-btn {
@@ -2586,6 +3107,11 @@
       box-shadow: 0 10px 22px rgba(249, 115, 22, 0.5);
     }
 
+    .reattempt-incorrect-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .pdf-report-btn {
       background: linear-gradient(to right, #dc2626, #b91c1c);
       color: white;
@@ -2608,6 +3134,11 @@
     .pdf-report-btn:hover {
       transform: translateY(-1px);
       box-shadow: 0 10px 22px rgba(220, 38, 38, 0.5);
+    }
+
+    .pdf-report-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .questions-answers-btn {
@@ -2678,6 +3209,7 @@
       font-weight: bold;
     }
 
+    /* PDF OVERLAY with circular animation */
     .pdf-overlay {
       position: fixed;
       top: 0;
@@ -2717,6 +3249,7 @@
       max-width: 400px;
     }
 
+    /* Reattempt header styles */
     #reattempt-header, #review-header {
       margin: 10px 0;
       padding: 10px;
@@ -2736,6 +3269,52 @@
       color: #fca5a5;
     }
 
+    /* ===== SUBJECTIVE BUTTONS MOBILE FIX ===== */
+    @media (max-width: 700px) {
+      .subjective-buttons {
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+      }
+      
+      .subjective-btn {
+        width: 100%;
+        padding: 10px 16px;
+        font-size: 0.9rem;
+        border-radius: 40px;
+        margin: 0;
+      }
+      
+      .subjective-container {
+        padding: 15px 12px;
+        border-width: 1.5px;
+      }
+      
+      .subjective-title {
+        font-size: 1rem;
+        margin-bottom: 12px;
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .subjective-btn {
+        padding: 8px 14px;
+        font-size: 0.85rem;
+        border-radius: 30px;
+      }
+      
+      .subjective-container {
+        padding: 12px 10px;
+        border-width: 1px;
+      }
+      
+      .subjective-title {
+        font-size: 0.95rem;
+        margin-bottom: 10px;
+      }
+    }
+
     @media (max-width: 700px) {
       .fixed-header {
         padding: 8px 12px;
@@ -2743,6 +3322,10 @@
       
       .header-content {
         gap: 8px;
+      }
+      
+      .header-left {
+        width: auto;
       }
       
       .logo-header {
@@ -3774,7 +4357,7 @@
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx06h9aa6wDmtDz3jBwNgOuoiz7-NZY1nJaEwts3A7vIHRkWfAU5O3N4UNUooCwvEm7Lw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzI5OMGERu2mHGAHpJEftGRFZHmAOPiSTUWPRF-fbA4VX21OTReEzf2r4pqv3yuV8G6/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwK5aWpBHLw1_ZepuOLhyfaqlHue8el057D9ZU4Gz7abT6xj7KT67qOoGNh8skbUj8/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -3854,7 +4437,114 @@
     };
 
     // ========== DOM ELEMENTS ==========
-    // ... (all DOM element declarations remain the same)
+    const fixedHeaderEl = document.querySelector(".fixed-header");
+    const loginContainerEl = document.getElementById("login-container");
+    const classSelectionEl = document.getElementById("class-selection");
+    const subjectSelectionEl = document.getElementById("subject-selection");
+    const quizContainerEl = document.getElementById("quiz-container");
+    const accountConfigErrorEl = document.getElementById("account-config-error");
+    const subscriptionExpiredEl = document.getElementById("subscription-expired");
+    
+    const loginFormEl = document.getElementById("login-form");
+    const usernameEl = document.getElementById("username");
+    const passwordEl = document.getElementById("password");
+    const passwordToggleEl = document.getElementById("password-toggle");
+    const loginErrorEl = document.getElementById("login-error");
+    const loginBtnEl = document.getElementById("login-btn");
+    const attemptCounterEl = document.getElementById("attempt-counter");
+    const attemptsRemainingEl = document.getElementById("attempts-remaining");
+    const cooldownMessageEl = document.getElementById("cooldown-message");
+    const cooldownTimerEl = document.getElementById("cooldown-timer");
+    
+    const accountConfigErrorUsernameEl = document.getElementById("error-username");
+    const accountConfigErrorRoleEl = document.getElementById("error-role");
+    const accountConfigErrorListEl = document.getElementById("error-list");
+    const whatsappBtnEl = document.getElementById("whatsapp-btn");
+    const backToLoginBtnEl = document.getElementById("back-to-login-btn");
+    
+    const expiredUsernameEl = document.getElementById("expired-username");
+    const expiredJoiningDateEl = document.getElementById("expired-joining-date");
+    const expiredLastDateEl = document.getElementById("expired-last-date");
+    const expiredWhatsappBtnEl = document.getElementById("expired-whatsapp-btn");
+    const backToLoginFromExpiredBtn = document.getElementById("back-to-login-from-expired-btn");
+    
+    const classGridEl = document.getElementById("class-grid");
+    const subjectGridEl = document.getElementById("subject-grid");
+    const currentClassDisplayEl = document.getElementById("current-class-display");
+    const backToClassesBtn = document.getElementById("back-to-classes-btn");
+    const currentPathEl = document.getElementById("current-path");
+    const pathClassLink = document.getElementById("path-class-link");
+    const pathSubjectEl = document.getElementById("path-subject");
+    
+    const topicSelectEl = document.getElementById("topic-select");
+    const startBtnEl = document.getElementById("start-btn");
+    const randomToggleEl = document.getElementById("random-toggle");
+    const toggleRowEl = document.querySelector(".toggle-row");
+    const quizTopicNameEl = document.getElementById("quiz-topic-name");
+    const quizQuestionCountEl = document.getElementById("quiz-question-count");
+    const timerContainerEl = document.getElementById("timer-container");
+    const timerDisplayEl = document.getElementById("timer-display");
+    
+    const questionNavigationEl = document.getElementById("question-navigation");
+    const questionGridEl = document.getElementById("question-grid");
+    const navigationToggleBtn = document.getElementById("navigation-toggle-btn");
+    const navigationStatsEl = document.getElementById("navigation-stats");
+    
+    const questionTextEl = document.getElementById("question-text");
+    const questionBoxEl = document.getElementById("question-box");
+    const questionImageContainerEl = document.getElementById("question-image-container");
+    const questionImageEl = document.getElementById("question-image");
+    const imageLoadingEl = document.getElementById("image-loading");
+    const imageErrorEl = document.getElementById("image-error");
+    
+    const optionsListEl = document.getElementById("options-list");
+    const subjectiveContainerEl = document.getElementById("subjective-container");
+    const subjectiveCorrectBtn = document.getElementById("subjective-correct-btn");
+    const subjectiveIncorrectBtn = document.getElementById("subjective-incorrect-btn");
+    const feedbackEl = document.getElementById("feedback");
+    const nextBtn = document.getElementById("next-btn");
+    const previousBtn = document.getElementById("previous-btn");
+    const finishBtn = document.getElementById("finish-btn");
+    const questionCounterEl = document.getElementById("question-counter");
+    const progressEl = document.querySelector(".progress");
+    const progressBarFillEl = document.getElementById("progress-bar-fill");
+    const totalScoreValueEl = document.getElementById("total-score-value");
+    const finalScoreEl = document.getElementById("final-score");
+    const controlsEl = document.querySelector(".controls");
+
+    const preloadOverlayEl = document.getElementById("preload-overlay");
+    const preloadProgressFillEl = document.getElementById("preload-progress-fill");
+    const preloadStatusEl = document.getElementById("preload-status");
+    const preloadCountEl = document.getElementById("preload-count");
+    
+    const pdfOverlayEl = document.getElementById("pdf-overlay");
+    const pdfStatusEl = document.getElementById("pdf-status");
+    const pdfSubstatusEl = document.getElementById("pdf-substatus");
+
+    const questionWhatsappIconEl = document.getElementById("question-whatsapp-icon");
+    const questionEditIconEl = document.getElementById("question-edit-icon");
+    const questionDeleteIconEl = document.getElementById("question-delete-icon");
+    const addQuestionBtn = document.getElementById("add-question-btn");
+    const adminAddQuestionDiv = document.getElementById("admin-add-question");
+
+    // Image URL toggle elements
+    const showImageUrlsCheckbox = document.getElementById("show-image-urls");
+    const questionImageUploadSection = document.getElementById("question-image-upload-section");
+    const optionAImageSection = document.getElementById("option-a-image-section");
+    const optionBImageSection = document.getElementById("option-b-image-section");
+    const optionCImageSection = document.getElementById("option-c-image-section");
+    const optionDImageSection = document.getElementById("option-d-image-section");
+
+    // Side menu elements
+    const menuToggle = document.getElementById('menuToggle');
+    const sideMenu = document.getElementById('sideMenu');
+    const menuOverlay = document.getElementById('menuOverlay');
+    const sideUsername = document.getElementById('sideUsername');
+    const sideLogoutBtn = document.getElementById('sideLogoutBtn');
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const metaThemeColor = document.getElementById('meta-theme-color');
+    const greetingMessageEl = document.getElementById('greetingMessage');
 
     // ========== PDF OVERLAY FUNCTIONS ==========
     function showPDFOverlay(message = "Processing...") {
@@ -3878,6 +4568,7 @@
     function toggleImageUrlFields() {
       const isChecked = showImageUrlsCheckbox.checked;
       
+      // Toggle question image URL section
       if (questionImageUploadSection) {
         if (isChecked) {
           questionImageUploadSection.classList.remove('hidden');
@@ -3886,6 +4577,7 @@
         }
       }
       
+      // Toggle option image URL sections
       const optionSections = [
         optionAImageSection,
         optionBImageSection,
@@ -3904,28 +4596,27 @@
       });
     }
 
-    // ========== IMAGE UPLOAD FUNCTIONS - FIXED ==========
+    // ========== IMAGE UPLOAD FUNCTIONS ==========
     let currentUploadField = null;
 
     function setupImageUpload(fieldId, previewId, inputId) {
       const uploadArea = document.getElementById(fieldId);
       if (!uploadArea) return;
       
-      let fileInput = document.getElementById('file-input-' + fieldId);
-      if (!fileInput) {
-        fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = 'image/*';
-        fileInput.style.display = 'none';
-        fileInput.id = 'file-input-' + fieldId;
-        document.body.appendChild(fileInput);
-      }
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'image/*';
+      fileInput.style.display = 'none';
+      fileInput.id = 'file-input-' + fieldId;
+      document.body.appendChild(fileInput);
 
+      // Handle click on upload area
       uploadArea.addEventListener('click', () => {
         currentUploadField = { previewId, inputId };
         fileInput.click();
       });
 
+      // Handle drag and drop
       uploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
         uploadArea.classList.add('dragover');
@@ -3946,11 +4637,12 @@
         }
       });
 
+      // Handle file selection
       fileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
           handleImageUpload(e.target.files[0], previewId, inputId);
         }
-        fileInput.value = '';
+        fileInput.value = ''; // Reset so same file can be selected again
       });
     }
 
@@ -3965,6 +4657,7 @@
         return;
       }
 
+      // Show preview
       const preview = document.getElementById(previewId);
       if (!preview) {
         console.error('Preview element not found:', previewId);
@@ -3978,6 +4671,7 @@
       };
       reader.readAsDataURL(file);
 
+      // Show progress
       const container = preview.closest('.image-upload-container');
       if (!container) {
         console.error('Container not found for preview:', previewId);
@@ -3997,101 +4691,46 @@
       if (progressBar) progressBar.style.width = '30%';
 
       try {
+        // Convert file to base64
         const base64Data = await new Promise((resolve) => {
-          const fileReader = new FileReader();
-          fileReader.onload = (e) => resolve(e.target.result);
-          fileReader.readAsDataURL(file);
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.readAsDataURL(file);
         });
 
         console.log('📤 Uploading to Google Drive...', { fileName: file.name, previewId, inputId });
 
-        const callbackName = 'uploadCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        // Upload to Google Drive via Apps Script
+        const result = await uploadImageToDrive(file.name, base64Data, file.type);
         
-        const uploadPromise = new Promise((resolve, reject) => {
-          window[callbackName] = function(data) {
-            console.log('📥 Upload callback received:', data);
-            delete window[callbackName];
-            
-            const iframe = document.getElementById('upload-iframe-' + callbackName);
-            if (iframe) iframe.remove();
-            
-            if (data && data.success) {
-              resolve(data);
-            } else {
-              reject(new Error(data?.error || 'Upload failed'));
-            }
-          };
-          
-          setTimeout(() => {
-            if (window[callbackName]) {
-              console.error('❌ Upload timeout');
-              delete window[callbackName];
-              const iframe = document.getElementById('upload-iframe-' + callbackName);
-              if (iframe) iframe.remove();
-              reject(new Error('Upload timeout after 60 seconds'));
-            }
-          }, 60000);
-        });
-
-        const payload = {
-          action: "uploadImage",
-          fileName: file.name,
-          mimeType: file.type,
-          fileData: base64Data,
-          username: currentUser ? currentUser.username : "",
-          role: currentUser ? currentUser.role : "",
-          callback: callbackName
-        };
-
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = MASTER_CONFIG_APPS_SCRIPT_URL;
-        form.target = 'upload-iframe-' + callbackName;
-        form.style.display = 'none';
-        form.enctype = 'application/x-www-form-urlencoded';
-
-        const payloadInput = document.createElement('input');
-        payloadInput.type = 'hidden';
-        payloadInput.name = 'payload';
-        payloadInput.value = JSON.stringify(payload);
-        form.appendChild(payloadInput);
-
-        const iframe = document.createElement('iframe');
-        iframe.name = 'upload-iframe-' + callbackName;
-        iframe.id = 'upload-iframe-' + callbackName;
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
-        document.body.appendChild(form);
-
-        console.log('📤 Submitting form to Apps Script...');
-        form.submit();
-
-        const result = await uploadPromise;
-        console.log('✅ Upload successful, URL:', result.fileUrl);
-
+        console.log('📥 Upload response:', result);
+        
         if (progressBar) progressBar.style.width = '100%';
         
-        const urlInput = document.getElementById(inputId);
-        if (urlInput) {
-          urlInput.value = result.fileUrl;
-          console.log(`✅ URL set in ${inputId}:`, result.fileUrl);
+        if (result && result.success) {
+          if (statusEl) {
+            statusEl.textContent = 'Upload complete!';
+            statusEl.style.color = '#22c55e';
+          }
           
-          urlInput.dispatchEvent(new Event('input', { bubbles: true }));
-          urlInput.dispatchEvent(new Event('change', { bubbles: true }));
+          // Set the URL in the input field
+          const input = document.getElementById(inputId);
+          if (input) {
+            input.value = result.fileUrl;
+            console.log(`✅ URL set in ${inputId}:`, result.fileUrl);
+            
+            // Trigger input event to ensure any listeners know the value changed
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          
+          setTimeout(() => {
+            if (progressContainer) progressContainer.style.display = 'none';
+            if (statusEl) statusEl.style.display = 'none';
+          }, 2000);
+        } else {
+          throw new Error(result?.error || 'Upload failed');
         }
-        
-        if (statusEl) {
-          statusEl.textContent = 'Upload complete!';
-          statusEl.style.color = '#22c55e';
-        }
-        
-        setTimeout(() => {
-          if (progressContainer) progressContainer.style.display = 'none';
-          if (statusEl) statusEl.style.display = 'none';
-        }, 2000);
-        
-        form.remove();
-        
       } catch (error) {
         console.error('❌ Upload failed:', error);
         if (statusEl) {
@@ -4104,6 +4743,73 @@
           if (progressContainer) progressContainer.style.display = 'none';
           if (statusEl) statusEl.style.display = 'none';
         }, 3000);
+      }
+    }
+
+    // ========== UPLOAD IMAGE TO GOOGLE DRIVE ==========
+    async function uploadImageToDrive(fileName, fileData, mimeType) {
+      try {
+        console.log('🚀 Starting fetch upload...', { fileName, mimeType });
+        
+        const payload = {
+          action: "uploadImage",
+          fileName: fileName,
+          mimeType: mimeType,
+          fileData: fileData,
+          username: currentUser ? currentUser.username : "",
+          role: currentUser ? currentUser.role : ""
+        };
+
+        console.log('Sending payload to Apps Script...');
+        
+        // Create a unique ID for this upload to track response
+        const uploadId = 'upload_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        // Set up message listener for the response
+        const responsePromise = new Promise((resolve, reject) => {
+          const messageHandler = function(event) {
+            console.log('📥 Message received:', event.data);
+            if (event.data && (event.data.success !== undefined)) {
+              console.log('📥 Upload response received:', event.data);
+              window.removeEventListener('message', messageHandler);
+              
+              if (event.data.success) {
+                resolve(event.data);
+              } else {
+                reject(new Error(event.data.error || 'Unknown error'));
+              }
+            }
+          };
+          
+          window.addEventListener('message', messageHandler);
+          
+          // Timeout after 30 seconds
+          setTimeout(() => {
+            window.removeEventListener('message', messageHandler);
+            reject(new Error('Upload timeout after 30 seconds'));
+          }, 30000);
+        });
+        
+        // Send the request
+        const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors', // This is key for CORS issues
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        });
+
+        console.log('Upload initiated, waiting for callback...');
+        
+        // Wait for the response via postMessage
+        const result = await responsePromise;
+        console.log('✅ Upload successful, URL:', result.fileUrl);
+        return result;
+        
+      } catch (error) {
+        console.error('❌ Upload fetch error:', error);
+        throw error;
       }
     }
 
@@ -4260,6 +4966,7 @@
 
     // ========== UPDATE ADMIN CONTROLS AND WHATSAPP VISIBILITY ==========
     function updateAdminControls() {
+      // WhatsApp icon: visible to non-admin users, hidden for admin
       if (questionWhatsappIconEl) {
         if (questionsLoaded && questions.length > 0) {
           questionWhatsappIconEl.style.display = isAdmin() ? 'none' : 'block';
@@ -4268,6 +4975,7 @@
         }
       }
       
+      // Edit icon: only visible to admin
       if (questionEditIconEl) {
         if (isAdmin() && questionsLoaded && questions.length > 0) {
           questionEditIconEl.style.display = 'block';
@@ -4276,6 +4984,7 @@
         }
       }
       
+      // Delete icon: only visible to admin
       if (questionDeleteIconEl) {
         if (isAdmin() && questionsLoaded && questions.length > 0) {
           questionDeleteIconEl.style.display = 'block';
@@ -4284,6 +4993,7 @@
         }
       }
       
+      // Add question button: visible to admin when chapter is selected (even if no questions)
       if (addQuestionBtn) {
         if (isAdmin() && currentSubjectConfig && currentTopicName) {
           adminAddQuestionDiv.style.display = 'block';
@@ -4568,17 +5278,21 @@
         const result = await deleteQuestionFromSheet(sheetId, gid, originalIndex);
         
         if (result && result.success) {
+          // Remove question from local array
           questions.splice(currentIndex, 1);
           userAnswers.splice(currentIndex, 1);
           userMarks.splice(currentIndex, 1);
           
+          // Adjust current index if needed
           if (currentIndex >= questions.length) {
             currentIndex = Math.max(0, questions.length - 1);
           }
           
+          // Update UI
           quizQuestionCountEl.textContent = `${questions.length} questions`;
           
           if (questions.length === 0) {
+            // No questions left
             questionTextEl.innerHTML = isAdmin() ? 
               "📝 No questions in this chapter.<br><br>Click the 'Add New Question' button below to create the first question." :
               "No questions available in this chapter yet.";
@@ -4666,6 +5380,7 @@
       document.getElementById('editor-question-type').value = q.isSubjective ? 'subjective' : 'mcq';
       document.getElementById('editor-question').value = q.question;
       
+      // Reset image URL toggle and hide fields by default
       if (showImageUrlsCheckbox) {
         showImageUrlsCheckbox.checked = false;
         toggleImageUrlFields();
@@ -4677,6 +5392,7 @@
       
       toggleQuestionTypeSections(q.isSubjective ? 'subjective' : 'mcq');
       
+      // Clear previews
       ['question', 'option-a', 'option-b', 'option-c', 'option-d'].forEach(prefix => {
         const preview = document.getElementById(`preview-${prefix}-image`);
         if (preview) {
@@ -4714,6 +5430,7 @@
       
       document.getElementById('question-editor-modal').style.display = 'flex';
       
+      // Setup upload handlers
       setTimeout(setupImageUploadHandlers, 100);
     }
 
@@ -4723,6 +5440,7 @@
       document.getElementById('editor-question-type').value = 'mcq';
       document.getElementById('editor-question').value = '';
       
+      // Reset image URL toggle and hide fields by default
       if (showImageUrlsCheckbox) {
         showImageUrlsCheckbox.checked = false;
         toggleImageUrlFields();
@@ -4732,11 +5450,13 @@
       document.getElementById('editor-marks').value = '1';
       document.getElementById('editor-explanation').value = '';
       
+      // Clear all fields
       ['a', 'b', 'c', 'd'].forEach(letter => {
         document.getElementById(`editor-option-${letter}`).value = '';
         document.getElementById(`editor-option-${letter}-img`).value = '';
       });
       
+      // Clear previews
       ['question', 'option-a', 'option-b', 'option-c', 'option-d'].forEach(prefix => {
         const preview = document.getElementById(`preview-${prefix}-image`);
         if (preview) {
@@ -4754,6 +5474,7 @@
       
       document.getElementById('question-editor-modal').style.display = 'flex';
       
+      // Setup upload handlers
       setTimeout(setupImageUploadHandlers, 100);
     }
 
@@ -4774,7 +5495,7 @@
       }
     }
 
-    // ========== SAVE QUESTION CHANGES ==========
+    // ========== SAVE QUESTION CHANGES - FIXED with proper image URL saving ==========
     async function saveQuestionChanges() {
       if (!isAdmin()) {
         alert("Unauthorized access");
@@ -4797,6 +5518,7 @@
         return;
       }
       
+      // Get all image URLs - make sure we get the latest values
       const questionImageUrl = document.getElementById('editor-image-url').value.trim();
       const optionAImg = document.getElementById('editor-option-a-img').value.trim();
       const optionBImg = document.getElementById('editor-option-b-img').value.trim();
@@ -4871,6 +5593,7 @@
       
       console.log('📦 Final rowData being sent:', JSON.stringify(rowData, null, 2));
       
+      // Show circular loading animation
       const actionMessage = editMode === 'new' ? 'Adding new question...' : 'Saving changes...';
       showPDFOverlay(actionMessage);
       updatePDFStatus(actionMessage, 'Please wait...');
@@ -4891,10 +5614,13 @@
         console.log('Save result from Apps Script:', result);
         
         if (result && result.success) {
+          // Update the local questions array without reloading the entire chapter
           if (editMode === 'edit') {
+            // Update existing question
             const questionIndex = parseInt(document.getElementById('question-editor-modal').dataset.questionIndex);
             if (!isNaN(questionIndex) && questions[questionIndex]) {
               
+              // Determine correct index from answer letter
               let correctIndex = 0;
               if (questionType !== 'subjective' && rowData.answer) {
                 const answerLetter = rowData.answer.toUpperCase();
@@ -4904,6 +5630,7 @@
                 else if (answerLetter === 'D') correctIndex = 3;
               }
               
+              // Update the question object with all fields including image URLs
               const updatedQuestion = {
                 ...questions[questionIndex],
                 question: rowData.question,
@@ -4923,6 +5650,7 @@
               });
             }
           } else if (editMode === 'new') {
+            // Determine correct index for new question
             let correctIndex = 0;
             if (questionType !== 'subjective' && rowData.answer) {
               const answerLetter = rowData.answer.toUpperCase();
@@ -4932,6 +5660,7 @@
               else if (answerLetter === 'D') correctIndex = 3;
             }
             
+            // Add new question locally
             const newQuestion = {
               question: rowData.question,
               options: questionType === 'mcq' ? [rowData.option1, rowData.option2, rowData.option3, rowData.option4].filter(opt => opt !== '') : [],
@@ -4945,6 +5674,7 @@
             };
             questions.push(newQuestion);
             
+            // Update user answers arrays
             userAnswers.push(undefined);
             userMarks.push(undefined);
             
@@ -4954,6 +5684,7 @@
             });
           }
           
+          // Update UI
           quizQuestionCountEl.textContent = `${questions.length} questions`;
           updateQuestionNavigation();
           renderQuestion();
@@ -4962,9 +5693,10 @@
           document.getElementById('question-editor-modal').style.display = 'none';
           alert('Question saved successfully!');
           
+          // Force refresh of image cache for this question
           if (rowData.imageUrl) {
             const url = convertImageUrl(rowData.imageUrl);
-            imageCache.delete(url);
+            imageCache.delete(url); // Remove from cache so it reloads fresh
           }
           
         } else {
@@ -5173,7 +5905,7 @@
 
       if (subjects.length === 0) {
         subjectGridEl.innerHTML = `
-          <div style="text-align: center; padding: 40px; color: #9ca3af; grid-column: 1/-1;">
+          <div style="text-align: center; padding: 40px; color: #fca5a5; grid-column: 1/-1;">
             No subjects available for this class.
           </div>
         `;
@@ -5759,47 +6491,20 @@
       }
     }
 
-    // ========== IMAGE HANDLING FUNCTIONS - FIXED WITH CORS PROXY ==========
+    // ========== IMAGE HANDLING FUNCTIONS ==========
     function convertImageUrl(url) {
-      if (!url || url.trim() === '') return '';
+      if (!url) return '';
       
-      // If it's already a full URL
+      // If it's already a full URL (including Google Drive), return it as-is
       if (url.startsWith('http://') || url.startsWith('https://')) {
-        // Handle Google Drive URLs
-        if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
-          // Extract file ID from various Google Drive URL formats
-          let fileId = null;
-          
-          // Format: https://drive.google.com/file/d/FILE_ID/view
-          const fileMatch = url.match(/\/file\/d\/([^\/]+)/);
-          if (fileMatch && fileMatch[1]) {
-            fileId = fileMatch[1];
-          }
-          
-          // Format: https://drive.google.com/open?id=FILE_ID
-          const openMatch = url.match(/[?&]id=([^&]+)/);
-          if (openMatch && openMatch[1]) {
-            fileId = openMatch[1];
-          }
-          
-          // Format: https://drive.google.com/uc?export=view&id=FILE_ID
-          const ucMatch = url.match(/[?&]id=([^&]+)/);
-          if (ucMatch && ucMatch[1]) {
-            fileId = ucMatch[1];
-          }
-          
-          // Format: https://drive.usercontent.google.com/download?id=FILE_ID
-          const downloadMatch = url.match(/[?&]id=([^&]+)/);
-          if (downloadMatch && downloadMatch[1]) {
-            fileId = downloadMatch[1];
-          }
-          
-          if (fileId) {
-            // Use a CORS proxy to bypass Google Drive restrictions
-            // Using cors-anywhere demo service - for production, you might want to host your own
-            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-            const directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
-            return proxyUrl + directUrl;
+        // Special handling for Google Drive URLs to ensure they work
+        if (url.includes('drive.google.com')) {
+          // If it's a view URL, convert to direct download URL
+          if (url.includes('/file/d/')) {
+            const fileId = url.match(/\/d\/([^\/]+)/);
+            if (fileId && fileId[1]) {
+              return `https://drive.google.com/uc?export=view&id=${fileId[1]}`;
+            }
           }
         }
         return url;
@@ -5814,40 +6519,25 @@
           imagePath = `images/${imagePath}`;
         }
       }
-      return imagePath;
+      return imagePath + '?t=' + Date.now();
     }
 
     function loadImageWithCache(url) {
       return new Promise((resolve, reject) => {
-        // Check cache first
         const cached = imageCache.get(url);
         if (cached) {
-          console.log('Using cached image:', url);
           resolve(cached);
           return;
         }
 
-        console.log('Loading image:', url);
         const img = new Image();
-        
-        // Set a timeout for image loading
-        const timeout = setTimeout(() => {
-          reject(new Error(`Image load timeout: ${url}`));
-        }, 10000);
-        
         img.onload = function() {
-          clearTimeout(timeout);
-          console.log('Image loaded successfully:', url);
           imageCache.set(url, img);
           resolve(img);
         };
-        
         img.onerror = function() {
-          clearTimeout(timeout);
-          console.error('Failed to load image:', url);
           reject(new Error(`Failed to load image: ${url}`));
         };
-        
         img.src = url;
       });
     }
@@ -5875,23 +6565,27 @@
 
       if (totalImagesToPreload === 0) return;
 
-      console.log('Preloading images:', urlsArray.length);
       showPreloadOverlay();
       updatePreloadProgress();
 
-      // Load images sequentially
-      for (const url of urlsArray) {
-        try {
-          await loadImageWithCache(url);
-        } catch (error) {
-          console.error('Failed to preload image:', url, error);
-        }
-        imagesPreloaded++;
-        updatePreloadProgress();
+      const CONCURRENT_LIMIT = 3;
+      const chunks = [];
+      for (let i = 0; i < urlsArray.length; i += CONCURRENT_LIMIT) {
+        chunks.push(urlsArray.slice(i, i + CONCURRENT_LIMIT));
+      }
+
+      for (const chunk of chunks) {
+        await Promise.allSettled(
+          chunk.map(url => 
+            loadImageWithCache(url)
+              .then(() => { imagesPreloaded++; updatePreloadProgress(); })
+              .catch(() => { imagesPreloaded++; updatePreloadProgress(); })
+          )
+        );
         await new Promise(resolve => setTimeout(resolve, 100));
       }
 
-      setTimeout(hidePreloadOverlay, 500);
+      hidePreloadOverlay();
     }
 
     function showPreloadOverlay() {
@@ -6659,10 +7353,12 @@
         const jsonData = JSON.parse(data.substring(47).slice(0, -2));
         const rows = jsonData.table.rows;
 
+        // Handle empty chapter - allow admin to add questions
         if (rows.length === 0 || rows.length < 3) {
           questions = [];
           questionsLoaded = true;
           
+          // Show appropriate message based on user role
           if (isAdmin()) {
             questionTextEl.innerHTML = "📝 No questions found in this chapter.<br><br>Click the 'Add New Question' button below to create the first question.";
           } else {
@@ -6675,6 +7371,7 @@
           finishBtn.disabled = true;
           quizQuestionCountEl.textContent = "0 questions";
           
+          // Make sure add button stays visible for admin
           updateAdminControls();
           return;
         }
@@ -6969,13 +7666,11 @@
         .replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>')
         .replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim() + ' ' + marksHtml;
 
+      // Update icons visibility
       updateAdminControls();
 
-      // Handle image display
-      if (q.imageUrl && q.imageUrl.trim() !== '') {
+      if (q.imageUrl?.trim()) {
         const imageUrl = convertImageUrl(q.imageUrl.trim());
-        console.log('Loading question image:', imageUrl);
-        
         questionImageContainerEl.classList.add('visible');
         questionImageEl.style.display = "none";
         imageLoadingEl.style.display = "block";
@@ -6987,8 +7682,7 @@
             questionImageEl.style.display = "block";
             imageLoadingEl.style.display = "none";
           })
-          .catch((error) => {
-            console.error('Failed to load image:', error);
+          .catch(() => {
             imageLoadingEl.style.display = "none";
             imageErrorEl.style.display = "block";
           });
@@ -7045,12 +7739,11 @@
           const contentDiv = document.createElement("div");
           contentDiv.className = "option-content";
 
-          // Handle option images
-          if (q.optionImages && q.optionImages[idx] && q.optionImages[idx].trim() !== '') {
+          if (q.optionImages?.[idx]?.trim()) {
             const optionImageUrl = convertImageUrl(q.optionImages[idx].trim());
             const wrapper = document.createElement("div");
             wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
-            wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
+            wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}">`;
             contentDiv.appendChild(wrapper);
           } else {
             contentDiv.textContent = opt;
