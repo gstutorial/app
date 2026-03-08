@@ -4357,7 +4357,7 @@
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx06h9aa6wDmtDz3jBwNgOuoiz7-NZY1nJaEwts3A7vIHRkWfAU5O3N4UNUooCwvEm7Lw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx1YvaTPj_phla-1oZPEoF0DX2oQjGTQvIqcaZO9T3fxxntl7NuAew5m5wruiEcGLKX/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx2F0BsCVBbEdFytzRp60Md9n_0z3urfeSMhzh0oNiZ3mi4g6kLWGaAc1GjyEaRbeA/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -4790,88 +4790,28 @@
           }, 30000);
         });
         
-        // Send the request
-        const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors', // This is key for CORS issues
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
-        });
-
-        console.log('Upload initiated, waiting for callback...');
         
-        // Wait for the response via postMessage
-        const result = await responsePromise;
-        console.log('✅ Upload successful, URL:', result.fileUrl);
-        return result;
-        
-      } catch (error) {
-        console.error('❌ Upload fetch error:', error);
-        throw error;
-      }
-    }
+        // Send request using iframe (reliable for Apps Script postMessage response)
+        const iframe = document.createElement("iframe");
+        iframe.name = "upload_iframe_" + Date.now();
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
 
-    function clearImageUpload(previewId, inputId) {
-      const preview = document.getElementById(previewId);
-      const input = document.getElementById(inputId);
-      
-      if (preview) {
-        preview.src = '';
-        preview.classList.remove('visible');
-      }
-      if (input) input.value = '';
-      
-      const container = preview ? preview.closest('.image-upload-container') : null;
-      if (container) {
-        const progressContainer = container.querySelector('.upload-progress');
-        const statusEl = container.querySelector('.upload-status');
-        if (progressContainer) progressContainer.style.display = 'none';
-        if (statusEl) statusEl.style.display = 'none';
-      }
-    }
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = MASTER_CONFIG_APPS_SCRIPT_URL;
+        form.target = iframe.name;
 
-    function setupImageUploadHandlers() {
-      setupImageUpload('upload-question-image', 'preview-question-image', 'editor-image-url');
-      setupImageUpload('upload-option-a-image', 'preview-option-a-image', 'editor-option-a-img');
-      setupImageUpload('upload-option-b-image', 'preview-option-b-image', 'editor-option-b-img');
-      setupImageUpload('upload-option-c-image', 'preview-option-c-image', 'editor-option-c-img');
-      setupImageUpload('upload-option-d-image', 'preview-option-d-image', 'editor-option-d-img');
-    }
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "data";
+        input.value = JSON.stringify(payload);
 
-    // ========== PASSWORD TOGGLE FUNCTION ==========
-    function togglePasswordVisibility() {
-      if (passwordEl.type === 'password') {
-        passwordEl.type = 'text';
-        passwordToggleEl.textContent = '🙈';
-      } else {
-        passwordEl.type = 'password';
-        passwordToggleEl.textContent = '👁️';
-      }
-    }
+        form.appendChild(input);
+        document.body.appendChild(form);
 
-    // ========== AUTHENTICATION FUNCTION ==========
-    async function authenticateWithAppsScript(username, password) {
-      try {
-        return new Promise((resolve, reject) => {
-          const callbackName = 'authCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-          
-          const script = document.createElement('script');
-          
-          window[callbackName] = function(data) {
-            delete window[callbackName];
-            document.body.removeChild(script);
-            
-            if (data && data.success) {
-              resolve(data);
-            } else {
-              resolve({ 
-                success: false, 
-                error: data?.error || 'Invalid username or password' 
-              });
-            }
-          };
+        form.submit();
+
           
           script.onerror = function() {
             delete window[callbackName];
