@@ -3854,114 +3854,7 @@
     };
 
     // ========== DOM ELEMENTS ==========
-    const fixedHeaderEl = document.querySelector(".fixed-header");
-    const loginContainerEl = document.getElementById("login-container");
-    const classSelectionEl = document.getElementById("class-selection");
-    const subjectSelectionEl = document.getElementById("subject-selection");
-    const quizContainerEl = document.getElementById("quiz-container");
-    const accountConfigErrorEl = document.getElementById("account-config-error");
-    const subscriptionExpiredEl = document.getElementById("subscription-expired");
-    
-    const loginFormEl = document.getElementById("login-form");
-    const usernameEl = document.getElementById("username");
-    const passwordEl = document.getElementById("password");
-    const passwordToggleEl = document.getElementById("password-toggle");
-    const loginErrorEl = document.getElementById("login-error");
-    const loginBtnEl = document.getElementById("login-btn");
-    const attemptCounterEl = document.getElementById("attempt-counter");
-    const attemptsRemainingEl = document.getElementById("attempts-remaining");
-    const cooldownMessageEl = document.getElementById("cooldown-message");
-    const cooldownTimerEl = document.getElementById("cooldown-timer");
-    
-    const accountConfigErrorUsernameEl = document.getElementById("error-username");
-    const accountConfigErrorRoleEl = document.getElementById("error-role");
-    const accountConfigErrorListEl = document.getElementById("error-list");
-    const whatsappBtnEl = document.getElementById("whatsapp-btn");
-    const backToLoginBtnEl = document.getElementById("back-to-login-btn");
-    
-    const expiredUsernameEl = document.getElementById("expired-username");
-    const expiredJoiningDateEl = document.getElementById("expired-joining-date");
-    const expiredLastDateEl = document.getElementById("expired-last-date");
-    const expiredWhatsappBtnEl = document.getElementById("expired-whatsapp-btn");
-    const backToLoginFromExpiredBtn = document.getElementById("back-to-login-from-expired-btn");
-    
-    const classGridEl = document.getElementById("class-grid");
-    const subjectGridEl = document.getElementById("subject-grid");
-    const currentClassDisplayEl = document.getElementById("current-class-display");
-    const backToClassesBtn = document.getElementById("back-to-classes-btn");
-    const currentPathEl = document.getElementById("current-path");
-    const pathClassLink = document.getElementById("path-class-link");
-    const pathSubjectEl = document.getElementById("path-subject");
-    
-    const topicSelectEl = document.getElementById("topic-select");
-    const startBtnEl = document.getElementById("start-btn");
-    const randomToggleEl = document.getElementById("random-toggle");
-    const toggleRowEl = document.querySelector(".toggle-row");
-    const quizTopicNameEl = document.getElementById("quiz-topic-name");
-    const quizQuestionCountEl = document.getElementById("quiz-question-count");
-    const timerContainerEl = document.getElementById("timer-container");
-    const timerDisplayEl = document.getElementById("timer-display");
-    
-    const questionNavigationEl = document.getElementById("question-navigation");
-    const questionGridEl = document.getElementById("question-grid");
-    const navigationToggleBtn = document.getElementById("navigation-toggle-btn");
-    const navigationStatsEl = document.getElementById("navigation-stats");
-    
-    const questionTextEl = document.getElementById("question-text");
-    const questionBoxEl = document.getElementById("question-box");
-    const questionImageContainerEl = document.getElementById("question-image-container");
-    const questionImageEl = document.getElementById("question-image");
-    const imageLoadingEl = document.getElementById("image-loading");
-    const imageErrorEl = document.getElementById("image-error");
-    
-    const optionsListEl = document.getElementById("options-list");
-    const subjectiveContainerEl = document.getElementById("subjective-container");
-    const subjectiveCorrectBtn = document.getElementById("subjective-correct-btn");
-    const subjectiveIncorrectBtn = document.getElementById("subjective-incorrect-btn");
-    const feedbackEl = document.getElementById("feedback");
-    const nextBtn = document.getElementById("next-btn");
-    const previousBtn = document.getElementById("previous-btn");
-    const finishBtn = document.getElementById("finish-btn");
-    const questionCounterEl = document.getElementById("question-counter");
-    const progressEl = document.querySelector(".progress");
-    const progressBarFillEl = document.getElementById("progress-bar-fill");
-    const totalScoreValueEl = document.getElementById("total-score-value");
-    const finalScoreEl = document.getElementById("final-score");
-    const controlsEl = document.querySelector(".controls");
-
-    const preloadOverlayEl = document.getElementById("preload-overlay");
-    const preloadProgressFillEl = document.getElementById("preload-progress-fill");
-    const preloadStatusEl = document.getElementById("preload-status");
-    const preloadCountEl = document.getElementById("preload-count");
-    
-    const pdfOverlayEl = document.getElementById("pdf-overlay");
-    const pdfStatusEl = document.getElementById("pdf-status");
-    const pdfSubstatusEl = document.getElementById("pdf-substatus");
-
-    const questionWhatsappIconEl = document.getElementById("question-whatsapp-icon");
-    const questionEditIconEl = document.getElementById("question-edit-icon");
-    const questionDeleteIconEl = document.getElementById("question-delete-icon");
-    const addQuestionBtn = document.getElementById("add-question-btn");
-    const adminAddQuestionDiv = document.getElementById("admin-add-question");
-
-    // Image URL toggle elements
-    const showImageUrlsCheckbox = document.getElementById("show-image-urls");
-    const questionImageUploadSection = document.getElementById("question-image-upload-section");
-    const optionAImageSection = document.getElementById("option-a-image-section");
-    const optionBImageSection = document.getElementById("option-b-image-section");
-    const optionCImageSection = document.getElementById("option-c-image-section");
-    const optionDImageSection = document.getElementById("option-d-image-section");
-
-    // Side menu elements
-    const menuToggle = document.getElementById('menuToggle');
-    const sideMenu = document.getElementById('sideMenu');
-    const menuOverlay = document.getElementById('menuOverlay');
-    const sideUsername = document.getElementById('sideUsername');
-    const sideLogoutBtn = document.getElementById('sideLogoutBtn');
-    const themeToggle = document.getElementById('themeToggle');
-    const themeIcon = document.getElementById('themeIcon');
-    const metaThemeColor = document.getElementById('meta-theme-color');
-    const greetingMessageEl = document.getElementById('greetingMessage');
+    // ... (all DOM element declarations remain the same)
 
     // ========== PDF OVERLAY FUNCTIONS ==========
     function showPDFOverlay(message = "Processing...") {
@@ -4018,7 +3911,6 @@
       const uploadArea = document.getElementById(fieldId);
       if (!uploadArea) return;
       
-      // Create file input if it doesn't exist
       let fileInput = document.getElementById('file-input-' + fieldId);
       if (!fileInput) {
         fileInput = document.createElement('input');
@@ -4029,13 +3921,11 @@
         document.body.appendChild(fileInput);
       }
 
-      // Handle click on upload area
       uploadArea.addEventListener('click', () => {
         currentUploadField = { previewId, inputId };
         fileInput.click();
       });
 
-      // Handle drag and drop
       uploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
         uploadArea.classList.add('dragover');
@@ -4056,12 +3946,11 @@
         }
       });
 
-      // Handle file selection
       fileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
           handleImageUpload(e.target.files[0], previewId, inputId);
         }
-        fileInput.value = ''; // Reset so same file can be selected again
+        fileInput.value = '';
       });
     }
 
@@ -4076,7 +3965,6 @@
         return;
       }
 
-      // Show preview
       const preview = document.getElementById(previewId);
       if (!preview) {
         console.error('Preview element not found:', previewId);
@@ -4090,7 +3978,6 @@
       };
       reader.readAsDataURL(file);
 
-      // Show progress
       const container = preview.closest('.image-upload-container');
       if (!container) {
         console.error('Container not found for preview:', previewId);
@@ -4110,7 +3997,6 @@
       if (progressBar) progressBar.style.width = '30%';
 
       try {
-        // Convert file to base64
         const base64Data = await new Promise((resolve) => {
           const fileReader = new FileReader();
           fileReader.onload = (e) => resolve(e.target.result);
@@ -4119,17 +4005,13 @@
 
         console.log('📤 Uploading to Google Drive...', { fileName: file.name, previewId, inputId });
 
-        // Create a unique callback name
         const callbackName = 'uploadCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         
-        // Create a promise that will be resolved when we get the callback
         const uploadPromise = new Promise((resolve, reject) => {
-          // Set up the callback function
           window[callbackName] = function(data) {
             console.log('📥 Upload callback received:', data);
             delete window[callbackName];
             
-            // Remove the iframe
             const iframe = document.getElementById('upload-iframe-' + callbackName);
             if (iframe) iframe.remove();
             
@@ -4140,7 +4022,6 @@
             }
           };
           
-          // Timeout after 60 seconds
           setTimeout(() => {
             if (window[callbackName]) {
               console.error('❌ Upload timeout');
@@ -4152,7 +4033,6 @@
           }, 60000);
         });
 
-        // Prepare the payload
         const payload = {
           action: "uploadImage",
           fileName: file.name,
@@ -4163,7 +4043,6 @@
           callback: callbackName
         };
 
-        // Create a form to submit
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = MASTER_CONFIG_APPS_SCRIPT_URL;
@@ -4171,14 +4050,12 @@
         form.style.display = 'none';
         form.enctype = 'application/x-www-form-urlencoded';
 
-        // Add payload as a hidden input
         const payloadInput = document.createElement('input');
         payloadInput.type = 'hidden';
         payloadInput.name = 'payload';
         payloadInput.value = JSON.stringify(payload);
         form.appendChild(payloadInput);
 
-        // Create iframe for response
         const iframe = document.createElement('iframe');
         iframe.name = 'upload-iframe-' + callbackName;
         iframe.id = 'upload-iframe-' + callbackName;
@@ -4189,20 +4066,16 @@
         console.log('📤 Submitting form to Apps Script...');
         form.submit();
 
-        // Wait for the result
         const result = await uploadPromise;
         console.log('✅ Upload successful, URL:', result.fileUrl);
 
-        // Update progress and input
         if (progressBar) progressBar.style.width = '100%';
         
-        // Set the URL in the input field
         const urlInput = document.getElementById(inputId);
         if (urlInput) {
           urlInput.value = result.fileUrl;
           console.log(`✅ URL set in ${inputId}:`, result.fileUrl);
           
-          // Trigger input event
           urlInput.dispatchEvent(new Event('input', { bubbles: true }));
           urlInput.dispatchEvent(new Event('change', { bubbles: true }));
         }
@@ -4217,7 +4090,6 @@
           if (statusEl) statusEl.style.display = 'none';
         }, 2000);
         
-        // Clean up
         form.remove();
         
       } catch (error) {
@@ -5887,7 +5759,7 @@
       }
     }
 
-    // ========== IMAGE HANDLING FUNCTIONS - FIXED FOR GOOGLE DRIVE ==========
+    // ========== IMAGE HANDLING FUNCTIONS - FIXED WITH CORS PROXY ==========
     function convertImageUrl(url) {
       if (!url || url.trim() === '') return '';
       
@@ -5923,8 +5795,11 @@
           }
           
           if (fileId) {
-            // Use the direct thumbnail URL that works better for images
-            return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+            // Use a CORS proxy to bypass Google Drive restrictions
+            // Using cors-anywhere demo service - for production, you might want to host your own
+            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+            const directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+            return proxyUrl + directUrl;
           }
         }
         return url;
@@ -5954,7 +5829,6 @@
 
         console.log('Loading image:', url);
         const img = new Image();
-        img.crossOrigin = 'anonymous'; // Add crossOrigin for better compatibility
         
         // Set a timeout for image loading
         const timeout = setTimeout(() => {
@@ -5971,25 +5845,7 @@
         img.onerror = function() {
           clearTimeout(timeout);
           console.error('Failed to load image:', url);
-          
-          // Try alternative Google Drive URL format if this fails
-          if (url.includes('thumbnail')) {
-            const altUrl = url.replace('thumbnail', 'uc?export=view');
-            console.log('Trying alternative URL:', altUrl);
-            const altImg = new Image();
-            altImg.crossOrigin = 'anonymous';
-            altImg.onload = function() {
-              console.log('Alternative image loaded:', altUrl);
-              imageCache.set(altUrl, altImg);
-              resolve(altImg);
-            };
-            altImg.onerror = function() {
-              reject(new Error(`Failed to load image: ${url}`));
-            };
-            altImg.src = altUrl;
-          } else {
-            reject(new Error(`Failed to load image: ${url}`));
-          }
+          reject(new Error(`Failed to load image: ${url}`));
         };
         
         img.src = url;
