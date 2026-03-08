@@ -20,6 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   
   <style>
+    /* All your existing styles remain exactly the same */
     /* ===== ORIGINAL STYLES - COMPLETELY PRESERVED ===== */
     * {
       box-sizing: border-box;
@@ -4357,7 +4358,7 @@
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx06h9aa6wDmtDz3jBwNgOuoiz7-NZY1nJaEwts3A7vIHRkWfAU5O3N4UNUooCwvEm7Lw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxiD9iQgHhtQ6iDfIoEydHtRhrusnYP0TFJB82QmdmaeX6faPw7UJ7KmS48yeZvdE9A/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzI5OMGERu2mHGAHpJEftGRFZHmAOPiSTUWPRF-fbA4VX21OTReEzf2r4pqv3yuV8G6/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -4700,37 +4701,107 @@
 
         console.log('📤 Uploading to Google Drive...', { fileName: file.name, previewId, inputId });
 
-        // Upload to Google Drive via Apps Script
-        const result = await uploadImageToDrive(file.name, base64Data, file.type);
+        // Create a unique callback name
+        const callbackName = 'uploadCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         
-        console.log('📥 Upload response:', result);
-        
+        // Create a promise that will be resolved when we get the callback
+        const uploadPromise = new Promise((resolve, reject) => {
+          // Set up the callback function
+          window[callbackName] = function(data) {
+            console.log('📥 Upload callback received:', data);
+            delete window[callbackName];
+            
+            // Remove the iframe
+            const iframe = document.getElementById('upload-iframe-' + callbackName);
+            if (iframe) iframe.remove();
+            
+            if (data && data.success) {
+              resolve(data);
+            } else {
+              reject(new Error(data?.error || 'Upload failed'));
+            }
+          };
+          
+          // Timeout after 60 seconds
+          setTimeout(() => {
+            if (window[callbackName]) {
+              console.error('❌ Upload timeout');
+              delete window[callbackName];
+              const iframe = document.getElementById('upload-iframe-' + callbackName);
+              if (iframe) iframe.remove();
+              reject(new Error('Upload timeout after 60 seconds'));
+            }
+          }, 60000);
+        });
+
+        // Prepare the payload
+        const payload = {
+          action: "uploadImage",
+          fileName: file.name,
+          mimeType: file.type,
+          fileData: base64Data,
+          username: currentUser ? currentUser.username : "",
+          role: currentUser ? currentUser.role : "",
+          callback: callbackName
+        };
+
+        // Create a form to submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = MASTER_CONFIG_APPS_SCRIPT_URL;
+        form.target = 'upload-iframe-' + callbackName;
+        form.style.display = 'none';
+        form.enctype = 'application/x-www-form-urlencoded';
+
+        // Add payload as a hidden input
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'payload';
+        input.value = JSON.stringify(payload);
+        form.appendChild(input);
+
+        // Create iframe for response
+        const iframe = document.createElement('iframe');
+        iframe.name = 'upload-iframe-' + callbackName;
+        iframe.id = 'upload-iframe-' + callbackName;
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+        document.body.appendChild(form);
+
+        console.log('📤 Submitting form to Apps Script...');
+        form.submit();
+
+        // Wait for the result
+        const result = await uploadPromise;
+        console.log('✅ Upload successful, URL:', result.fileUrl);
+
+        // Update progress and input
         if (progressBar) progressBar.style.width = '100%';
         
-        if (result && result.success) {
-          if (statusEl) {
-            statusEl.textContent = 'Upload complete!';
-            statusEl.style.color = '#22c55e';
-          }
+        // Set the URL in the input field
+        const input = document.getElementById(inputId);
+        if (input) {
+          input.value = result.fileUrl;
+          console.log(`✅ URL set in ${inputId}:`, result.fileUrl);
           
-          // Set the URL in the input field
-          const input = document.getElementById(inputId);
-          if (input) {
-            input.value = result.fileUrl;
-            console.log(`✅ URL set in ${inputId}:`, result.fileUrl);
-            
-            // Trigger input event to ensure any listeners know the value changed
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            input.dispatchEvent(new Event('change', { bubbles: true }));
-          }
-          
-          setTimeout(() => {
-            if (progressContainer) progressContainer.style.display = 'none';
-            if (statusEl) statusEl.style.display = 'none';
-          }, 2000);
-        } else {
-          throw new Error(result?.error || 'Upload failed');
+          // Trigger input event
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
         }
+        
+        if (statusEl) {
+          statusEl.textContent = 'Upload complete!';
+          statusEl.style.color = '#22c55e';
+        }
+        
+        setTimeout(() => {
+          if (progressContainer) progressContainer.style.display = 'none';
+          if (statusEl) statusEl.style.display = 'none';
+        }, 2000);
+        
+        // Clean up
+        form.remove();
+        
       } catch (error) {
         console.error('❌ Upload failed:', error);
         if (statusEl) {
@@ -4743,73 +4814,6 @@
           if (progressContainer) progressContainer.style.display = 'none';
           if (statusEl) statusEl.style.display = 'none';
         }, 3000);
-      }
-    }
-
-    // ========== UPLOAD IMAGE TO GOOGLE DRIVE ==========
-    async function uploadImageToDrive(fileName, fileData, mimeType) {
-      try {
-        console.log('🚀 Starting fetch upload...', { fileName, mimeType });
-        
-        const payload = {
-          action: "uploadImage",
-          fileName: fileName,
-          mimeType: mimeType,
-          fileData: fileData,
-          username: currentUser ? currentUser.username : "",
-          role: currentUser ? currentUser.role : ""
-        };
-
-        console.log('Sending payload to Apps Script...');
-        
-        // Create a unique ID for this upload to track response
-        const uploadId = 'upload_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        
-        // Set up message listener for the response
-        const responsePromise = new Promise((resolve, reject) => {
-          const messageHandler = function(event) {
-            console.log('📥 Message received:', event.data);
-            if (event.data && (event.data.success !== undefined)) {
-              console.log('📥 Upload response received:', event.data);
-              window.removeEventListener('message', messageHandler);
-              
-              if (event.data.success) {
-                resolve(event.data);
-              } else {
-                reject(new Error(event.data.error || 'Unknown error'));
-              }
-            }
-          };
-          
-          window.addEventListener('message', messageHandler);
-          
-          // Timeout after 30 seconds
-          setTimeout(() => {
-            window.removeEventListener('message', messageHandler);
-            reject(new Error('Upload timeout after 30 seconds'));
-          }, 30000);
-        });
-        
-        // Send the request
-        const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors', // This is key for CORS issues
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
-        });
-
-        console.log('Upload initiated, waiting for callback...');
-        
-        // Wait for the response via postMessage
-        const result = await responsePromise;
-        console.log('✅ Upload successful, URL:', result.fileUrl);
-        return result;
-        
-      } catch (error) {
-        console.error('❌ Upload fetch error:', error);
-        throw error;
       }
     }
 
@@ -5495,7 +5499,7 @@
       }
     }
 
-    // ========== SAVE QUESTION CHANGES - FIXED with proper image URL saving ==========
+    // ========== SAVE QUESTION CHANGES ==========
     async function saveQuestionChanges() {
       if (!isAdmin()) {
         alert("Unauthorized access");
@@ -5518,7 +5522,7 @@
         return;
       }
       
-      // Get all image URLs - make sure we get the latest values
+      // Get all image URLs
       const questionImageUrl = document.getElementById('editor-image-url').value.trim();
       const optionAImg = document.getElementById('editor-option-a-img').value.trim();
       const optionBImg = document.getElementById('editor-option-b-img').value.trim();
@@ -5593,7 +5597,6 @@
       
       console.log('📦 Final rowData being sent:', JSON.stringify(rowData, null, 2));
       
-      // Show circular loading animation
       const actionMessage = editMode === 'new' ? 'Adding new question...' : 'Saving changes...';
       showPDFOverlay(actionMessage);
       updatePDFStatus(actionMessage, 'Please wait...');
@@ -5614,9 +5617,8 @@
         console.log('Save result from Apps Script:', result);
         
         if (result && result.success) {
-          // Update the local questions array without reloading the entire chapter
+          // Update the local questions array
           if (editMode === 'edit') {
-            // Update existing question
             const questionIndex = parseInt(document.getElementById('question-editor-modal').dataset.questionIndex);
             if (!isNaN(questionIndex) && questions[questionIndex]) {
               
@@ -5630,7 +5632,7 @@
                 else if (answerLetter === 'D') correctIndex = 3;
               }
               
-              // Update the question object with all fields including image URLs
+              // Update the question object with all fields
               const updatedQuestion = {
                 ...questions[questionIndex],
                 question: rowData.question,
@@ -5696,7 +5698,7 @@
           // Force refresh of image cache for this question
           if (rowData.imageUrl) {
             const url = convertImageUrl(rowData.imageUrl);
-            imageCache.delete(url); // Remove from cache so it reloads fresh
+            imageCache.delete(url);
           }
           
         } else {
@@ -6491,23 +6493,41 @@
       }
     }
 
-    // ========== IMAGE HANDLING FUNCTIONS ==========
+    // ========== IMAGE HANDLING FUNCTIONS - FIXED ==========
     function convertImageUrl(url) {
       if (!url) return '';
       
-      // If it's already a full URL (including Google Drive), return it as-is
+      // If it's already a full URL
       if (url.startsWith('http://') || url.startsWith('https://')) {
-        // Special handling for Google Drive URLs to ensure they work
+        // Handle Google Drive URLs
         if (url.includes('drive.google.com')) {
-          // If it's a view URL, convert to direct download URL
-          if (url.includes('/file/d/')) {
-            const fileId = url.match(/\/d\/([^\/]+)/);
-            if (fileId && fileId[1]) {
-              return `https://drive.google.com/uc?export=view&id=${fileId[1]}`;
-            }
+          // Extract file ID from various Google Drive URL formats
+          let fileId = null;
+          
+          // Format: https://drive.google.com/file/d/FILE_ID/view
+          const fileMatch = url.match(/\/file\/d\/([^\/]+)/);
+          if (fileMatch && fileMatch[1]) {
+            fileId = fileMatch[1];
+          }
+          
+          // Format: https://drive.google.com/open?id=FILE_ID
+          const openMatch = url.match(/[?&]id=([^&]+)/);
+          if (openMatch && openMatch[1]) {
+            fileId = openMatch[1];
+          }
+          
+          // Format: https://drive.google.com/uc?export=view&id=FILE_ID
+          const ucMatch = url.match(/[?&]id=([^&]+)/);
+          if (ucMatch && ucMatch[1]) {
+            fileId = ucMatch[1];
+          }
+          
+          if (fileId) {
+            // Return direct download URL that works for images
+            return `https://drive.google.com/uc?export=view&id=${fileId}&t=${Date.now()}`;
           }
         }
-        return url;
+        return url + '?t=' + Date.now();
       }
 
       // Legacy GitHub path handling
@@ -6524,20 +6544,36 @@
 
     function loadImageWithCache(url) {
       return new Promise((resolve, reject) => {
+        // Check cache first
         const cached = imageCache.get(url);
         if (cached) {
+          console.log('Using cached image:', url);
           resolve(cached);
           return;
         }
 
+        console.log('Loading image:', url);
         const img = new Image();
+        
+        // Set a timeout for image loading
+        const timeout = setTimeout(() => {
+          reject(new Error(`Image load timeout: ${url}`));
+        }, 10000);
+        
         img.onload = function() {
+          clearTimeout(timeout);
+          console.log('Image loaded successfully:', url);
           imageCache.set(url, img);
           resolve(img);
         };
+        
         img.onerror = function() {
+          clearTimeout(timeout);
+          console.error('Failed to load image:', url);
           reject(new Error(`Failed to load image: ${url}`));
         };
+        
+        // Add cache buster to URL
         img.src = url;
       });
     }
@@ -6565,27 +6601,23 @@
 
       if (totalImagesToPreload === 0) return;
 
+      console.log('Preloading images:', urlsArray.length);
       showPreloadOverlay();
       updatePreloadProgress();
 
-      const CONCURRENT_LIMIT = 3;
-      const chunks = [];
-      for (let i = 0; i < urlsArray.length; i += CONCURRENT_LIMIT) {
-        chunks.push(urlsArray.slice(i, i + CONCURRENT_LIMIT));
-      }
-
-      for (const chunk of chunks) {
-        await Promise.allSettled(
-          chunk.map(url => 
-            loadImageWithCache(url)
-              .then(() => { imagesPreloaded++; updatePreloadProgress(); })
-              .catch(() => { imagesPreloaded++; updatePreloadProgress(); })
-          )
-        );
+      // Load images sequentially to avoid overwhelming
+      for (const url of urlsArray) {
+        try {
+          await loadImageWithCache(url);
+        } catch (error) {
+          console.error('Failed to preload image:', url, error);
+        }
+        imagesPreloaded++;
+        updatePreloadProgress();
         await new Promise(resolve => setTimeout(resolve, 100));
       }
 
-      hidePreloadOverlay();
+      setTimeout(hidePreloadOverlay, 500);
     }
 
     function showPreloadOverlay() {
@@ -7353,12 +7385,11 @@
         const jsonData = JSON.parse(data.substring(47).slice(0, -2));
         const rows = jsonData.table.rows;
 
-        // Handle empty chapter - allow admin to add questions
+        // Handle empty chapter
         if (rows.length === 0 || rows.length < 3) {
           questions = [];
           questionsLoaded = true;
           
-          // Show appropriate message based on user role
           if (isAdmin()) {
             questionTextEl.innerHTML = "📝 No questions found in this chapter.<br><br>Click the 'Add New Question' button below to create the first question.";
           } else {
@@ -7371,7 +7402,6 @@
           finishBtn.disabled = true;
           quizQuestionCountEl.textContent = "0 questions";
           
-          // Make sure add button stays visible for admin
           updateAdminControls();
           return;
         }
@@ -7666,11 +7696,13 @@
         .replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>')
         .replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim() + ' ' + marksHtml;
 
-      // Update icons visibility
       updateAdminControls();
 
-      if (q.imageUrl?.trim()) {
+      // Handle image display
+      if (q.imageUrl && q.imageUrl.trim() !== '') {
         const imageUrl = convertImageUrl(q.imageUrl.trim());
+        console.log('Loading question image:', imageUrl);
+        
         questionImageContainerEl.classList.add('visible');
         questionImageEl.style.display = "none";
         imageLoadingEl.style.display = "block";
@@ -7682,7 +7714,8 @@
             questionImageEl.style.display = "block";
             imageLoadingEl.style.display = "none";
           })
-          .catch(() => {
+          .catch((error) => {
+            console.error('Failed to load image:', error);
             imageLoadingEl.style.display = "none";
             imageErrorEl.style.display = "block";
           });
@@ -7739,11 +7772,12 @@
           const contentDiv = document.createElement("div");
           contentDiv.className = "option-content";
 
-          if (q.optionImages?.[idx]?.trim()) {
+          // Handle option images
+          if (q.optionImages && q.optionImages[idx] && q.optionImages[idx].trim() !== '') {
             const optionImageUrl = convertImageUrl(q.optionImages[idx].trim());
             const wrapper = document.createElement("div");
             wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
-            wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}">`;
+            wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
             contentDiv.appendChild(wrapper);
           } else {
             contentDiv.textContent = opt;
