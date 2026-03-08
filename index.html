@@ -21,7 +21,6 @@
   
   <style>
     /* All your existing styles remain exactly the same */
-    /* ===== ORIGINAL STYLES - COMPLETELY PRESERVED ===== */
     * {
       box-sizing: border-box;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -50,7 +49,6 @@
       color: #1f2937;
     }
 
-    /* ===== LOADING ANIMATIONS ===== */
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
@@ -66,11 +64,6 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes shimmer {
-      0% { background-position: -1000px 0; }
-      100% { background-position: 1000px 0; }
-    }
-
     .loading-spinner {
       border: 4px solid rgba(59, 130, 246, 0.2);
       border-top: 4px solid #3b82f6;
@@ -81,112 +74,6 @@
       margin: 20px auto;
     }
 
-    .loading-spinner-small {
-      border: 3px solid rgba(59, 130, 246, 0.2);
-      border-top: 3px solid #3b82f6;
-      border-radius: 50%;
-      width: 30px;
-      height: 30px;
-      animation: spin 1s linear infinite;
-      display: inline-block;
-      margin-right: 10px;
-    }
-
-    .loading-pulse {
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-
-    .loading-shimmer {
-      background: linear-gradient(90deg, 
-        rgba(30, 41, 59, 0.3) 0%, 
-        rgba(30, 41, 59, 0.5) 50%, 
-        rgba(30, 41, 59, 0.3) 100%);
-      background-size: 1000px 100%;
-      animation: shimmer 2s infinite;
-    }
-
-    .loading-container {
-      text-align: center;
-      padding: 40px;
-      color: #9ca3af;
-      grid-column: 1/-1;
-    }
-
-    .loading-text {
-      font-size: 1.1rem;
-      margin-top: 15px;
-      color: #93c5fd;
-    }
-
-    .loading-subtext {
-      font-size: 0.9rem;
-      margin-top: 8px;
-      color: #6b7280;
-    }
-
-    /* Skeleton loading */
-    .skeleton-card {
-      background: rgba(15, 23, 42, 0.5);
-      border-radius: 12px;
-      padding: 20px;
-      min-height: 120px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid rgba(75, 85, 99, 0.3);
-    }
-
-    .skeleton-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      background: rgba(75, 85, 99, 0.5);
-      margin-bottom: 10px;
-      animation: pulse 1.5s infinite;
-    }
-
-    .skeleton-title {
-      width: 80px;
-      height: 20px;
-      background: rgba(75, 85, 99, 0.5);
-      border-radius: 4px;
-      margin-bottom: 8px;
-      animation: pulse 1.5s infinite;
-    }
-
-    .skeleton-desc {
-      width: 120px;
-      height: 16px;
-      background: rgba(75, 85, 99, 0.5);
-      border-radius: 4px;
-      animation: pulse 1.5s infinite;
-    }
-
-    /* Card animations */
-    .class-card, .subject-card {
-      transition: all 0.2s ease;
-      opacity: 0;
-      animation: fadeIn 0.3s ease forwards;
-    }
-
-    .class-card:nth-child(1) { animation-delay: 0.05s; }
-    .class-card:nth-child(2) { animation-delay: 0.1s; }
-    .class-card:nth-child(3) { animation-delay: 0.15s; }
-    .class-card:nth-child(4) { animation-delay: 0.2s; }
-    .class-card:nth-child(5) { animation-delay: 0.25s; }
-    .class-card:nth-child(6) { animation-delay: 0.3s; }
-    .class-card:nth-child(7) { animation-delay: 0.35s; }
-    .class-card:nth-child(8) { animation-delay: 0.4s; }
-
-    .subject-card:nth-child(1) { animation-delay: 0.05s; }
-    .subject-card:nth-child(2) { animation-delay: 0.1s; }
-    .subject-card:nth-child(3) { animation-delay: 0.15s; }
-    .subject-card:nth-child(4) { animation-delay: 0.2s; }
-    .subject-card:nth-child(5) { animation-delay: 0.25s; }
-    .subject-card:nth-child(6) { animation-delay: 0.3s; }
-
-    /* ===== FIXED HEADER - Mobile optimized ===== */
     .fixed-header {
       position: fixed;
       top: 0;
@@ -223,7 +110,6 @@
       flex: 1;
     }
 
-    /* INCREASED LOGO SIZE */
     .logo-header {
       width: 90px !important;
       height: 90px !important;
@@ -250,7 +136,6 @@
       flex: 1;
     }
 
-    /* INCREASED TITLE SIZE - Left aligned */
     .header-title {
       font-size: 1.5rem !important;
       font-weight: 700;
@@ -267,7 +152,6 @@
       text-align: left;
     }
 
-    /* SUBTITLE - Smaller, left aligned */
     .header-subtitle {
       font-size: 0.85rem !important;
       color: #9ca3af;
@@ -290,7 +174,6 @@
       flex-shrink: 0;
     }
 
-    /* Menu toggle - right aligned */
     .menu-toggle {
       width: 48px;
       height: 48px;
@@ -322,7 +205,6 @@
       background: #1f2937;
     }
 
-    /* ===== SIDE MENU - Optimized spacing ===== */
     .side-menu {
       position: fixed;
       top: 76px;
@@ -531,7 +413,6 @@
       background: rgba(239, 68, 68, 0.1);
     }
 
-    /* ===== QUESTION NAVIGATION BUTTON COLORS ===== */
     .question-number-btn {
       width: 40px;
       height: 40px;
@@ -572,22 +453,10 @@
       box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
     }
 
-    body.light-mode .question-number-btn.current {
-      background: #3b82f6 !important;
-      border-color: #3b82f6 !important;
-      color: white !important;
-    }
-
     .question-number-btn.answered {
       background: rgba(34, 197, 94, 0.2) !important;
       border-color: #22c55e !important;
       color: #22c55e !important;
-    }
-
-    body.light-mode .question-number-btn.answered {
-      background: #dcfce7 !important;
-      border-color: #22c55e !important;
-      color: #166534 !important;
     }
 
     .question-number-btn.incorrect {
@@ -596,25 +465,12 @@
       color: #ef4444 !important;
     }
 
-    body.light-mode .question-number-btn.incorrect {
-      background: #fee2e2 !important;
-      border-color: #ef4444 !important;
-      color: #991b1b !important;
-    }
-
     .question-number-btn.not-answered {
       background: rgba(75, 85, 99, 0.2) !important;
       border-color: rgba(75, 85, 99, 0.5) !important;
       color: #9ca3af !important;
     }
 
-    body.light-mode .question-number-btn.not-answered {
-      background: #f3f4f6 !important;
-      border-color: #d1d5db !important;
-      color: #9ca3af !important;
-    }
-
-    /* ===== SUBJECTIVE QUESTION STYLES ===== */
     .subjective-container {
       margin: 15px 0;
       padding: 15px;
@@ -684,14 +540,6 @@
       box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.5);
     }
 
-    .marks-indicator {
-      font-size: 0.9rem;
-      color: #f59e0b;
-      margin-left: 10px;
-      font-weight: 600;
-    }
-
-    /* ===== BUTTON GROUPS STYLING - No labels, just depth, center aligned text ===== */
     .button-groups-container {
       display: flex;
       flex-direction: column;
@@ -720,10 +568,6 @@
       border-color: rgba(59, 130, 246, 0.5);
     }
 
-    body.light-mode .button-group:hover {
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
-    }
-
     .group-buttons {
       display: flex;
       flex-direction: column;
@@ -748,7 +592,6 @@
       transform: translateX(5px) !important;
     }
 
-    /* Reattempt status banner */
     .reattempt-status {
       margin: 10px 0;
       padding: 12px;
@@ -770,19 +613,6 @@
       color: #fdba74;
     }
 
-    body.light-mode .reattempt-status.completed {
-      background: #dcfce7;
-      color: #166534;
-      border-color: #22c55e;
-    }
-
-    body.light-mode .reattempt-status.in-progress {
-      background: #fff3e0;
-      color: #b45309;
-      border-color: #f97316;
-    }
-
-    /* ===== ADMIN EDITING STYLES ===== */
     .question-edit-icon {
       position: absolute;
       top: 10px;
@@ -813,7 +643,6 @@
       filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
     }
 
-    /* Delete button styles - positioned where WhatsApp icon would be */
     .question-delete-icon {
       position: absolute;
       top: 10px;
@@ -872,7 +701,6 @@
       box-shadow: 0 10px 22px rgba(16, 185, 129, 0.5);
     }
 
-    /* Toggle switch for image URLs */
     .image-toggle-row {
       display: flex;
       align-items: center;
@@ -902,7 +730,6 @@
       color: #9ca3af;
     }
 
-    /* Image URL sections */
     .image-url-section {
       transition: all 0.3s ease;
       overflow: hidden;
@@ -912,7 +739,6 @@
       display: none !important;
     }
 
-    /* Image Upload Styles */
     .image-upload-container {
       margin: 15px 0;
       padding: 15px;
@@ -1067,7 +893,6 @@
       opacity: 1;
     }
 
-    /* Modal Styles */
     .modal {
       position: fixed;
       top: 0;
@@ -1231,102 +1056,6 @@
       background: #111827;
     }
 
-    body.light-mode .btn-secondary:hover {
-      background: #e5e7eb;
-    }
-
-    /* Mobile responsiveness for admin controls */
-    @media (max-width: 700px) {
-      .question-edit-icon {
-        top: 8px;
-        right: 45px;
-        width: 22px;
-        height: 22px;
-      }
-      
-      .question-edit-icon img {
-        width: 22px;
-        height: 22px;
-      }
-
-      .question-delete-icon {
-        top: 8px;
-        right: 10px;
-        width: 22px;
-        height: 22px;
-      }
-
-      .question-delete-icon img {
-        width: 22px;
-        height: 22px;
-      }
-      
-      .modal-content {
-        padding: 15px;
-        width: 95%;
-      }
-      
-      .modal-footer {
-        flex-direction: column;
-        gap: 10px;
-      }
-      
-      .btn-primary,
-      .btn-secondary,
-      .btn-success {
-        width: 100%;
-        padding: 10px 16px;
-        font-size: 0.95rem;
-      }
-      
-      .upload-area {
-        padding: 15px;
-      }
-      
-      .upload-icon {
-        font-size: 30px;
-      }
-      
-      .upload-text {
-        font-size: 0.9rem;
-      }
-      
-      .upload-hint {
-        font-size: 0.75rem;
-      }
-      
-      .upload-buttons {
-        flex-direction: column;
-      }
-    }
-
-    @media (max-width: 400px) {
-      .question-edit-icon {
-        top: 6px;
-        right: 40px;
-        width: 20px;
-        height: 20px;
-      }
-      
-      .question-edit-icon img {
-        width: 20px;
-        height: 20px;
-      }
-
-      .question-delete-icon {
-        top: 6px;
-        right: 10px;
-        width: 20px;
-        height: 20px;
-      }
-
-      .question-delete-icon img {
-        width: 20px;
-        height: 20px;
-      }
-    }
-
-    /* ===== REST OF ORIGINAL STYLES ===== */
     .main-content {
       width: 100%;
       max-width: 720px;
@@ -1381,18 +1110,10 @@
       letter-spacing: 0.5px;
     }
 
-    body.light-mode .login-title {
-      color: #1f2937;
-    }
-
     .login-subtitle {
       font-size: 0.95rem;
       color: #9ca3af;
       text-align: center;
-    }
-
-    body.light-mode .login-subtitle {
-      color: #6b7280;
     }
 
     .login-form {
@@ -1412,10 +1133,6 @@
       font-size: 0.9rem;
       color: #d1d5db;
       font-weight: 500;
-    }
-
-    body.light-mode .form-group label {
-      color: #4b5563;
     }
 
     .form-input {
@@ -1440,10 +1157,6 @@
       outline: none;
       border-color: #3b82f6;
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-    }
-
-    .form-input::placeholder {
-      color: #6b7280;
     }
 
     .password-input-wrapper {
@@ -1471,10 +1184,6 @@
 
     .password-toggle:hover {
       color: #60a5fa;
-    }
-
-    .password-toggle:active {
-      transform: translateY(-50%) scale(0.95);
     }
 
     .attempt-counter {
@@ -1576,10 +1285,6 @@
       color: #e5e7eb;
       text-align: center;
       margin-bottom: 5px;
-    }
-
-    body.light-mode .error-subtitle {
-      color: #1f2937;
     }
 
     .error-user-info {
@@ -1745,10 +1450,6 @@
       text-align: center;
     }
 
-    body.light-mode .config-info {
-      color: #2563eb;
-    }
-
     .request-credentials-btn {
       background: linear-gradient(to right, #25d366, #128c7e);
       color: white;
@@ -1814,11 +1515,6 @@
       width: 100%;
     }
 
-    body.light-mode .class-selection {
-      background: #ffffff;
-      border: 1px solid rgba(0, 0, 0, 0.1);
-    }
-
     .screen-header {
       text-align: center;
       margin-bottom: 30px;
@@ -1834,10 +1530,6 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
       letter-spacing: 0.5px;
-    }
-
-    body.light-mode .screen-title {
-      color: #1f2937;
     }
 
     .screen-subtitle {
@@ -1869,21 +1561,11 @@
       min-height: 120px;
     }
 
-    body.light-mode .class-card {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-    }
-
     .class-card:hover {
       transform: translateY(-4px);
       background: rgba(31, 41, 55, 0.9);
       border-color: #3b82f6;
       box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
-    }
-
-    body.light-mode .class-card:hover {
-      background: #ffffff;
-      border-color: #3b82f6;
     }
 
     .class-icon {
@@ -1895,10 +1577,6 @@
       font-size: 1.1rem;
       font-weight: 600;
       color: #e5e7eb;
-    }
-
-    body.light-mode .class-name {
-      color: #1f2937;
     }
 
     .class-desc {
@@ -1915,11 +1593,6 @@
       border: 1px solid rgba(148, 163, 184, 0.3);
       display: none;
       width: 100%;
-    }
-
-    body.light-mode .subject-selection {
-      background: #ffffff;
-      border: 1px solid rgba(0, 0, 0, 0.1);
     }
 
     .subject-grid {
@@ -1944,19 +1617,10 @@
       min-height: 140px;
     }
 
-    body.light-mode .subject-card {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-    }
-
     .subject-card:hover {
       transform: translateY(-4px);
       background: rgba(31, 41, 55, 0.9);
       box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
-    }
-
-    body.light-mode .subject-card:hover {
-      background: #ffffff;
     }
 
     .subject-icon {
@@ -1968,10 +1632,6 @@
       font-size: 1.2rem;
       font-weight: 600;
       color: #e5e7eb;
-    }
-
-    body.light-mode .subject-name {
-      color: #1f2937;
     }
 
     .subject-desc {
@@ -1995,12 +1655,6 @@
       gap: 6px;
     }
 
-    body.light-mode .back-btn {
-      color: #4b5563;
-      border: 1px solid #e5e7eb;
-      background: #f3f4f6;
-    }
-
     .back-btn:hover {
       background: rgba(75, 85, 99, 0.25);
       transform: translateY(-1px);
@@ -2016,22 +1670,12 @@
       width: 100%;
     }
 
-    body.light-mode .quiz-container {
-      background: #ffffff;
-      border: 1px solid rgba(0, 0, 0, 0.1);
-    }
-
     .topic-section {
       margin-bottom: 20px;
       padding: 15px;
       background: rgba(15, 23, 42, 0.7);
       border-radius: 12px;
       border: 1px solid rgba(75, 85, 99, 0.5);
-    }
-
-    body.light-mode .topic-section {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
     }
 
     .topic-info {
@@ -2057,11 +1701,6 @@
       flex-wrap: wrap;
     }
 
-    body.light-mode .current-path {
-      color: #2563eb;
-      background: rgba(59, 130, 246, 0.1);
-    }
-
     .path-separator {
       color: #6b7280;
       margin: 0 4px;
@@ -2076,10 +1715,6 @@
 
     .path-link:hover {
       color: #60a5fa;
-    }
-
-    body.light-mode .path-link {
-      color: #2563eb;
     }
 
     .topic-name {
@@ -2119,12 +1754,6 @@
       min-width: 200px;
     }
 
-    body.light-mode .topic-select {
-      background: #ffffff;
-      color: #1f2937;
-      border: 1px solid #d1d5db;
-    }
-
     .start-btn {
       border-radius: 999px;
       border: none;
@@ -2159,11 +1788,6 @@
       display: block;
     }
 
-    body.light-mode .question-navigation {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-    }
-
     .question-navigation.collapsed {
       padding: 12px 15px;
     }
@@ -2192,10 +1816,6 @@
 
     .navigation-title i {
       font-size: 1rem;
-    }
-
-    body.light-mode .navigation-title {
-      color: #2563eb;
     }
 
     .question-grid {
@@ -2288,10 +1908,6 @@
       color: #cbd5f5;
       margin-bottom: 10px;
       flex-wrap: wrap;
-    }
-
-    body.light-mode .toggle-row {
-      color: #4b5563;
     }
 
     .toggle-row.hidden {
@@ -2412,10 +2028,6 @@
       gap: 8px;
     }
 
-    body.light-mode .progress {
-      color: #6b7280;
-    }
-
     .progress.hidden {
       display: none;
     }
@@ -2426,10 +2038,6 @@
       background: rgba(15, 23, 42, 0.7);
       border-radius: 999px;
       overflow: hidden;
-    }
-
-    body.light-mode .progress-bar {
-      background: #e5e7eb;
     }
 
     .progress-bar-fill {
@@ -2450,11 +2058,6 @@
       border: 1px solid rgba(59, 130, 246, 0.2);
     }
 
-    body.light-mode .timer-container {
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-    }
-
     .timer-container.hidden {
       display: none;
     }
@@ -2466,10 +2069,6 @@
       margin-right: 10px;
     }
 
-    body.light-mode .timer-label {
-      color: #2563eb;
-    }
-
     .timer-display {
       font-size: 1.1rem;
       font-weight: 700;
@@ -2477,10 +2076,6 @@
       font-family: 'Courier New', monospace;
       letter-spacing: 1px;
       white-space: nowrap;
-    }
-
-    body.light-mode .timer-display {
-      color: #2563eb;
     }
 
     .timer-warning {
@@ -2521,11 +2116,6 @@
       position: relative;
     }
 
-    body.light-mode .question-box {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-    }
-
     .question-text {
       font-size: 1rem;
       font-weight: 500;
@@ -2535,11 +2125,6 @@
       margin-bottom: 8px;
     }
 
-    body.light-mode .question-text {
-      color: #1f2937;
-    }
-
-    /* Question marks badge */
     .question-marks-badge {
       display: inline-block;
       background: rgba(245, 158, 11, 0.2);
@@ -2551,12 +2136,6 @@
       font-weight: 600;
       margin-left: 10px;
       white-space: nowrap;
-    }
-
-    body.light-mode .question-marks-badge {
-      background: #fef3c7;
-      color: #b45309;
-      border-color: #fbbf24;
     }
 
     .question-whatsapp-icon {
@@ -2622,12 +2201,6 @@
       overflow: hidden;
     }
 
-    body.light-mode .option {
-      background: #ffffff;
-      color: #1f2937;
-      border: 1px solid #d1d5db;
-    }
-
     .option-label {
       display: flex;
       align-items: center;
@@ -2639,12 +2212,6 @@
       color: #93c5fd;
       padding: 8px;
       flex-shrink: 0;
-    }
-
-    body.light-mode .option-label {
-      background: #e5e7eb;
-      color: #2563eb;
-      border-right: 1px solid #d1d5db;
     }
 
     .option-content {
@@ -2660,10 +2227,6 @@
       transform: translateY(-1px);
     }
 
-    body.light-mode .option:hover:not(.disabled):not(.in-reattempt-locked) {
-      background: #f3f4f6;
-    }
-
     .option.correct {
       background: rgba(22, 163, 74, 0.25);
       border-color: #22c55e;
@@ -2674,15 +2237,6 @@
       color: #86efac;
     }
 
-    body.light-mode .option.correct {
-      background: #dcfce7;
-    }
-
-    body.light-mode .option.correct .option-label {
-      background: #bbf7d0;
-      color: #166534;
-    }
-
     .option.incorrect {
       background: rgba(220, 38, 38, 0.2);
       border-color: #f97373;
@@ -2691,15 +2245,6 @@
     .option.incorrect .option-label {
       background: rgba(220, 38, 38, 0.3);
       color: #fca5a5;
-    }
-
-    body.light-mode .option.incorrect {
-      background: #fee2e2;
-    }
-
-    body.light-mode .option.incorrect .option-label {
-      background: #fecaca;
-      color: #991b1b;
     }
 
     .option.disabled {
@@ -2737,12 +2282,6 @@
       color: #fca5a5;
     }
 
-    /* Style for reattempt mode options */
-    .in-reattempt-mode .option:not(.disabled):hover {
-      background: rgba(31, 41, 55, 0.9);
-      transform: translateY(-1px);
-    }
-
     .feedback {
       min-height: 22px;
       font-size: 0.9rem;
@@ -2758,20 +2297,10 @@
       border: 1px solid rgba(22, 163, 74, 0.2);
     }
 
-    body.light-mode .feedback.correct {
-      color: #166534;
-      background: #dcfce7;
-    }
-
     .feedback.incorrect {
       color: #fb7185;
       background: rgba(220, 38, 38, 0.1);
       border: 1px solid rgba(220, 38, 38, 0.2);
-    }
-
-    body.light-mode .feedback.incorrect {
-      color: #991b1b;
-      background: #fee2e2;
     }
 
     .explanation {
@@ -2783,10 +2312,6 @@
       font-size: 0.9rem;
       color: #93c5fd;
       animation: fadeIn 0.3s ease-in;
-    }
-
-    body.light-mode .explanation {
-      color: #2563eb;
     }
 
     .explanation strong {
@@ -2820,10 +2345,6 @@
       flex: 1;
     }
 
-    button {
-      transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.1s ease;
-    }
-
     #previous-btn {
       border: none;
       border-radius: 999px;
@@ -2835,12 +2356,6 @@
       color: #e5e7eb;
       border: 1px solid rgba(75, 85, 99, 0.8);
       min-width: 120px;
-    }
-
-    body.light-mode #previous-btn {
-      background: #f3f4f6;
-      color: #1f2937;
-      border: 1px solid #d1d5db;
     }
 
     #previous-btn:hover:enabled {
@@ -2863,12 +2378,6 @@
       color: #e5e7eb;
       border: 1px solid rgba(75, 85, 99, 0.8);
       min-width: 120px;
-    }
-
-    body.light-mode #next-btn {
-      background: #f3f4f6;
-      color: #1f2937;
-      border: 1px solid #d1d5db;
     }
 
     #next-btn:hover:enabled {
@@ -2909,10 +2418,6 @@
       color: #e5e7eb;
     }
 
-    body.light-mode .score-box {
-      color: #1f2937;
-    }
-
     .final-score {
       margin-top: 10px;
       padding: 15px;
@@ -2920,11 +2425,6 @@
       background: rgba(15, 23, 42, 0.7);
       border: 1px solid rgba(75, 85, 99, 0.7);
       font-size: 0.9rem;
-    }
-
-    body.light-mode .final-score {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
     }
 
     .result-header {
@@ -2955,20 +2455,11 @@
       min-height: 40px;
     }
 
-    body.light-mode .stat-item {
-      background: #ffffff;
-      border: 1px solid #e5e7eb;
-    }
-
     .stat-label {
       font-size: 0.8rem;
       color: #9ca3af;
       flex-shrink: 0;
       min-width: 100px;
-    }
-
-    body.light-mode .stat-label {
-      color: #6b7280;
     }
 
     .stat-value {
@@ -2978,10 +2469,6 @@
       text-align: right;
       flex: 1;
       padding-left: 8px;
-    }
-
-    body.light-mode .stat-value {
-      color: #1f2937;
     }
 
     .stat-percentage {
@@ -3003,11 +2490,6 @@
       color: #9ca3af;
     }
 
-    body.light-mode .result-summary {
-      background: #f9fafb;
-      color: #6b7280;
-    }
-
     .result-message {
       font-size: 0.9rem;
       color: #e5e7eb;
@@ -3017,10 +2499,6 @@
       background: rgba(59, 130, 246, 0.1);
       border: 1px solid rgba(59, 130, 246, 0.2);
       text-align: center;
-    }
-
-    body.light-mode .result-message {
-      color: #1f2937;
     }
 
     .restart-btn {
@@ -3108,11 +2586,6 @@
       box-shadow: 0 10px 22px rgba(249, 115, 22, 0.5);
     }
 
-    .reattempt-incorrect-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
     .pdf-report-btn {
       background: linear-gradient(to right, #dc2626, #b91c1c);
       color: white;
@@ -3135,11 +2608,6 @@
     .pdf-report-btn:hover {
       transform: translateY(-1px);
       box-shadow: 0 10px 22px rgba(220, 38, 38, 0.5);
-    }
-
-    .pdf-report-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
     }
 
     .questions-answers-btn {
@@ -3210,7 +2678,6 @@
       font-weight: bold;
     }
 
-    /* PDF OVERLAY with circular animation */
     .pdf-overlay {
       position: fixed;
       top: 0;
@@ -3250,7 +2717,6 @@
       max-width: 400px;
     }
 
-    /* Reattempt header styles */
     #reattempt-header, #review-header {
       margin: 10px 0;
       padding: 10px;
@@ -3270,52 +2736,6 @@
       color: #fca5a5;
     }
 
-    /* ===== SUBJECTIVE BUTTONS MOBILE FIX ===== */
-    @media (max-width: 700px) {
-      .subjective-buttons {
-        flex-direction: column;
-        gap: 8px;
-        width: 100%;
-      }
-      
-      .subjective-btn {
-        width: 100%;
-        padding: 10px 16px;
-        font-size: 0.9rem;
-        border-radius: 40px;
-        margin: 0;
-      }
-      
-      .subjective-container {
-        padding: 15px 12px;
-        border-width: 1.5px;
-      }
-      
-      .subjective-title {
-        font-size: 1rem;
-        margin-bottom: 12px;
-        text-align: center;
-      }
-    }
-
-    @media (max-width: 400px) {
-      .subjective-btn {
-        padding: 8px 14px;
-        font-size: 0.85rem;
-        border-radius: 30px;
-      }
-      
-      .subjective-container {
-        padding: 12px 10px;
-        border-width: 1px;
-      }
-      
-      .subjective-title {
-        font-size: 0.95rem;
-        margin-bottom: 10px;
-      }
-    }
-
     @media (max-width: 700px) {
       .fixed-header {
         padding: 8px 12px;
@@ -3323,10 +2743,6 @@
       
       .header-content {
         gap: 8px;
-      }
-      
-      .header-left {
-        width: auto;
       }
       
       .logo-header {
@@ -4569,7 +3985,6 @@
     function toggleImageUrlFields() {
       const isChecked = showImageUrlsCheckbox.checked;
       
-      // Toggle question image URL section
       if (questionImageUploadSection) {
         if (isChecked) {
           questionImageUploadSection.classList.remove('hidden');
@@ -4578,7 +3993,6 @@
         }
       }
       
-      // Toggle option image URL sections
       const optionSections = [
         optionAImageSection,
         optionBImageSection,
@@ -4604,12 +4018,16 @@
       const uploadArea = document.getElementById(fieldId);
       if (!uploadArea) return;
       
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.accept = 'image/*';
-      fileInput.style.display = 'none';
-      fileInput.id = 'file-input-' + fieldId;
-      document.body.appendChild(fileInput);
+      // Create file input if it doesn't exist
+      let fileInput = document.getElementById('file-input-' + fieldId);
+      if (!fileInput) {
+        fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.style.display = 'none';
+        fileInput.id = 'file-input-' + fieldId;
+        document.body.appendChild(fileInput);
+      }
 
       // Handle click on upload area
       uploadArea.addEventListener('click', () => {
@@ -4694,9 +4112,9 @@
       try {
         // Convert file to base64
         const base64Data = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target.result);
-          reader.readAsDataURL(file);
+          const fileReader = new FileReader();
+          fileReader.onload = (e) => resolve(e.target.result);
+          fileReader.readAsDataURL(file);
         });
 
         console.log('📤 Uploading to Google Drive...', { fileName: file.name, previewId, inputId });
@@ -4754,11 +4172,11 @@
         form.enctype = 'application/x-www-form-urlencoded';
 
         // Add payload as a hidden input
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'payload';
-        input.value = JSON.stringify(payload);
-        form.appendChild(input);
+        const payloadInput = document.createElement('input');
+        payloadInput.type = 'hidden';
+        payloadInput.name = 'payload';
+        payloadInput.value = JSON.stringify(payload);
+        form.appendChild(payloadInput);
 
         // Create iframe for response
         const iframe = document.createElement('iframe');
@@ -4779,14 +4197,14 @@
         if (progressBar) progressBar.style.width = '100%';
         
         // Set the URL in the input field
-        const input = document.getElementById(inputId);
-        if (input) {
-          input.value = result.fileUrl;
+        const urlInput = document.getElementById(inputId);
+        if (urlInput) {
+          urlInput.value = result.fileUrl;
           console.log(`✅ URL set in ${inputId}:`, result.fileUrl);
           
           // Trigger input event
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-          input.dispatchEvent(new Event('change', { bubbles: true }));
+          urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+          urlInput.dispatchEvent(new Event('change', { bubbles: true }));
         }
         
         if (statusEl) {
@@ -4970,7 +4388,6 @@
 
     // ========== UPDATE ADMIN CONTROLS AND WHATSAPP VISIBILITY ==========
     function updateAdminControls() {
-      // WhatsApp icon: visible to non-admin users, hidden for admin
       if (questionWhatsappIconEl) {
         if (questionsLoaded && questions.length > 0) {
           questionWhatsappIconEl.style.display = isAdmin() ? 'none' : 'block';
@@ -4979,7 +4396,6 @@
         }
       }
       
-      // Edit icon: only visible to admin
       if (questionEditIconEl) {
         if (isAdmin() && questionsLoaded && questions.length > 0) {
           questionEditIconEl.style.display = 'block';
@@ -4988,7 +4404,6 @@
         }
       }
       
-      // Delete icon: only visible to admin
       if (questionDeleteIconEl) {
         if (isAdmin() && questionsLoaded && questions.length > 0) {
           questionDeleteIconEl.style.display = 'block';
@@ -4997,7 +4412,6 @@
         }
       }
       
-      // Add question button: visible to admin when chapter is selected (even if no questions)
       if (addQuestionBtn) {
         if (isAdmin() && currentSubjectConfig && currentTopicName) {
           adminAddQuestionDiv.style.display = 'block';
@@ -5282,21 +4696,17 @@
         const result = await deleteQuestionFromSheet(sheetId, gid, originalIndex);
         
         if (result && result.success) {
-          // Remove question from local array
           questions.splice(currentIndex, 1);
           userAnswers.splice(currentIndex, 1);
           userMarks.splice(currentIndex, 1);
           
-          // Adjust current index if needed
           if (currentIndex >= questions.length) {
             currentIndex = Math.max(0, questions.length - 1);
           }
           
-          // Update UI
           quizQuestionCountEl.textContent = `${questions.length} questions`;
           
           if (questions.length === 0) {
-            // No questions left
             questionTextEl.innerHTML = isAdmin() ? 
               "📝 No questions in this chapter.<br><br>Click the 'Add New Question' button below to create the first question." :
               "No questions available in this chapter yet.";
@@ -5384,7 +4794,6 @@
       document.getElementById('editor-question-type').value = q.isSubjective ? 'subjective' : 'mcq';
       document.getElementById('editor-question').value = q.question;
       
-      // Reset image URL toggle and hide fields by default
       if (showImageUrlsCheckbox) {
         showImageUrlsCheckbox.checked = false;
         toggleImageUrlFields();
@@ -5396,7 +4805,6 @@
       
       toggleQuestionTypeSections(q.isSubjective ? 'subjective' : 'mcq');
       
-      // Clear previews
       ['question', 'option-a', 'option-b', 'option-c', 'option-d'].forEach(prefix => {
         const preview = document.getElementById(`preview-${prefix}-image`);
         if (preview) {
@@ -5434,7 +4842,6 @@
       
       document.getElementById('question-editor-modal').style.display = 'flex';
       
-      // Setup upload handlers
       setTimeout(setupImageUploadHandlers, 100);
     }
 
@@ -5444,7 +4851,6 @@
       document.getElementById('editor-question-type').value = 'mcq';
       document.getElementById('editor-question').value = '';
       
-      // Reset image URL toggle and hide fields by default
       if (showImageUrlsCheckbox) {
         showImageUrlsCheckbox.checked = false;
         toggleImageUrlFields();
@@ -5454,13 +4860,11 @@
       document.getElementById('editor-marks').value = '1';
       document.getElementById('editor-explanation').value = '';
       
-      // Clear all fields
       ['a', 'b', 'c', 'd'].forEach(letter => {
         document.getElementById(`editor-option-${letter}`).value = '';
         document.getElementById(`editor-option-${letter}-img`).value = '';
       });
       
-      // Clear previews
       ['question', 'option-a', 'option-b', 'option-c', 'option-d'].forEach(prefix => {
         const preview = document.getElementById(`preview-${prefix}-image`);
         if (preview) {
@@ -5478,7 +4882,6 @@
       
       document.getElementById('question-editor-modal').style.display = 'flex';
       
-      // Setup upload handlers
       setTimeout(setupImageUploadHandlers, 100);
     }
 
@@ -5522,7 +4925,6 @@
         return;
       }
       
-      // Get all image URLs
       const questionImageUrl = document.getElementById('editor-image-url').value.trim();
       const optionAImg = document.getElementById('editor-option-a-img').value.trim();
       const optionBImg = document.getElementById('editor-option-b-img').value.trim();
@@ -5617,12 +5019,10 @@
         console.log('Save result from Apps Script:', result);
         
         if (result && result.success) {
-          // Update the local questions array
           if (editMode === 'edit') {
             const questionIndex = parseInt(document.getElementById('question-editor-modal').dataset.questionIndex);
             if (!isNaN(questionIndex) && questions[questionIndex]) {
               
-              // Determine correct index from answer letter
               let correctIndex = 0;
               if (questionType !== 'subjective' && rowData.answer) {
                 const answerLetter = rowData.answer.toUpperCase();
@@ -5632,7 +5032,6 @@
                 else if (answerLetter === 'D') correctIndex = 3;
               }
               
-              // Update the question object with all fields
               const updatedQuestion = {
                 ...questions[questionIndex],
                 question: rowData.question,
@@ -5652,7 +5051,6 @@
               });
             }
           } else if (editMode === 'new') {
-            // Determine correct index for new question
             let correctIndex = 0;
             if (questionType !== 'subjective' && rowData.answer) {
               const answerLetter = rowData.answer.toUpperCase();
@@ -5662,7 +5060,6 @@
               else if (answerLetter === 'D') correctIndex = 3;
             }
             
-            // Add new question locally
             const newQuestion = {
               question: rowData.question,
               options: questionType === 'mcq' ? [rowData.option1, rowData.option2, rowData.option3, rowData.option4].filter(opt => opt !== '') : [],
@@ -5676,7 +5073,6 @@
             };
             questions.push(newQuestion);
             
-            // Update user answers arrays
             userAnswers.push(undefined);
             userMarks.push(undefined);
             
@@ -5686,7 +5082,6 @@
             });
           }
           
-          // Update UI
           quizQuestionCountEl.textContent = `${questions.length} questions`;
           updateQuestionNavigation();
           renderQuestion();
@@ -5695,7 +5090,6 @@
           document.getElementById('question-editor-modal').style.display = 'none';
           alert('Question saved successfully!');
           
-          // Force refresh of image cache for this question
           if (rowData.imageUrl) {
             const url = convertImageUrl(rowData.imageUrl);
             imageCache.delete(url);
@@ -6527,7 +5921,7 @@
             return `https://drive.google.com/uc?export=view&id=${fileId}&t=${Date.now()}`;
           }
         }
-        return url + '?t=' + Date.now();
+        return url + '&t=' + Date.now();
       }
 
       // Legacy GitHub path handling
@@ -7385,7 +6779,6 @@
         const jsonData = JSON.parse(data.substring(47).slice(0, -2));
         const rows = jsonData.table.rows;
 
-        // Handle empty chapter
         if (rows.length === 0 || rows.length < 3) {
           questions = [];
           questionsLoaded = true;
