@@ -4011,7 +4011,7 @@
       });
     }
 
-    // ========== IMAGE UPLOAD FUNCTIONS ==========
+    // ========== IMAGE UPLOAD FUNCTIONS - FIXED ==========
     let currentUploadField = null;
 
     function setupImageUpload(fieldId, previewId, inputId) {
@@ -5887,14 +5887,14 @@
       }
     }
 
-    // ========== IMAGE HANDLING FUNCTIONS - FIXED ==========
+    // ========== IMAGE HANDLING FUNCTIONS - FIXED FOR GOOGLE DRIVE ==========
     function convertImageUrl(url) {
-      if (!url) return '';
+      if (!url || url.trim() === '') return '';
       
       // If it's already a full URL
       if (url.startsWith('http://') || url.startsWith('https://')) {
         // Handle Google Drive URLs
-        if (url.includes('drive.google.com')) {
+        if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
           // Extract file ID from various Google Drive URL formats
           let fileId = null;
           
@@ -5916,12 +5916,18 @@
             fileId = ucMatch[1];
           }
           
+          // Format: https://drive.usercontent.google.com/download?id=FILE_ID
+          const downloadMatch = url.match(/[?&]id=([^&]+)/);
+          if (downloadMatch && downloadMatch[1]) {
+            fileId = downloadMatch[1];
+          }
+          
           if (fileId) {
-            // Return direct download URL that works for images
-            return `https://drive.google.com/uc?export=view&id=${fileId}&t=${Date.now()}`;
+            // Use the direct thumbnail URL that works better for images
+            return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
           }
         }
-        return url + '&t=' + Date.now();
+        return url;
       }
 
       // Legacy GitHub path handling
@@ -5933,7 +5939,7 @@
           imagePath = `images/${imagePath}`;
         }
       }
-      return imagePath + '?t=' + Date.now();
+      return imagePath;
     }
 
     function loadImageWithCache(url) {
@@ -5948,6 +5954,7 @@
 
         console.log('Loading image:', url);
         const img = new Image();
+        img.crossOrigin = 'anonymous'; // Add crossOrigin for better compatibility
         
         // Set a timeout for image loading
         const timeout = setTimeout(() => {
@@ -5964,10 +5971,27 @@
         img.onerror = function() {
           clearTimeout(timeout);
           console.error('Failed to load image:', url);
-          reject(new Error(`Failed to load image: ${url}`));
+          
+          // Try alternative Google Drive URL format if this fails
+          if (url.includes('thumbnail')) {
+            const altUrl = url.replace('thumbnail', 'uc?export=view');
+            console.log('Trying alternative URL:', altUrl);
+            const altImg = new Image();
+            altImg.crossOrigin = 'anonymous';
+            altImg.onload = function() {
+              console.log('Alternative image loaded:', altUrl);
+              imageCache.set(altUrl, altImg);
+              resolve(altImg);
+            };
+            altImg.onerror = function() {
+              reject(new Error(`Failed to load image: ${url}`));
+            };
+            altImg.src = altUrl;
+          } else {
+            reject(new Error(`Failed to load image: ${url}`));
+          }
         };
         
-        // Add cache buster to URL
         img.src = url;
       });
     }
@@ -5999,7 +6023,7 @@
       showPreloadOverlay();
       updatePreloadProgress();
 
-      // Load images sequentially to avoid overwhelming
+      // Load images sequentially
       for (const url of urlsArray) {
         try {
           await loadImageWithCache(url);
