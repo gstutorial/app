@@ -9097,52 +9097,5 @@
   </script>
   
   <!-- NO SERVICE WORKER REGISTRATION - Completely disabled -->
-
-<!-- ===== Production Image Rendering Fix ===== -->
-<script>
-function fixDrive(url){
- if(!url) return "";
- url = url.trim();
-
- if(url.includes("uc?export=view")) return url;
-
- if(url.includes("/file/d/")){
-   try{
-     let id = url.split("/d/")[1].split("/")[0];
-     return "https://drive.google.com/uc?export=view&id="+id;
-   }catch(e){}
- }
-
- if(url.includes("open?id=")){
-   try{
-     let id=url.split("id=")[1];
-     return "https://drive.google.com/uc?export=view&id="+id;
-   }catch(e){}
- }
-
- return url;
-}
-
-function normalizeImages(){
- document.querySelectorAll("img").forEach(img=>{
-   if(img.src && img.src.includes("drive.google.com")){
-     img.src = fixDrive(img.src);
-   }
-   img.onerror=function(){
-     this.style.display="none";
-   };
- });
-}
-
-const observer=new MutationObserver(()=>{
- normalizeImages();
-});
-
-window.addEventListener("load",()=>{
- normalizeImages();
- observer.observe(document.body,{childList:true,subtree:true});
-});
-</script>
-
 </body>
 </html>
