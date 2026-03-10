@@ -1003,6 +1003,15 @@
       background: linear-gradient(90deg, #3b82f6, #22c55e);
       transition: width 0.3s ease;
     }
+    
+    .upload-progress-bar.active {
+      animation: progress-pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes progress-pulse {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 1; }
+    }
 
     .upload-status {
       margin-top: 8px;
@@ -1201,11 +1210,44 @@
       cursor: pointer;
       transition: all 0.2s ease;
       box-shadow: 0 8px 18px rgba(37, 99, 235, 0.4);
+      position: relative;
     }
 
-    .btn-primary:hover {
+    .btn-primary:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 10px 22px rgba(37, 99, 235, 0.5);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    /* ===== SAVE BUTTON SPINNER ===== */
+    .btn-primary.saving {
+      position: relative;
+      color: transparent !important;
+      pointer-events: none;
+    }
+
+    .btn-primary.saving::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      top: 50%;
+      left: 50%;
+      margin-left: -10px;
+      margin-top: -10px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: save-spin 0.8s linear infinite;
+    }
+
+    @keyframes save-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     .btn-secondary {
@@ -4357,7 +4399,7 @@
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx06h9aa6wDmtDz3jBwNgOuoiz7-NZY1nJaEwts3A7vIHRkWfAU5O3N4UNUooCwvEm7Lw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwK5aWpBHLw1_ZepuOLhyfaqlHue8el057D9ZU4Gz7abT6xj7KT67qOoGNh8skbUj8/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx2i_UJiBWtEEptFEGFKaYbE-o0XAh7rgpn4PmB9Ow5vwH4XFNphSXQbkw7pZK760Bs/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -4646,107 +4688,7 @@
       });
     }
 
-    async function handleImageUpload(file, previewId, inputId) {
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file (JPEG, PNG, GIF)');
-        return;
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
-        return;
-      }
-
-      // Show preview
-      const preview = document.getElementById(previewId);
-      if (!preview) {
-        console.error('Preview element not found:', previewId);
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        preview.src = e.target.result;
-        preview.classList.add('visible');
-      };
-      reader.readAsDataURL(file);
-
-      // Show progress
-      const container = preview.closest('.image-upload-container');
-      if (!container) {
-        console.error('Container not found for preview:', previewId);
-        return;
-      }
-      
-      const progressContainer = container.querySelector('.upload-progress');
-      const progressBar = container.querySelector('.upload-progress-bar');
-      const statusEl = container.querySelector('.upload-status');
-      
-      if (progressContainer) progressContainer.style.display = 'block';
-      if (statusEl) {
-        statusEl.style.display = 'block';
-        statusEl.textContent = 'Uploading to Google Drive...';
-        statusEl.style.color = '#93c5fd';
-      }
-      if (progressBar) progressBar.style.width = '30%';
-
-      try {
-        // Convert file to base64
-        const base64Data = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target.result);
-          reader.readAsDataURL(file);
-        });
-
-        console.log('📤 Uploading to Google Drive...', { fileName: file.name, previewId, inputId });
-
-        // Upload to Google Drive via Apps Script
-        const result = await uploadImageToDrive(file.name, base64Data, file.type);
-        
-        console.log('📥 Upload response:', result);
-        
-        if (progressBar) progressBar.style.width = '100%';
-        
-        if (result && result.success) {
-          if (statusEl) {
-            statusEl.textContent = 'Upload complete!';
-            statusEl.style.color = '#22c55e';
-          }
-          
-          // Set the URL in the input field
-          const input = document.getElementById(inputId);
-          if (input) {
-            input.value = result.fileUrl;
-            console.log(`✅ URL set in ${inputId}:`, result.fileUrl);
-            
-            // Trigger input event to ensure any listeners know the value changed
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            input.dispatchEvent(new Event('change', { bubbles: true }));
-          }
-          
-          setTimeout(() => {
-            if (progressContainer) progressContainer.style.display = 'none';
-            if (statusEl) statusEl.style.display = 'none';
-          }, 2000);
-        } else {
-          throw new Error(result?.error || 'Upload failed');
-        }
-      } catch (error) {
-        console.error('❌ Upload failed:', error);
-        if (statusEl) {
-          statusEl.textContent = 'Upload failed: ' + error.message;
-          statusEl.style.color = '#ef4444';
-        }
-        if (progressBar) progressBar.style.width = '0%';
-        
-        setTimeout(() => {
-          if (progressContainer) progressContainer.style.display = 'none';
-          if (statusEl) statusEl.style.display = 'none';
-        }, 3000);
-      }
-    }
-
-    // ========== UPLOAD IMAGE TO GOOGLE DRIVE ==========
+    // ========== UPLOAD IMAGE TO GOOGLE DRIVE - IMPROVED VERSION ==========
     async function uploadImageToDrive(fileName, fileData, mimeType) {
       try {
         console.log('🚀 Starting fetch upload...', { fileName, mimeType });
@@ -4790,16 +4732,27 @@
           }, 30000);
         });
         
-        // Send the request
+        // Send the request with proper CORS handling
         const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
           method: 'POST',
-          mode: 'no-cors', // This is key for CORS issues
+          mode: 'cors', // Changed from 'no-cors' to allow reading response
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(payload)
         });
 
+        // Try to parse response if we get one
+        try {
+          const responseData = await response.json();
+          console.log('Response data:', responseData);
+          if (responseData && responseData.success) {
+            return responseData;
+          }
+        } catch (e) {
+          console.log('Could not parse JSON response, waiting for postMessage');
+        }
+        
         console.log('Upload initiated, waiting for callback...');
         
         // Wait for the response via postMessage
@@ -4810,6 +4763,122 @@
       } catch (error) {
         console.error('❌ Upload fetch error:', error);
         throw error;
+      }
+    }
+
+    // ========== HANDLE IMAGE UPLOAD - IMPROVED VERSION ==========
+    async function handleImageUpload(file, previewId, inputId) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file (JPEG, PNG, GIF)');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+
+      // Show preview
+      const preview = document.getElementById(previewId);
+      if (!preview) {
+        console.error('Preview element not found:', previewId);
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        preview.src = e.target.result;
+        preview.classList.add('visible');
+      };
+      reader.readAsDataURL(file);
+
+      // Show progress
+      const container = preview.closest('.image-upload-container');
+      if (!container) {
+        console.error('Container not found for preview:', previewId);
+        return;
+      }
+      
+      const progressContainer = container.querySelector('.upload-progress');
+      const progressBar = container.querySelector('.upload-progress-bar');
+      const statusEl = container.querySelector('.upload-status');
+      
+      if (progressContainer) progressContainer.style.display = 'block';
+      if (progressBar) {
+        progressBar.style.width = '30%';
+        progressBar.classList.add('active');
+      }
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'Uploading to Google Drive...';
+        statusEl.style.color = '#93c5fd';
+      }
+
+      try {
+        // Convert file to base64
+        const base64Data = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.readAsDataURL(file);
+        });
+
+        console.log('📤 Uploading to Google Drive...', { fileName: file.name, previewId, inputId });
+
+        // Upload to Google Drive via Apps Script
+        const result = await uploadImageToDrive(file.name, base64Data, file.type);
+        
+        console.log('📥 Upload response:', result);
+        
+        if (progressBar) {
+          progressBar.style.width = '100%';
+          progressBar.classList.remove('active');
+        }
+        
+        if (result && result.success) {
+          if (statusEl) {
+            statusEl.textContent = 'Upload complete!';
+            statusEl.style.color = '#22c55e';
+          }
+          
+          // Set the URL in the input field
+          const input = document.getElementById(inputId);
+          if (input) {
+            input.value = result.fileUrl;
+            console.log(`✅ URL set in ${inputId}:`, result.fileUrl);
+            
+            // Trigger input event to ensure any listeners know the value changed
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            
+            // Also update the preview if it's a different element
+            if (previewId !== inputId.replace('-img', '-image').replace('editor-', 'preview-')) {
+              // Additional handling if needed
+            }
+          }
+          
+          // Hide progress after delay
+          setTimeout(() => {
+            if (progressContainer) progressContainer.style.display = 'none';
+            if (statusEl) statusEl.style.display = 'none';
+          }, 2000);
+        } else {
+          throw new Error(result?.error || 'Upload failed');
+        }
+      } catch (error) {
+        console.error('❌ Upload failed:', error);
+        if (statusEl) {
+          statusEl.textContent = 'Upload failed: ' + error.message;
+          statusEl.style.color = '#ef4444';
+        }
+        if (progressBar) {
+          progressBar.style.width = '0%';
+          progressBar.classList.remove('active');
+        }
+        
+        setTimeout(() => {
+          if (progressContainer) progressContainer.style.display = 'none';
+          if (statusEl) statusEl.style.display = 'none';
+        }, 3000);
       }
     }
 
@@ -5495,13 +5564,14 @@
       }
     }
 
-    // ========== SAVE QUESTION CHANGES - FIXED with proper image URL saving ==========
+    // ========== SAVE QUESTION CHANGES - WITH CIRCULAR ANIMATION ==========
     async function saveQuestionChanges() {
       if (!isAdmin()) {
         alert("Unauthorized access");
         return;
       }
 
+      const saveBtn = document.getElementById('editor-save-btn');
       const editMode = document.getElementById('question-editor-modal').dataset.editMode;
       const originalIndex = document.getElementById('question-editor-modal').dataset.originalIndex;
       const questionType = document.getElementById('editor-question-type').value;
@@ -5593,10 +5663,9 @@
       
       console.log('📦 Final rowData being sent:', JSON.stringify(rowData, null, 2));
       
-      // Show circular loading animation
-      const actionMessage = editMode === 'new' ? 'Adding new question...' : 'Saving changes...';
-      showPDFOverlay(actionMessage);
-      updatePDFStatus(actionMessage, 'Please wait...');
+      // Show circular loading animation on save button
+      saveBtn.classList.add('saving');
+      saveBtn.disabled = true;
       
       try {
         const trimmed = topicSelectEl.value;
@@ -5689,7 +5758,9 @@
           updateQuestionNavigation();
           renderQuestion();
           
-          hidePDFOverlay();
+          // Remove loading animation and close modal
+          saveBtn.classList.remove('saving');
+          saveBtn.disabled = false;
           document.getElementById('question-editor-modal').style.display = 'none';
           alert('Question saved successfully!');
           
@@ -5704,7 +5775,8 @@
         }
       } catch (error) {
         console.error('Error saving question:', error);
-        hidePDFOverlay();
+        saveBtn.classList.remove('saving');
+        saveBtn.disabled = false;
         alert('Error saving question: ' + error.message);
       }
     }
