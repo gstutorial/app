@@ -4255,9 +4255,9 @@
               <div class="upload-buttons">
                 <button class="upload-clear-btn" onclick="clearImageUpload('preview-question-image', 'editor-image-url')">Clear</button>
               </div>
-              <!-- Hidden input field for image URL - we'll set this via JavaScript after upload -->
+              <!-- Hidden input field for image URL -->
               <input type="hidden" id="editor-image-url">
-              <p style="color: #9ca3af; font-size: 0.8rem; margin-top: 5px;">Image will be uploaded and URL will be saved automatically</p>
+              <p style="color: #9ca3af; font-size: 0.8rem; margin-top: 5px;">Image will be uploaded and saved automatically</p>
             </div>
           </div>
         </div>
@@ -4390,7 +4390,7 @@
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx06h9aa6wDmtDz3jBwNgOuoiz7-NZY1nJaEwts3A7vIHRkWfAU5O3N4UNUooCwvEm7Lw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_T3mJJPpylrAelHL5ynmiGHmER38e0vKxc4eTfEH_A5_U4jtIIcAIFafWvBXuzBgH/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyPrxReFRc-AFSVaDNiPFEnc5OprBZwHogDFVIqDvwkp6icMmjzrdtT3g6ErMBNPBC6/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -4639,7 +4639,7 @@
     // ========== IMAGE UPLOAD FUNCTIONS ==========
     let currentUploadField = null;
 
-    function setupImageUpload(fieldId, previewId, inputId) {
+    function setupImageUpload(fieldId, previewId, inputId, fieldName) {
       const uploadArea = document.getElementById(fieldId);
       if (!uploadArea) return;
       
@@ -4673,23 +4673,23 @@
         const files = e.dataTransfer.files;
         if (files.length > 0) {
           currentUploadField = { previewId, inputId };
-          handleImageUpload(files[0], previewId, inputId);
+          handleImageUpload(files[0], previewId, inputId, fieldName);
         }
       });
 
       // Handle file selection
       fileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
-          handleImageUpload(e.target.files[0], previewId, inputId);
+          handleImageUpload(e.target.files[0], previewId, inputId, fieldName);
         }
         fileInput.value = ''; // Reset so same file can be selected again
       });
     }
 
-    // ========== UPLOAD IMAGE TO GOOGLE DRIVE - SIMPLIFIED VERSION ==========
-    async function uploadImageToDrive(fileName, fileData, mimeType) {
+    // ========== UPLOAD IMAGE TO GOOGLE DRIVE - FIXED VERSION ==========
+    async function uploadImageToDrive(fileName, fileData, mimeType, fieldId, rowIndex) {
       return new Promise((resolve, reject) => {
-        console.log('🚀 Starting upload...', { fileName, mimeType });
+        console.log('🚀 Starting upload...', { fileName, mimeType, fieldId, rowIndex });
         
         const formData = new FormData();
         formData.append('action', 'uploadImage');
@@ -4698,6 +4698,10 @@
         formData.append('fileData', fileData);
         formData.append('username', currentUser ? currentUser.username : '');
         formData.append('role', currentUser ? currentUser.role : '');
+        formData.append('fieldId', fieldId);
+        formData.append('sheetId', currentSubjectConfig?.sheetId || '');
+        formData.append('gid', currentSubjectConfig?.chapters?.[topicSelectEl.value] || '');
+        formData.append('rowIndex', rowIndex);
         
         // Use fetch with no-cors mode
         fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
@@ -4706,17 +4710,13 @@
           body: formData
         })
         .then(() => {
-          // Since we can't read the response with no-cors, we'll simulate a successful upload
-          // The actual URL will be set when saving the question
           console.log('Upload initiated successfully');
           
-          // For now, create a temporary URL using the filename
-          // This will be replaced when the question is saved
-          const tempUrl = `https://drive.google.com/uc?export=view&id=temp_${Date.now()}`;
+          // Since we can't read the response with no-cors, we'll simulate success
+          // The actual URL will be saved by Apps Script directly to the sheet
           resolve({ 
             success: true, 
-            fileUrl: tempUrl,
-            message: 'Upload initiated. URL will be saved when you save the question.'
+            message: 'Upload initiated. Image will be saved to sheet.'
           });
         })
         .catch(error => {
@@ -4726,8 +4726,8 @@
       });
     }
 
-    // ========== HANDLE IMAGE UPLOAD - SIMPLIFIED ==========
-    async function handleImageUpload(file, previewId, inputId) {
+    // ========== HANDLE IMAGE UPLOAD - FIXED ==========
+    async function handleImageUpload(file, previewId, inputId, fieldName) {
       if (!file.type.startsWith('image/')) {
         alert('Please select an image file (JPEG, PNG, GIF)');
         return;
@@ -4782,10 +4782,18 @@
           reader.readAsDataURL(file);
         });
 
-        console.log('📤 Uploading to Google Drive...', { fileName: file.name, previewId, inputId });
+        console.log('📤 Uploading to Google Drive...', { fileName: file.name, previewId, inputId, fieldName });
+
+        // Get the row index for the current question
+        let rowIndex = '';
+        const editMode = document.getElementById('question-editor-modal').dataset.editMode;
+        if (editMode === 'edit') {
+          const originalIndex = document.getElementById('question-editor-modal').dataset.originalIndex;
+          rowIndex = originalIndex;
+        }
 
         // Upload to Google Drive via Apps Script
-        const result = await uploadImageToDrive(file.name, base64Data, file.type);
+        const result = await uploadImageToDrive(file.name, base64Data, file.type, fieldName, rowIndex);
         
         console.log('📥 Upload response:', result);
         
@@ -4800,11 +4808,12 @@
             statusEl.style.color = '#22c55e';
           }
           
-          // Set the URL in the hidden input field
+          // For now, we'll set a marker in the hidden input
+          // The actual URL will be saved by Apps Script directly to the sheet
           const input = document.getElementById(inputId);
           if (input) {
-            input.value = result.fileUrl;
-            console.log(`✅ URL set in ${inputId}:`, result.fileUrl);
+            input.value = 'uploaded'; // Just a marker that image was uploaded
+            console.log(`✅ Upload marker set in ${inputId}`);
           }
           
           // Hide progress after delay
@@ -4853,11 +4862,11 @@
     }
 
     function setupImageUploadHandlers() {
-      setupImageUpload('upload-question-image', 'preview-question-image', 'editor-image-url');
-      setupImageUpload('upload-option-a-image', 'preview-option-a-image', 'editor-option-a-img');
-      setupImageUpload('upload-option-b-image', 'preview-option-b-image', 'editor-option-b-img');
-      setupImageUpload('upload-option-c-image', 'preview-option-c-image', 'editor-option-c-img');
-      setupImageUpload('upload-option-d-image', 'preview-option-d-image', 'editor-option-d-img');
+      setupImageUpload('upload-question-image', 'preview-question-image', 'editor-image-url', 'imageUrl');
+      setupImageUpload('upload-option-a-image', 'preview-option-a-image', 'editor-option-a-img', 'optionImage1');
+      setupImageUpload('upload-option-b-image', 'preview-option-b-image', 'editor-option-b-img', 'optionImage2');
+      setupImageUpload('upload-option-c-image', 'preview-option-c-image', 'editor-option-c-img', 'optionImage3');
+      setupImageUpload('upload-option-d-image', 'preview-option-d-image', 'editor-option-d-img', 'optionImage4');
     }
 
     // ========== PASSWORD TOGGLE FUNCTION ==========
@@ -5726,7 +5735,7 @@
           alert('Question saved successfully!');
           
           // Force refresh of image cache for this question
-          if (rowData.imageUrl) {
+          if (rowData.imageUrl && !rowData.imageUrl.startsWith('uploaded')) {
             const url = convertImageUrl(rowData.imageUrl);
             imageCache.delete(url); // Remove from cache so it reloads fresh
           }
