@@ -4390,7 +4390,7 @@
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx06h9aa6wDmtDz3jBwNgOuoiz7-NZY1nJaEwts3A7vIHRkWfAU5O3N4UNUooCwvEm7Lw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyPrxReFRc-AFSVaDNiPFEnc5OprBZwHogDFVIqDvwkp6icMmjzrdtT3g6ErMBNPBC6/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwi77kMP6N7J-HwFZRSDrSJOPZZxlyvvdhlXp_3b4vvpgk7jfdq5C9XYj-QFrVgqp5F/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -4691,38 +4691,95 @@
       return new Promise((resolve, reject) => {
         console.log('🚀 Starting upload...', { fileName, mimeType, fieldId, rowIndex });
         
-        const formData = new FormData();
-        formData.append('action', 'uploadImage');
-        formData.append('fileName', fileName);
-        formData.append('mimeType', mimeType);
-        formData.append('fileData', fileData);
-        formData.append('username', currentUser ? currentUser.username : '');
-        formData.append('role', currentUser ? currentUser.role : '');
-        formData.append('fieldId', fieldId);
-        formData.append('sheetId', currentSubjectConfig?.sheetId || '');
-        formData.append('gid', currentSubjectConfig?.chapters?.[topicSelectEl.value] || '');
-        formData.append('rowIndex', rowIndex);
+        // Create a unique callback name
+        const callbackName = 'uploadCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         
-        // Use fetch with no-cors mode
-        fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: formData
-        })
-        .then(() => {
-          console.log('Upload initiated successfully');
-          
-          // Since we can't read the response with no-cors, we'll simulate success
-          // The actual URL will be saved by Apps Script directly to the sheet
-          resolve({ 
-            success: true, 
-            message: 'Upload initiated. Image will be saved to sheet.'
-          });
-        })
-        .catch(error => {
-          console.error('Upload error:', error);
-          reject(error);
+        // Create a hidden iframe for form submission
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.name = 'upload_iframe_' + callbackName;
+        document.body.appendChild(iframe);
+        
+        // Create a form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = MASTER_CONFIG_APPS_SCRIPT_URL;
+        form.target = iframe.name;
+        form.enctype = 'multipart/form-data';
+        
+        // Add form fields
+        const fields = {
+          action: 'uploadImage',
+          fileName: fileName,
+          mimeType: mimeType,
+          fileData: fileData,
+          username: currentUser ? currentUser.username : '',
+          role: currentUser ? currentUser.role : '',
+          fieldId: fieldId,
+          sheetId: currentSubjectConfig?.sheetId || '',
+          gid: currentSubjectConfig?.chapters?.[topicSelectEl.value] || '',
+          rowIndex: rowIndex,
+          callback: callbackName
+        };
+        
+        Object.keys(fields).forEach(key => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = fields[key];
+          form.appendChild(input);
         });
+        
+        document.body.appendChild(form);
+        
+        // Set up message listener for the response
+        const messageHandler = function(event) {
+          console.log('📥 Message received:', event.data);
+          if (event.data && event.data.callback === callbackName) {
+            console.log('📥 Upload response received:', event.data);
+            window.removeEventListener('message', messageHandler);
+            
+            // Clean up
+            setTimeout(() => {
+              if (iframe && iframe.parentNode) {
+                iframe.parentNode.removeChild(iframe);
+              }
+              if (form && form.parentNode) {
+                form.parentNode.removeChild(form);
+              }
+            }, 100);
+            
+            if (event.data.success) {
+              resolve(event.data);
+            } else {
+              reject(new Error(event.data.error || 'Unknown error'));
+            }
+          }
+        };
+        
+        window.addEventListener('message', messageHandler);
+        
+        // Handle iframe load event (fallback)
+        iframe.onload = function() {
+          // This is a fallback - the main response should come via postMessage
+          console.log('Iframe loaded');
+        };
+        
+        // Timeout after 30 seconds
+        const timeoutId = setTimeout(() => {
+          window.removeEventListener('message', messageHandler);
+          if (iframe && iframe.parentNode) {
+            iframe.parentNode.removeChild(iframe);
+          }
+          if (form && form.parentNode) {
+            form.parentNode.removeChild(form);
+          }
+          reject(new Error('Upload timeout after 30 seconds'));
+        }, 30000);
+        
+        // Submit the form
+        console.log('Submitting form to Apps Script...');
+        form.submit();
       });
     }
 
@@ -4808,12 +4865,11 @@
             statusEl.style.color = '#22c55e';
           }
           
-          // For now, we'll set a marker in the hidden input
-          // The actual URL will be saved by Apps Script directly to the sheet
+          // Set the actual URL in the hidden input
           const input = document.getElementById(inputId);
-          if (input) {
-            input.value = 'uploaded'; // Just a marker that image was uploaded
-            console.log(`✅ Upload marker set in ${inputId}`);
+          if (input && result.fileUrl) {
+            input.value = result.fileUrl;
+            console.log(`✅ URL set in ${inputId}:`, result.fileUrl);
           }
           
           // Hide progress after delay
@@ -5735,7 +5791,7 @@
           alert('Question saved successfully!');
           
           // Force refresh of image cache for this question
-          if (rowData.imageUrl && !rowData.imageUrl.startsWith('uploaded')) {
+          if (rowData.imageUrl) {
             const url = convertImageUrl(rowData.imageUrl);
             imageCache.delete(url); // Remove from cache so it reloads fresh
           }
