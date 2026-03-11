@@ -4420,7 +4420,7 @@
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwf3FEX0Lcpq7IUOdM01uje7T4vWfVVSjObcFy4x4pPVikU5JshK_5-aCAV_T1swZ5cJQ/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbycA8sdmCtMGCpbUpozqr56tpLFdR34NPMPYBmaSXdjBH2MwYVZspYMfUOJD43l-ysL/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxW16vUbJFgTPLM8IoUXimlA2Tp5j1nLj5wS2Uj69TvOM8txehiUVqMKUtfPD3ybM8/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -4718,19 +4718,20 @@
 
     // ========== UPLOAD IMAGE TO GOOGLE DRIVE - FIXED WITH FETCH ==========
    async function uploadImageToDrive(fileName, fileData, mimeType, fieldId, rowIndex, tempId) {
-      console.log('🚀 Starting fetch upload...', { fileName, mimeType, fieldId, rowIndex, tempId });
-      
       const formData = new FormData();
-      formData.append('fileData', fileData);
       
-      // FIX: Use the arguments passed to the function (fileName and mimeType)
-      // instead of trying to access a non-existent "file" object
-      formData.append('fileName', fileName); 
+      // THIS LINE IS REQUIRED
+      formData.append('action', 'uploadImage'); 
+      
+      formData.append('fileData', fileData);
+      formData.append('fileName', fileName);
+      // ... rest of your code
       formData.append('mimeType', mimeType);
       
       formData.append('username', currentUser ? currentUser.username : '');
       formData.append('role', currentUser ? currentUser.role : '');
       formData.append('token', currentUser ? currentUser.token : ''); 
+      // ... (rest of the formData.append lines stay the same)
       formData.append('fieldId', fieldId);
       formData.append('sheetId', currentSubjectConfig?.sheetId || '');
       formData.append('gid', currentSubjectConfig?.chapters?.[topicSelectEl.value] || '');
