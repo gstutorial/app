@@ -4717,16 +4717,20 @@
     }
 
     // ========== UPLOAD IMAGE TO GOOGLE DRIVE - FIXED WITH FETCH ==========
-    async function uploadImageToDrive(fileName, fileData, mimeType, fieldId, rowIndex, tempId) {
+   async function uploadImageToDrive(fileName, fileData, mimeType, fieldId, rowIndex, tempId) {
       console.log('🚀 Starting fetch upload...', { fileName, mimeType, fieldId, rowIndex, tempId });
       
       const formData = new FormData();
       formData.append('fileData', fileData);
-      formData.append('fileName', file.name);
-      formData.append('mimeType', file.type);
+      
+      // FIX: Use the arguments passed to the function (fileName and mimeType)
+      // instead of trying to access a non-existent "file" object
+      formData.append('fileName', fileName); 
+      formData.append('mimeType', mimeType);
+      
       formData.append('username', currentUser ? currentUser.username : '');
       formData.append('role', currentUser ? currentUser.role : '');
-      formData.append('token', currentUser ? currentUser.token : ''); // <--- Token added here!
+      formData.append('token', currentUser ? currentUser.token : ''); 
       formData.append('fieldId', fieldId);
       formData.append('sheetId', currentSubjectConfig?.sheetId || '');
       formData.append('gid', currentSubjectConfig?.chapters?.[topicSelectEl.value] || '');
@@ -4751,7 +4755,6 @@
         throw error;
       }
     }
-
     // ========== HANDLE IMAGE UPLOAD ==========
     async function handleImageUpload(file, previewId, inputId, fieldName) {
       if (!file.type.startsWith('image/')) {
