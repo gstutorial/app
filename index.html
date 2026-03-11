@@ -6510,28 +6510,36 @@
 
     // ========== IMPROVED IMAGE HANDLING FUNCTIONS ==========
     function convertImageUrl(url) {
-      if (!url || url === 'null' || url === 'undefined') return '';
+      if (!url) return '';
       
-      // If it's already a full URL (including Google Drive), process it
+      // If it's already a full URL, process it
       if (url.startsWith('http://') || url.startsWith('https://')) {
-        // Special handling for Google Drive URLs
+        // Special handling for Google Drive URLs to bypass recent embedding restrictions
         if (url.includes('drive.google.com')) {
-          // Handle different Google Drive URL formats
-          if (url.includes('/file/d/')) {
-            const fileId = url.match(/\/d\/([^\/]+)/);
-            if (fileId && fileId[1]) {
-              return `https://drive.google.com/uc?export=view&id=${fileId[1]}`;
+          let fileId = null;
+          
+          // Match format: https://drive.google.com/file/d/FILE_ID/view
+          const matchD = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+          if (matchD && matchD[1]) {
+            fileId = matchD[1];
+          } 
+          // Match format: https://drive.google.com/open?id=FILE_ID or /uc?id=FILE_ID
+          else {
+            const matchId = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (matchId && matchId[1]) {
+              fileId = matchId[1];
             }
           }
-          // If it's already a direct view URL, return as is
-          if (url.includes('uc?export=view')) {
-            return url;
+          
+          // If we successfully extracted an ID, use the thumbnail endpoint
+          if (fileId) {
+            // sz=w1000 sets a max-width of 1000px, which keeps quality high while loading fast
+            return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
           }
         }
         return url;
       }
 
-      // Return empty string for non-URLs
       return '';
     }
 
