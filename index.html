@@ -5356,6 +5356,7 @@
     }
 
     // ========== DELETE CURRENT QUESTION ==========
+    // ========== DELETE CURRENT QUESTION ==========
     async function deleteCurrentQuestion() {
       if (!isAdmin()) {
         alert("Unauthorized access");
@@ -5383,7 +5384,7 @@
       try {
         const result = await deleteQuestionFromSheet(sheetId, gid, originalIndex);
         
-       if (result && result.success) {
+        if (result && result.success) {
           hidePDFOverlay();
           alert('Question deleted successfully!');
           
@@ -5425,14 +5426,19 @@
         } else {
           throw new Error(result?.error || 'Failed to delete question');
         }
-          hidePDFOverlay();
-          alert('Question deleted successfully!');
-        } else {
-          throw new Error(result?.error || 'Failed to delete question');
-        }
       } catch (error) {
         console.error('Error deleting question:', error);
         hidePDFOverlay();
+        
+        if (error.error === 'Question index out of range') {
+          alert('The question you are trying to delete may have already been removed. Refreshing the question list...');
+          await loadQuestionsFromGoogleSheet(topicSelectEl.value);
+        } else {
+          alert('Error deleting question: ' + (error.error || error.message));
+        }
+      }
+    }
+    hidePDFOverlay();
         
         // Show more specific error message
         if (error.error === 'Question index out of range') {
@@ -5623,6 +5629,7 @@
     }
 
     // ========== SAVE QUESTION CHANGES - WITH CIRCULAR ANIMATION AND TEXT ==========
+    // ========== SAVE QUESTION CHANGES ==========
     async function saveQuestionChanges() {
       if (!isAdmin()) {
         alert("Unauthorized access");
@@ -5634,7 +5641,6 @@
       const originalIndex = document.getElementById('question-editor-modal').dataset.originalIndex;
       const questionType = document.getElementById('editor-question-type').value;
       const tempId = document.getElementById('question-editor-modal').dataset.tempId || '';
-      const currentQuestionIndex = parseInt(document.getElementById('question-editor-modal').dataset.questionIndex) || 0;
       
       const question = document.getElementById('editor-question').value.trim();
       if (!question) {
@@ -5648,19 +5654,11 @@
         return;
       }
       
-      // Get all image URLs from hidden inputs
       const questionImageUrl = document.getElementById('editor-image-url').value.trim();
       const optionAImg = document.getElementById('editor-option-a-img').value.trim();
       const optionBImg = document.getElementById('editor-option-b-img').value.trim();
       const optionCImg = document.getElementById('editor-option-c-img').value.trim();
       const optionDImg = document.getElementById('editor-option-d-img').value.trim();
-      
-      console.log('🔍 Image URLs being saved:');
-      console.log('Question Image URL:', questionImageUrl);
-      console.log('Option A Image:', optionAImg);
-      console.log('Option B Image:', optionBImg);
-      console.log('Option C Image:', optionCImg);
-      console.log('Option D Image:', optionDImg);
       
       let rowData;
       
@@ -5679,7 +5677,6 @@
         }
         
         const optionImages = [optionAImg, optionBImg, optionCImg, optionDImg];
-        
         const answer = document.getElementById('editor-answer-mcq').value;
         
         rowData = {
@@ -5721,9 +5718,6 @@
         };
       }
       
-      console.log('📦 Final rowData being sent:', JSON.stringify(rowData, null, 2));
-      
-      // Show circular loading animation with "Saving..." text
       const originalText = saveBtn.textContent;
       saveBtn.classList.add('saving');
       saveBtn.innerHTML = 'Saving...';
@@ -5738,22 +5732,15 @@
           throw new Error("Invalid chapter configuration. Please select a chapter.");
         }
         
-        console.log('Saving to sheet:', { sheetId, gid, editMode, originalIndex, tempId });
-        
         const result = await saveQuestionToSheet(rowData, editMode, originalIndex, sheetId, gid, tempId);
         
-        console.log('Save result from Apps Script:', result);
-        
-       if (result && result.success) {
-          // Remove loading animation and close modal
+        if (result && result.success) {
           saveBtn.classList.remove('saving');
           saveBtn.innerHTML = originalText;
           saveBtn.disabled = false;
           document.getElementById('question-editor-modal').style.display = 'none';
           
-          // --- FIX: Update data locally to preserve quiz state and position ---
           if (editMode === 'edit') {
-            // Update existing question
             questions[currentIndex].question = rowData.question;
             questions[currentIndex].imageUrl = rowData.imageUrl;
             questions[currentIndex].marks = parseFloat(rowData.marks) || 1;
@@ -5775,9 +5762,7 @@
               questions[currentIndex].optionImages = [];
               questions[currentIndex].explanation = rowData.answer + (rowData.explanation ? ' - ' + rowData.explanation : '');
             }
-            // User stays on exact same question!
           } else {
-            // Handle NEW question being added
             const newQ = {
               question: rowData.question,
               imageUrl: rowData.imageUrl,
@@ -5804,17 +5789,23 @@
             
             questions.push(newQ);
             quizQuestionCountEl.textContent = `${questions.length} questions`;
-            currentIndex = questions.length - 1; // Jump directly to the newly added question
+            currentIndex = questions.length - 1; 
           }
           
-          // Re-render instantly!
           updateQuestionNavigation();
           renderQuestion();
-          
           alert('Question saved successfully!');
         } else {
           throw new Error(result?.error || 'Failed to save question');
         }
+      } catch (error) {
+        console.error('Error saving question:', error);
+        saveBtn.classList.remove('saving');
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+        alert('Error saving question: ' + (error.message || error.error || 'Unknown error'));
+      }
+    }
     // ========== SAVE QUESTION TO SHEET API ==========
     async function saveQuestionToSheet(questionData, editMode, originalIndex, sheetId, gid, tempId) {
       return new Promise((resolve, reject) => {
