@@ -4721,7 +4721,7 @@
       console.log('🚀 Starting fetch upload...', { fileName, mimeType, fieldId, rowIndex, tempId });
       
       const formData = new FormData();
-      formData.append('fileData', base64Data);
+      formData.append('fileData', fileData);
       formData.append('fileName', file.name);
       formData.append('mimeType', file.type);
       formData.append('username', currentUser ? currentUser.username : '');
