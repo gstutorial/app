@@ -19,43 +19,6 @@
   <!-- Include Noto Sans font for better Unicode support -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   
-  <!-- Service Worker UNREGISTER script - Completely disables caching -->
-  <script>
-    // ========== COMPLETELY DISABLE SERVICE WORKER AND CACHING ==========
-    (function() {
-      // Unregister all service workers immediately
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          for(let registration of registrations) {
-            registration.unregister().then(function(success) {
-              if (success) console.log('✅ Service Worker unregistered');
-            });
-          }
-        });
-        
-        // Prevent any new service workers from registering
-        navigator.serviceWorker.addEventListener('register', function(e) {
-          e.preventDefault();
-        });
-      }
-      
-      // Clear all caches
-      if ('caches' in window) {
-        caches.keys().then(function(cacheNames) {
-          return Promise.all(
-            cacheNames.map(function(cacheName) {
-              return caches.delete(cacheName);
-            })
-          );
-        });
-      }
-      
-      // Clear storage
-      localStorage.clear();
-      sessionStorage.clear();
-    })();
-  </script>
-  
   <style>
     /* ===== ORIGINAL STYLES - COMPLETELY PRESERVED ===== */
     * {
@@ -266,7 +229,7 @@
       border-radius: 8px;
       object-fit: contain;
       flex-shrink: 0;
-      background: rgb(2 7 24);
+      background: rgb(15 23 42);
       padding: 3px;
     }
 
@@ -275,7 +238,7 @@
       height: 120px;
       border-radius: 12px;
       object-fit: contain;
-      background: rgb(21 30 48);
+      background: rgb(15 23 42);
       padding: 5px;
     }
 
@@ -818,26 +781,618 @@
       border-color: #f97316;
     }
 
-    /* Mobile responsiveness */
+    /* ===== ADMIN EDITING STYLES ===== */
+    .question-edit-icon {
+      position: absolute;
+      top: 10px;
+      right: 45px;
+      width: 25px;
+      height: 25px;
+      cursor: pointer;
+      z-index: 100;
+      transition: all 0.2s ease;
+      opacity: 0.8;
+      background: transparent;
+      border: none;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .question-edit-icon:hover {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    .question-edit-icon img {
+      width: 25px;
+      height: 25px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+
+    /* Delete button styles - positioned where WhatsApp icon would be */
+    .question-delete-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 25px;
+      height: 25px;
+      cursor: pointer;
+      z-index: 100;
+      transition: all 0.2s ease;
+      opacity: 0.8;
+      background: transparent;
+      border: none;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .question-delete-icon:hover {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    .question-delete-icon img {
+      width: 25px;
+      height: 25px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+
+    .admin-add-question {
+      margin: 15px 0;
+      padding: 10px;
+      background: rgba(16, 185, 129, 0.1);
+      border-radius: 12px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      text-align: center;
+    }
+
+    .btn-success {
+      background: linear-gradient(to right, #10b981, #059669);
+      color: white;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 18px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(16, 185, 129, 0.5);
+    }
+
+    /* Toggle switch for image URLs */
+    .image-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 15px 0;
+      padding: 10px;
+      background: rgba(59, 130, 246, 0.1);
+      border-radius: 8px;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .image-toggle-row input[type="checkbox"] {
+      transform: scale(1.2);
+      cursor: pointer;
+      accent-color: #3b82f6;
+    }
+
+    .image-toggle-row label {
+      cursor: pointer;
+      font-weight: 500;
+      color: #93c5fd;
+    }
+
+    .image-toggle-row .toggle-hint {
+      margin-left: auto;
+      font-size: 0.85rem;
+      color: #9ca3af;
+    }
+
+    /* Image URL sections */
+    .image-url-section {
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .image-url-section.hidden {
+      display: none !important;
+    }
+
+    /* Image Upload Styles */
+    .image-upload-container {
+      margin: 15px 0;
+      padding: 15px;
+      background: rgba(30, 41, 59, 0.5);
+      border-radius: 12px;
+      border: 2px dashed rgba(59, 130, 246, 0.5);
+      display: block;
+    }
+
+    body.light-mode .image-upload-container {
+      background: rgba(255, 255, 255, 0.7);
+      border: 2px dashed rgba(59, 130, 246, 0.3);
+    }
+
+    .upload-area {
+      border: 2px dashed rgba(59, 130, 246, 0.7);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(15, 23, 42, 0.7);
+      margin-bottom: 10px;
+    }
+
+    body.light-mode .upload-area {
+      background: #f9fafb;
+    }
+
+    .upload-area:hover {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .upload-area.dragover {
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, 0.1);
+    }
+
+    .upload-icon {
+      font-size: 40px;
+      color: #3b82f6;
+      margin-bottom: 10px;
+    }
+
+    .upload-text {
+      color: #e5e7eb;
+      font-size: 1rem;
+      margin-bottom: 5px;
+    }
+
+    body.light-mode .upload-text {
+      color: #1f2937;
+    }
+
+    .upload-hint {
+      color: #9ca3af;
+      font-size: 0.85rem;
+    }
+
+    .upload-preview {
+      max-width: 100%;
+      max-height: 150px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 2px solid #3b82f6;
+      display: none;
+      object-fit: contain;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .upload-preview.visible {
+      display: block;
+      margin: 10px auto;
+    }
+
+    .upload-progress {
+      margin-top: 10px;
+      height: 4px;
+      background: rgba(75, 85, 99, 0.3);
+      border-radius: 2px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .upload-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #3b82f6, #22c55e);
+      transition: width 0.3s ease;
+    }
+    
+    .upload-progress-bar.active {
+      animation: progress-pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes progress-pulse {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 1; }
+    }
+
+    .upload-status {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: #93c5fd;
+      text-align: center;
+      display: none;
+    }
+
+    .upload-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .upload-clear-btn {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .upload-clear-btn:hover {
+      background: rgba(239, 68, 68, 0.3);
+    }
+
+    body.light-mode .upload-clear-btn {
+      color: #dc2626;
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .url-input-container {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .url-input-container input {
+      flex: 1;
+    }
+
+    .url-upload-icon {
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+      filter: invert(1);
+    }
+
+    body.light-mode .url-upload-icon {
+      filter: invert(0);
+    }
+
+    .url-upload-icon:hover {
+      opacity: 1;
+    }
+
+    /* Modal Styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: #020617;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 18px;
+      width: 90%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 25px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    body.light-mode .modal-content {
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .modal-header h2 {
+      color: #e5e7eb;
+      margin: 0;
+      font-size: 1.5rem;
+      background: linear-gradient(90deg, #3b82f6 0%, #22c55e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: #9ca3af;
+      font-size: 28px;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .modal-close:hover {
+      color: #ef4444;
+    }
+
+    .modal-body {
+      margin-bottom: 20px;
+    }
+
+    .editor-row {
+      margin-bottom: 20px;
+    }
+
+    .editor-row label {
+      display: block;
+      color: #d1d5db;
+      margin-bottom: 8px;
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    body.light-mode .editor-row label {
+      color: #4b5563;
+    }
+
+    .editor-row input[type="text"],
+    .editor-row input[type="number"],
+    .editor-row textarea,
+    .editor-row select {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(75, 85, 99, 0.9);
+      background: #111827;
+      color: #e5e7eb;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+    }
+
+    body.light-mode .editor-row input[type="text"],
+    body.light-mode .editor-row input[type="number"],
+    body.light-mode .editor-row textarea,
+    body.light-mode .editor-row select {
+      background: #f3f4f6;
+      color: #1f2937;
+      border: 1px solid #d1d5db;
+    }
+
+    .editor-row input:focus,
+    .editor-row textarea:focus,
+    .editor-row select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 15px;
+      justify-content: flex-end;
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .btn-primary {
+      background: linear-gradient(to right, #3b82f6, #2563eb);
+      color: white;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 30px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.4);
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(37, 99, 235, 0.5);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    /* ===== SAVE BUTTON SPINNER WITH TEXT ===== */
+    .btn-primary.saving {
+      position: relative;
+      padding-left: 40px !important;
+      pointer-events: none;
+    }
+
+    .btn-primary.saving::before {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: save-spin 0.8s linear infinite;
+    }
+
+    @keyframes save-spin {
+      0% { transform: translateY(-50%) rotate(0deg); }
+      100% { transform: translateY(-50%) rotate(360deg); }
+    }
+
+    /* ===== LOGIN BUTTON SPINNER WITH TEXT ===== */
+    .login-btn.saving {
+      position: relative;
+      padding-left: 40px !important;
+      pointer-events: none;
+    }
+
+    .login-btn.saving::before {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: login-spin 0.8s linear infinite;
+    }
+
+    @keyframes login-spin {
+      0% { transform: translateY(-50%) rotate(0deg); }
+      100% { transform: translateY(-50%) rotate(360deg); }
+    }
+
+    .btn-secondary {
+      background: #1f2937;
+      color: #e5e7eb;
+      border: 1px solid rgba(75, 85, 99, 0.8);
+      border-radius: 999px;
+      padding: 12px 30px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    body.light-mode .btn-secondary {
+      background: #f3f4f6;
+      color: #1f2937;
+      border: 1px solid #d1d5db;
+    }
+
+    .btn-secondary:hover {
+      background: #111827;
+    }
+
+    body.light-mode .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+
+    /* Mobile responsiveness for admin controls */
     @media (max-width: 700px) {
-      .button-group {
-        padding: 14px;
+      .question-edit-icon {
+        top: 8px;
+        right: 45px;
+        width: 22px;
+        height: 22px;
       }
       
-      .group-btn {
-        padding: 10px 14px !important;
-        font-size: 0.9rem !important;
+      .question-edit-icon img {
+        width: 22px;
+        height: 22px;
+      }
+
+      .question-delete-icon {
+        top: 8px;
+        right: 10px;
+        width: 22px;
+        height: 22px;
+      }
+
+      .question-delete-icon img {
+        width: 22px;
+        height: 22px;
+      }
+      
+      .modal-content {
+        padding: 15px;
+        width: 95%;
+      }
+      
+      .modal-footer {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .btn-primary,
+      .btn-secondary,
+      .btn-success {
+        width: 100%;
+        padding: 10px 16px;
+        font-size: 0.95rem;
+      }
+      
+      .upload-area {
+        padding: 15px;
+      }
+      
+      .upload-icon {
+        font-size: 30px;
+      }
+      
+      .upload-text {
+        font-size: 0.9rem;
+      }
+      
+      .upload-hint {
+        font-size: 0.75rem;
+      }
+      
+      .upload-buttons {
+        flex-direction: column;
       }
     }
 
     @media (max-width: 400px) {
-      .button-group {
-        padding: 12px;
+      .question-edit-icon {
+        top: 6px;
+        right: 40px;
+        width: 20px;
+        height: 20px;
       }
       
-      .group-btn {
-        padding: 8px 12px !important;
-        font-size: 0.85rem !important;
+      .question-edit-icon img {
+        width: 20px;
+        height: 20px;
+      }
+
+      .question-delete-icon {
+        top: 6px;
+        right: 10px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .question-delete-icon img {
+        width: 20px;
+        height: 20px;
       }
     }
 
@@ -1038,6 +1593,7 @@
       gap: 8px;
       box-shadow: 0 8px 18px rgba(37, 99, 235, 0.4);
       width: 100%;
+      position: relative;
     }
 
     .login-btn:hover:not(:disabled) {
@@ -2046,7 +2602,7 @@
       font-weight: 500;
       color: #f9fafb;
       line-height: 1.5;
-      padding-right: 40px;
+      padding-right: 80px;
       margin-bottom: 8px;
     }
 
@@ -2108,8 +2664,8 @@
       position: absolute;
       top: 0;
       right: 0;
-      width: 30px;
-      height: 30px;
+      width: 80px;
+      height: 40px;
       pointer-events: none;
       z-index: 50;
     }
@@ -2603,7 +3159,6 @@
       cursor: not-allowed;
     }
 
-    /* NEW: Reattempt Incorrect Button */
     .reattempt-incorrect-btn {
       background: linear-gradient(to right, #f97316, #ea580c);
       color: white;
@@ -2981,7 +3536,7 @@
       
       .question-text {
         font-size: 0.95rem;
-        padding-right: 35px;
+        padding-right: 70px;
       }
       
       .question-whatsapp-icon {
@@ -2992,6 +3547,30 @@
       }
       
       .question-whatsapp-icon img {
+        width: 22px;
+        height: 22px;
+      }
+
+      .question-edit-icon {
+        top: 8px;
+        right: 45px;
+        width: 22px;
+        height: 22px;
+      }
+
+      .question-edit-icon img {
+        width: 22px;
+        height: 22px;
+      }
+
+      .question-delete-icon {
+        top: 8px;
+        right: 8px;
+        width: 22px;
+        height: 22px;
+      }
+
+      .question-delete-icon img {
         width: 22px;
         height: 22px;
       }
@@ -3197,7 +3776,7 @@
       
       .question-text {
         font-size: 0.95rem;
-        padding-right: 30px;
+        padding-right: 60px;
       }
       
       .question-whatsapp-icon {
@@ -3208,6 +3787,30 @@
       }
       
       .question-whatsapp-icon img {
+        width: 20px;
+        height: 20px;
+      }
+
+      .question-edit-icon {
+        top: 6px;
+        right: 40px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .question-edit-icon img {
+        width: 20px;
+        height: 20px;
+      }
+
+      .question-delete-icon {
+        top: 6px;
+        right: 6px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .question-delete-icon img {
         width: 20px;
         height: 20px;
       }
@@ -3302,8 +3905,8 @@
   <!-- PDF Generating Overlay (circular animation) -->
   <div id="pdf-overlay" class="pdf-overlay">
     <div class="pdf-spinner"></div>
-    <div id="pdf-status" class="pdf-status">Generating PDF Report...</div>
-    <div id="pdf-substatus" class="pdf-substatus">Please wait while we create your detailed performance report</div>
+    <div id="pdf-status" class="pdf-status">Processing...</div>
+    <div id="pdf-substatus" class="pdf-substatus">Please wait...</div>
   </div>
   
   <!-- Fixed Header -->
@@ -3496,8 +4099,14 @@
     
     <!-- Quiz Container -->
     <div class="quiz-container" id="quiz-container">
-      <!-- Path Display -->
-      <div id="current-path" class="current-path" style="display: none;"></div>
+      <!-- Path Display - Fixed navigation -->
+      <div id="current-path" class="current-path" style="display: none;">
+        <span class="path-link" onclick="navigateToClasses()">Classes</span>
+        <span class="path-separator">›</span>
+        <span class="path-link" id="path-class-link" onclick="navigateToSubjects()"></span>
+        <span class="path-separator">›</span>
+        <span id="path-subject"></span>
+      </div>
       
       <!-- TOPIC SELECTION SECTION -->
       <div class="topic-section">
@@ -3544,6 +4153,11 @@
         <label for="random-toggle">Randomize questions & options</label>
       </div>
 
+      <!-- ADMIN ADD QUESTION BUTTON -->
+      <div id="admin-add-question" class="admin-add-question" style="display: none;">
+        <button id="add-question-btn" class="btn-success">+ Add New Question</button>
+      </div>
+
       <div class="progress">
         <div id="question-counter">Choose a chapter and click Start</div>
         <div class="progress-bar">
@@ -3553,12 +4167,25 @@
       </div>
 
       <div class="question-box" id="question-box">
-        <!-- WhatsApp Icon Button -->
+        <!-- WhatsApp Icon Button (visible to non-admin users) -->
         <button id="question-whatsapp-icon" class="question-whatsapp-icon" style="display: none;" 
                 title="Report issue or ask about this question">
           <img src="whatsapp.png" alt="WhatsApp Support">
         </button>
-        <!-- Reserved area for WhatsApp icon -->
+
+        <!-- Edit Icon Button (visible only to admin) -->
+        <button id="question-edit-icon" class="question-edit-icon" style="display: none;" 
+                title="Edit this question">
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='25' viewBox='0 0 24 24'%3E%3Cpath fill='%233b82f6' d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/%3E%3C/svg%3E" alt="Edit">
+        </button>
+
+        <!-- Delete Icon Button (visible only to admin) - positioned where WhatsApp icon would be -->
+        <button id="question-delete-icon" class="question-delete-icon" style="display: none;" 
+                title="Delete this question">
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='25' viewBox='0 0 24 24'%3E%3Cpath fill='%23ef4444' d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/%3E%3C/svg%3E" alt="Delete">
+        </button>
+
+        <!-- Reserved area for icons -->
         <div class="question-whatsapp-reserved-area"></div>
         
         <div id="question-text" class="question-text">
@@ -3609,13 +4236,191 @@
     </div>
   </div>
 
+  <!-- Question Editor Modal with Image Upload -->
+  <div id="question-editor-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="editor-title">Edit Question</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+      
+      <div class="modal-body">
+        <!-- Question Type Selection -->
+        <div class="editor-row">
+          <label>Question Type:</label>
+          <select id="editor-question-type">
+            <option value="mcq">Multiple Choice</option>
+            <option value="subjective">Subjective</option>
+          </select>
+        </div>
+
+        <!-- Question Text -->
+        <div class="editor-row">
+          <label>Question:</label>
+          <textarea id="editor-question" rows="3" placeholder="Enter question text"></textarea>
+        </div>
+
+        <!-- Show/Hide Image URLs Toggle -->
+        <div class="image-toggle-row">
+          <input type="checkbox" id="show-image-urls" />
+          <label for="show-image-urls">Show/Hide Image Uploads</label>
+          <span class="toggle-hint">(Click to show image upload areas)</span>
+        </div>
+
+        <!-- Question Image Upload Section -->
+        <div id="question-image-upload-section" class="image-url-section hidden">
+          <div class="editor-row">
+            <label>Question Image:</label>
+            <div class="image-upload-container">
+              <div class="upload-area" id="upload-question-image">
+                <div class="upload-icon">📷</div>
+                <div class="upload-text">Click to upload or drag & drop</div>
+                <div class="upload-hint">Supported: JPG, PNG, GIF (Max 5MB)</div>
+              </div>
+              <img id="preview-question-image" class="upload-preview" src="" alt="Preview">
+              <div class="upload-progress">
+                <div class="upload-progress-bar"></div>
+              </div>
+              <div class="upload-status"></div>
+              <div class="upload-buttons">
+                <button class="upload-clear-btn" onclick="clearImageUpload('preview-question-image', 'editor-image-url')">Clear</button>
+              </div>
+              <!-- Hidden input field for image URL -->
+              <input type="hidden" id="editor-image-url">
+              <p style="color: #9ca3af; font-size: 0.8rem; margin-top: 5px;">Image will be uploaded and saved automatically</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Options Section -->
+        <div id="mcq-options-section">
+          <label style="margin-bottom: 12px; display: block;">Options:</label>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Option A -->
+            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden;">
+              <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">A.</div>
+              <div style="flex: 1; padding: 8px 12px;">
+                <input type="text" id="editor-option-a" placeholder="Option A" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem; margin-bottom: 8px;">
+                <div id="option-a-image-section" class="image-url-section hidden">
+                  <div class="image-upload-container" style="margin: 5px 0;">
+                    <div class="upload-area" id="upload-option-a-image" style="padding: 10px;">
+                      <div class="upload-text">Upload option A image</div>
+                    </div>
+                    <img id="preview-option-a-image" class="upload-preview" src="" alt="Preview">
+                    <div class="upload-progress">
+                      <div class="upload-progress-bar"></div>
+                    </div>
+                    <!-- Hidden input field for option image URL -->
+                    <input type="hidden" id="editor-option-a-img">
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Option B -->
+            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden;">
+              <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">B.</div>
+              <div style="flex: 1; padding: 8px 12px;">
+                <input type="text" id="editor-option-b" placeholder="Option B" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem; margin-bottom: 8px;">
+                <div id="option-b-image-section" class="image-url-section hidden">
+                  <div class="image-upload-container" style="margin: 5px 0;">
+                    <div class="upload-area" id="upload-option-b-image" style="padding: 10px;">
+                      <div class="upload-text">Upload option B image</div>
+                    </div>
+                    <img id="preview-option-b-image" class="upload-preview" src="" alt="Preview">
+                    <div class="upload-progress">
+                      <div class="upload-progress-bar"></div>
+                    </div>
+                    <!-- Hidden input field for option image URL -->
+                    <input type="hidden" id="editor-option-b-img">
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Option C -->
+            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden;">
+              <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">C.</div>
+              <div style="flex: 1; padding: 8px 12px;">
+                <input type="text" id="editor-option-c" placeholder="Option C" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem; margin-bottom: 8px;">
+                <div id="option-c-image-section" class="image-url-section hidden">
+                  <div class="image-upload-container" style="margin: 5px 0;">
+                    <div class="upload-area" id="upload-option-c-image" style="padding: 10px;">
+                      <div class="upload-text">Upload option C image</div>
+                    </div>
+                    <img id="preview-option-c-image" class="upload-preview" src="" alt="Preview">
+                    <div class="upload-progress">
+                      <div class="upload-progress-bar"></div>
+                    </div>
+                    <!-- Hidden input field for option image URL -->
+                    <input type="hidden" id="editor-option-c-img">
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Option D -->
+            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden;">
+              <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">D.</div>
+              <div style="flex: 1; padding: 8px 12px;">
+                <input type="text" id="editor-option-d" placeholder="Option D" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem; margin-bottom: 8px;">
+                <div id="option-d-image-section" class="image-url-section hidden">
+                  <div class="image-upload-container" style="margin: 5px 0;">
+                    <div class="upload-area" id="upload-option-d-image" style="padding: 10px;">
+                      <div class="upload-text">Upload option D image</div>
+                    </div>
+                    <img id="preview-option-d-image" class="upload-preview" src="" alt="Preview">
+                    <div class="upload-progress">
+                      <div class="upload-progress-bar"></div>
+                    </div>
+                    <!-- Hidden input field for option image URL -->
+                    <input type="hidden" id="editor-option-d-img">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Answer -->
+        <div class="editor-row" id="answer-section">
+          <label>Correct Answer:</label>
+          <select id="editor-answer-mcq" style="display: block;">
+            <option value="A">Option A</option>
+            <option value="B">Option B</option>
+            <option value="C">Option C</option>
+            <option value="D">Option D</option>
+          </select>
+          <textarea id="editor-answer-subjective" style="display: none;" rows="2" placeholder="Enter answer for subjective question"></textarea>
+        </div>
+
+        <!-- Marks -->
+        <div class="editor-row">
+          <label>Marks:</label>
+          <input type="number" id="editor-marks" value="1" min="1" step="1">
+        </div>
+
+        <!-- Explanation -->
+        <div class="editor-row">
+          <label>Explanation:</label>
+          <textarea id="editor-explanation" rows="3" placeholder="Enter explanation"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="editor-save-btn" class="btn-primary">Save Changes</button>
+        <button id="editor-cancel-btn" class="btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ========== FORCE CACHE BUSTING ==========
     const version = Date.now();
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx06h9aa6wDmtDz3jBwNgOuoiz7-NZY1nJaEwts3A7vIHRkWfAU5O3N4UNUooCwvEm7Lw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw2CCk6wZgSWwLVyi4-6izf0DNIvcG-E64_jfsT0TgclHZ_PIevnAEdLq6B2Ccc6ABK/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwMkaSO_2udBaJn_K3bRdtHRo-8tPpIeBax15Lc5lg4DOaJChPSa6zTMGTminjA22m3/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -3624,6 +4429,7 @@
 
     // ========== GLOBAL VARIABLES ==========
     let questions = [];
+    let originalQuestions = [];
     let currentIndex = 0;
     let score = 0;
     let totalMarks = 0;
@@ -3646,6 +4452,7 @@
     let reattemptUserAnswers = [];
     let reattemptUserMarks = [];
     let reattemptStatusBanner = null;
+    let isQuizActive = false;
     
     // Image preloading system
     let imageCache = new Map();
@@ -3694,10 +4501,6 @@
 
     // ========== DOM ELEMENTS ==========
     const fixedHeaderEl = document.querySelector(".fixed-header");
-    const headerUserInfoEl = document.getElementById("header-user-info");
-    const headerUsernameEl = document.getElementById("header-username");
-    const headerLogoutBtnEl = document.getElementById("header-logout-btn");
-    
     const loginContainerEl = document.getElementById("login-container");
     const classSelectionEl = document.getElementById("class-selection");
     const subjectSelectionEl = document.getElementById("subject-selection");
@@ -3733,6 +4536,8 @@
     const currentClassDisplayEl = document.getElementById("current-class-display");
     const backToClassesBtn = document.getElementById("back-to-classes-btn");
     const currentPathEl = document.getElementById("current-path");
+    const pathClassLink = document.getElementById("path-class-link");
+    const pathSubjectEl = document.getElementById("path-subject");
     
     const topicSelectEl = document.getElementById("topic-select");
     const startBtnEl = document.getElementById("start-btn");
@@ -3766,7 +4571,6 @@
     const questionCounterEl = document.getElementById("question-counter");
     const progressEl = document.querySelector(".progress");
     const progressBarFillEl = document.getElementById("progress-bar-fill");
-    const scoreMiniEl = document.getElementById("score-mini");
     const totalScoreValueEl = document.getElementById("total-score-value");
     const finalScoreEl = document.getElementById("final-score");
     const controlsEl = document.querySelector(".controls");
@@ -3781,6 +4585,25 @@
     const pdfSubstatusEl = document.getElementById("pdf-substatus");
 
     const questionWhatsappIconEl = document.getElementById("question-whatsapp-icon");
+    const questionEditIconEl = document.getElementById("question-edit-icon");
+    const questionDeleteIconEl = document.getElementById("question-delete-icon");
+    const addQuestionBtn = document.getElementById("add-question-btn");
+    const adminAddQuestionDiv = document.getElementById("admin-add-question");
+
+    // Image URL toggle elements
+    const showImageUrlsCheckbox = document.getElementById("show-image-urls");
+    const questionImageUploadSection = document.getElementById("question-image-upload-section");
+    const optionAImageSection = document.getElementById("option-a-image-section");
+    const optionBImageSection = document.getElementById("option-b-image-section");
+    const optionCImageSection = document.getElementById("option-c-image-section");
+    const optionDImageSection = document.getElementById("option-d-image-section");
+
+    // Hidden image URL inputs
+    const editorImageUrl = document.getElementById("editor-image-url");
+    const editorOptionAImg = document.getElementById("editor-option-a-img");
+    const editorOptionBImg = document.getElementById("editor-option-b-img");
+    const editorOptionCImg = document.getElementById("editor-option-c-img");
+    const editorOptionDImg = document.getElementById("editor-option-d-img");
 
     // Side menu elements
     const menuToggle = document.getElementById('menuToggle');
@@ -3793,6 +4616,336 @@
     const metaThemeColor = document.getElementById('meta-theme-color');
     const greetingMessageEl = document.getElementById('greetingMessage');
 
+    // ========== PDF OVERLAY FUNCTIONS ==========
+    function showPDFOverlay(message = "Processing...") {
+      console.log('Showing PDF overlay with message:', message);
+      if (pdfStatusEl) pdfStatusEl.textContent = message;
+      if (pdfSubstatusEl) pdfSubstatusEl.textContent = "Please wait...";
+      if (pdfOverlayEl) pdfOverlayEl.style.display = 'flex';
+    }
+
+    function hidePDFOverlay() {
+      console.log('Hiding PDF overlay');
+      if (pdfOverlayEl) pdfOverlayEl.style.display = 'none';
+    }
+
+    function updatePDFStatus(status, substatus) {
+      if (pdfStatusEl) pdfStatusEl.textContent = status;
+      if (pdfSubstatusEl) pdfSubstatusEl.textContent = substatus || '';
+    }
+
+    // ========== TOGGLE IMAGE URL FIELDS ==========
+    function toggleImageUrlFields() {
+      const isChecked = showImageUrlsCheckbox.checked;
+      
+      // Toggle question image URL section
+      if (questionImageUploadSection) {
+        if (isChecked) {
+          questionImageUploadSection.classList.remove('hidden');
+        } else {
+          questionImageUploadSection.classList.add('hidden');
+        }
+      }
+      
+      // Toggle option image URL sections
+      const optionSections = [
+        optionAImageSection,
+        optionBImageSection,
+        optionCImageSection,
+        optionDImageSection
+      ];
+      
+      optionSections.forEach(section => {
+        if (section) {
+          if (isChecked) {
+            section.classList.remove('hidden');
+          } else {
+            section.classList.add('hidden');
+          }
+        }
+      });
+    }
+
+    // ========== IMAGE UPLOAD FUNCTIONS ==========
+    let currentUploadField = null;
+
+    function setupImageUpload(fieldId, previewId, inputId, fieldName) {
+      const uploadArea = document.getElementById(fieldId);
+      if (!uploadArea) return;
+      
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'image/*';
+      fileInput.style.display = 'none';
+      fileInput.id = 'file-input-' + fieldId;
+      document.body.appendChild(fileInput);
+
+      // Handle click on upload area
+      uploadArea.addEventListener('click', () => {
+        currentUploadField = { previewId, inputId };
+        fileInput.click();
+      });
+
+      // Handle drag and drop
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+      });
+
+      uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+      });
+
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          currentUploadField = { previewId, inputId };
+          handleImageUpload(files[0], previewId, inputId, fieldName);
+        }
+      });
+
+      // Handle file selection
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          handleImageUpload(e.target.files[0], previewId, inputId, fieldName);
+        }
+        fileInput.value = ''; // Reset so same file can be selected again
+      });
+    }
+
+    // ========== UPLOAD IMAGE TO GOOGLE DRIVE - FIXED WITH FETCH ==========
+    async function uploadImageToDrive(fileName, fileData, mimeType, fieldId, rowIndex, tempId) {
+      console.log('🚀 Starting fetch upload...', { fileName, mimeType, fieldId, rowIndex, tempId });
+      
+      const formData = new FormData();
+      formData.append('action', 'uploadImage');
+      formData.append('fileName', fileName);
+      formData.append('mimeType', mimeType);
+      formData.append('fileData', fileData);
+      formData.append('username', currentUser ? currentUser.username : '');
+      formData.append('role', currentUser ? currentUser.role : '');
+      formData.append('fieldId', fieldId);
+      formData.append('sheetId', currentSubjectConfig?.sheetId || '');
+      formData.append('gid', currentSubjectConfig?.chapters?.[topicSelectEl.value] || '');
+      formData.append('rowIndex', rowIndex);
+      formData.append('tempId', tempId);
+
+      try {
+        const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('📥 Upload response:', result);
+        return result;
+      } catch (error) {
+        console.error('❌ Upload fetch error:', error);
+        throw error;
+      }
+    }
+
+    // ========== HANDLE IMAGE UPLOAD ==========
+    async function handleImageUpload(file, previewId, inputId, fieldName) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file (JPEG, PNG, GIF)');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+
+      // Show preview
+      const preview = document.getElementById(previewId);
+      if (!preview) {
+        console.error('Preview element not found:', previewId);
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        preview.src = e.target.result;
+        preview.classList.add('visible');
+      };
+      reader.readAsDataURL(file);
+
+      // Show progress
+      const container = preview.closest('.image-upload-container');
+      if (!container) {
+        console.error('Container not found for preview:', previewId);
+        return;
+      }
+      
+      const progressContainer = container.querySelector('.upload-progress');
+      const progressBar = container.querySelector('.upload-progress-bar');
+      const statusEl = container.querySelector('.upload-status');
+      
+      if (progressContainer) progressContainer.style.display = 'block';
+      if (progressBar) {
+        progressBar.style.width = '30%';
+        progressBar.classList.add('active');
+      }
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'Uploading to Google Drive...';
+        statusEl.style.color = '#93c5fd';
+      }
+
+      try {
+       // Compress image using Canvas API before uploading
+        const base64Data = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              let width = img.width;
+              let height = img.height;
+              
+              // Set maximum dimensions (800px is great for mobile/web quizzes)
+              const MAX_WIDTH = 800;
+              const MAX_HEIGHT = 800;
+
+              // Calculate new dimensions while maintaining aspect ratio
+              if (width > height) {
+                if (width > MAX_WIDTH) {
+                  height = Math.round((height * MAX_WIDTH) / width);
+                  width = MAX_WIDTH;
+                }
+              } else {
+                if (height > MAX_HEIGHT) {
+                  width = Math.round((width * MAX_HEIGHT) / height);
+                  height = MAX_HEIGHT;
+                }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+
+              // Export as JPEG with 70% quality (drastically reduces file size)
+              resolve(canvas.toDataURL('image/jpeg', 0.7));
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+
+        console.log('📤 Uploading to Google Drive...', { fileName: file.name, previewId, inputId, fieldName });
+
+       // Get the row index for the current question
+        let rowIndex = '';
+        let tempId = '';
+        const modalDataset = document.getElementById('question-editor-modal').dataset;
+        const editMode = modalDataset.editMode;
+        
+        if (editMode === 'edit') {
+          rowIndex = modalDataset.originalIndex;
+        } else {
+          // For new questions, set rowIndex to 'new'
+          rowIndex = 'new';
+          
+          // FIX: Check if we already created a tempId for this new question session
+          if (modalDataset.tempId && modalDataset.tempId !== '') {
+            tempId = modalDataset.tempId;
+          } else {
+            // If not, create one and immediately save it to the dataset so it gets reused!
+            tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            modalDataset.tempId = tempId;
+          }
+        }
+
+        // Upload to Google Drive via Apps Script
+        const result = await uploadImageToDrive(file.name, base64Data, file.type, fieldName, rowIndex, tempId);
+        
+        console.log('📥 Upload response:', result);
+        
+        if (progressBar) {
+          progressBar.style.width = '100%';
+          progressBar.classList.remove('active');
+        }
+        
+        if (result && result.success) {
+          if (statusEl) {
+            statusEl.textContent = 'Upload complete!';
+            statusEl.style.color = '#22c55e';
+          }
+          
+          // Set the actual URL in the hidden input
+          const input = document.getElementById(inputId);
+          if (input && result.fileUrl) {
+            input.value = result.fileUrl;
+            console.log(`✅ URL set in ${inputId}:`, result.fileUrl);
+            
+            // Store tempId for new questions
+            if (editMode === 'new') {
+              document.getElementById('question-editor-modal').dataset.tempId = tempId;
+            }
+          }
+          
+          // Hide progress after delay
+          setTimeout(() => {
+            if (progressContainer) progressContainer.style.display = 'none';
+            if (statusEl) statusEl.style.display = 'none';
+          }, 2000);
+        } else {
+          throw new Error(result?.error || 'Upload failed');
+        }
+      } catch (error) {
+        console.error('❌ Upload failed:', error);
+        if (statusEl) {
+          statusEl.textContent = 'Upload failed: ' + error.message;
+          statusEl.style.color = '#ef4444';
+        }
+        if (progressBar) {
+          progressBar.style.width = '0%';
+          progressBar.classList.remove('active');
+        }
+        
+        setTimeout(() => {
+          if (progressContainer) progressContainer.style.display = 'none';
+          if (statusEl) statusEl.style.display = 'none';
+        }, 3000);
+      }
+    }
+
+    function clearImageUpload(previewId, inputId) {
+      const preview = document.getElementById(previewId);
+      const input = document.getElementById(inputId);
+      
+      if (preview) {
+        preview.src = '';
+        preview.classList.remove('visible');
+      }
+      if (input) input.value = '';
+      
+      const container = preview ? preview.closest('.image-upload-container') : null;
+      if (container) {
+        const progressContainer = container.querySelector('.upload-progress');
+        const statusEl = container.querySelector('.upload-status');
+        if (progressContainer) progressContainer.style.display = 'none';
+        if (statusEl) statusEl.style.display = 'none';
+      }
+    }
+
+    function setupImageUploadHandlers() {
+      setupImageUpload('upload-question-image', 'preview-question-image', 'editor-image-url', 'imageUrl');
+      setupImageUpload('upload-option-a-image', 'preview-option-a-image', 'editor-option-a-img', 'optionImage1');
+      setupImageUpload('upload-option-b-image', 'preview-option-b-image', 'editor-option-b-img', 'optionImage2');
+      setupImageUpload('upload-option-c-image', 'preview-option-c-image', 'editor-option-c-img', 'optionImage3');
+      setupImageUpload('upload-option-d-image', 'preview-option-d-image', 'editor-option-d-img', 'optionImage4');
+    }
+
     // ========== PASSWORD TOGGLE FUNCTION ==========
     function togglePasswordVisibility() {
       if (passwordEl.type === 'password') {
@@ -3801,6 +4954,62 @@
       } else {
         passwordEl.type = 'password';
         passwordToggleEl.textContent = '👁️';
+      }
+    }
+
+    // ========== AUTHENTICATION FUNCTION ==========
+    async function authenticateWithAppsScript(username, password) {
+      try {
+        return new Promise((resolve, reject) => {
+          const callbackName = 'authCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+          
+          const script = document.createElement('script');
+          
+          window[callbackName] = function(data) {
+            delete window[callbackName];
+            document.body.removeChild(script);
+            
+            if (data && data.success) {
+              resolve(data);
+            } else {
+              resolve({ 
+                success: false, 
+                error: data?.error || 'Invalid username or password' 
+              });
+            }
+          };
+          
+          script.onerror = function() {
+            delete window[callbackName];
+            document.body.removeChild(script);
+            resolve({ 
+              success: false, 
+              error: 'Network error. Please check your connection.' 
+            });
+          };
+          
+          const url = `${AUTH_APPS_SCRIPT_URL}?action=authenticate&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&_t=${Date.now()}&callback=${callbackName}`;
+          script.src = url;
+          document.body.appendChild(script);
+          
+          setTimeout(() => {
+            if (window[callbackName]) {
+              delete window[callbackName];
+              document.body.removeChild(script);
+              resolve({ 
+                success: false, 
+                error: 'Request timeout. Please try again.' 
+              });
+            }
+          }, 10000);
+        });
+
+      } catch (error) {
+        console.error('Authentication error:', error);
+        return {
+          success: false,
+          error: 'Cannot connect to authentication server. Please try again later.'
+        };
       }
     }
 
@@ -3848,7 +5057,78 @@
       return 'Interactive Learning';
     }
 
-    // ========== LOAD ALL CONFIG AT ONCE (CACHED) ==========
+    // ========== PERFORMANCE REMARK FUNCTION ==========
+    function getPerformanceRemark(percentage) {
+      if (percentage >= 80) return "OUTSTANDING! Excellent performance! Keep up the great work!";
+      if (percentage >= 60) return "GOOD JOB! Solid performance with room for improvement.";
+      if (percentage >= 40) return "SATISFACTORY. Review the chapter and practice more.";
+      return "NEEDS IMPROVEMENT. Study the chapter thoroughly and retry.";
+    }
+
+    // ========== CHECK IF USER IS ADMIN ==========
+    function isAdmin() {
+      return currentUser && currentUser.role === 'Admin';
+    }
+
+    // ========== UPDATE ADMIN CONTROLS AND WHATSAPP VISIBILITY ==========
+    function updateAdminControls() {
+      // WhatsApp icon: visible to non-admin users, hidden for admin
+      if (questionWhatsappIconEl) {
+        if (questionsLoaded && questions.length > 0) {
+          questionWhatsappIconEl.style.display = isAdmin() ? 'none' : 'block';
+        } else {
+          questionWhatsappIconEl.style.display = 'none';
+        }
+      }
+      
+      // Edit icon: only visible to admin
+      if (questionEditIconEl) {
+        if (isAdmin() && questionsLoaded && questions.length > 0) {
+          questionEditIconEl.style.display = 'block';
+        } else {
+          questionEditIconEl.style.display = 'none';
+        }
+      }
+      
+      // Delete icon: only visible to admin
+      if (questionDeleteIconEl) {
+        if (isAdmin() && questionsLoaded && questions.length > 0) {
+          questionDeleteIconEl.style.display = 'block';
+        } else {
+          questionDeleteIconEl.style.display = 'none';
+        }
+      }
+      
+      // Add question button: visible to admin when chapter is selected (even if no questions)
+      if (addQuestionBtn) {
+        if (isAdmin() && currentSubjectConfig && currentTopicName) {
+          adminAddQuestionDiv.style.display = 'block';
+        } else {
+          adminAddQuestionDiv.style.display = 'none';
+        }
+      }
+    }
+
+    // ========== NAVIGATION FUNCTIONS ==========
+    function navigateToClasses() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      isQuizActive = false;
+      showClassSelection();
+    }
+
+    function navigateToSubjects() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      isQuizActive = false;
+      showSubjectSelection(currentClass);
+    }
+
+    // ========== LOAD ALL CONFIG AT ONCE ==========
     async function loadAllConfigAtOnce() {
       if (ALL_CONFIG_CACHE && ALL_CONFIG_CACHE_TIME && 
           (Date.now() - ALL_CONFIG_CACHE_TIME < CACHE_DURATION)) {
@@ -3874,6 +5154,44 @@
         console.error("Error loading all config:", error);
         return null;
       }
+    }
+
+    // ========== JSONP HELPER FUNCTION ==========
+    function jsonpRequest(url, callbackName) {
+      return new Promise((resolve, reject) => {
+        const uniqueCallback = callbackName + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        const script = document.createElement('script');
+        
+        window[uniqueCallback] = function(data) {
+          delete window[uniqueCallback];
+          document.body.removeChild(script);
+          
+          if (data && data.success) {
+            resolve(data);
+          } else {
+            reject(data?.error || 'Unknown error');
+          }
+        };
+        
+        script.onerror = function() {
+          delete window[uniqueCallback];
+          document.body.removeChild(script);
+          reject('Network error');
+        };
+        
+        const separator = url.includes('?') ? '&' : '?';
+        script.src = `${url}${separator}callback=${uniqueCallback}`;
+        document.body.appendChild(script);
+        
+        setTimeout(() => {
+          if (window[uniqueCallback]) {
+            delete window[uniqueCallback];
+            document.body.removeChild(script);
+            reject('Request timeout');
+          }
+        }, 10000);
+      });
     }
 
     // ========== SUBSCRIPTION EXPIRED FUNCTIONS ==========
@@ -4006,161 +5324,533 @@
       });
     }
 
-    // ========== PDF REPORT FUNCTIONS ==========
-    function showPDFOverlay(message = "Generating PDF Report...") {
-      pdfStatusEl.textContent = message;
-      pdfOverlayEl.style.display = 'flex';
-    }
-
-    function hidePDFOverlay() {
-      pdfOverlayEl.style.display = 'none';
-    }
-
-    function updatePDFStatus(message, submessage = "") {
-      pdfStatusEl.textContent = message;
-      if (submessage) {
-        pdfSubstatusEl.textContent = submessage;
-      }
-    }
-
-    function getPerformanceRemark(percentage) {
-      if (percentage >= 80) return "OUTSTANDING! Excellent performance! Keep up the great work!";
-      if (percentage >= 60) return "GOOD JOB! Solid performance with room for improvement.";
-      if (percentage >= 40) return "SATISFACTORY. Review the chapter and practice more.";
-      return "NEEDS IMPROVEMENT. Study the chapter thoroughly and retry.";
-    }
-
-    // ========== UNICODE TEXT HANDLING FOR PDF ==========
-    function getUnicodeSafeText(text) {
-      if (!text) return '';
-      const textStr = String(text);
-      const hasDevanagari = /[\u0900-\u097F]/.test(textStr);
-      if (hasDevanagari) {
-        return textStr;
-      }
-      return textStr;
-    }
-
-    function addUnicodeText(doc, text, x, y, options = {}) {
-      const safeText = getUnicodeSafeText(text);
-      const opts = {
-        fontSize: options.fontSize || 11,
-        fontStyle: options.fontStyle || 'normal',
-        textColor: options.textColor || [226, 232, 240],
-        align: options.align || 'left',
-        maxWidth: options.maxWidth || null
-      };
+    // ========== SETUP EDIT ICON ==========
+    function setupEditIcon() {
+      if (!questionEditIconEl) return;
       
-      doc.setFontSize(opts.fontSize);
-      doc.setTextColor(opts.textColor[0], opts.textColor[1], opts.textColor[2]);
-      
-      if (opts.fontStyle === 'bold') {
-        doc.setFont('helvetica', 'bold');
-      } else {
-        doc.setFont('helvetica', 'normal');
-      }
-      
-      if (opts.maxWidth) {
-        const lines = doc.splitTextToSize(safeText, opts.maxWidth);
-        doc.text(lines, x, y, { align: opts.align });
-        return lines.length * (opts.fontSize * 0.35);
-      } else {
-        doc.text(safeText, x, y, { align: opts.align });
-        return opts.fontSize * 0.35;
-      }
+      questionEditIconEl.addEventListener("click", function() {
+        if (!isAdmin()) return;
+        if (!questionsLoaded || questions.length === 0 || currentIndex >= questions.length) {
+          alert("No question to edit.");
+          return;
+        }
+        openQuestionEditor(currentIndex);
+      });
     }
 
-    // ========== AUTHENTICATION FUNCTIONS ==========
-    async function authenticateWithAppsScript(username, password) {
+    // ========== SETUP DELETE ICON ==========
+    function setupDeleteIcon() {
+      if (!questionDeleteIconEl) return;
+      
+      questionDeleteIconEl.addEventListener("click", function() {
+        if (!isAdmin()) return;
+        if (!questionsLoaded || questions.length === 0 || currentIndex >= questions.length) {
+          alert("No question to delete.");
+          return;
+        }
+        
+        if (confirm("⚠️ Are you sure you want to delete this question?\n\nThis action cannot be undone!")) {
+          deleteCurrentQuestion();
+        }
+      });
+    }
+
+    // ========== DELETE CURRENT QUESTION ==========
+    // ========== DELETE CURRENT QUESTION ==========
+    async function deleteCurrentQuestion() {
+      if (!isAdmin()) {
+        alert("Unauthorized access");
+        return;
+      }
+
+      const trimmed = topicSelectEl.value;
+      const gid = currentSubjectConfig?.chapters?.[trimmed];
+      const sheetId = currentSubjectConfig?.sheetId;
+      
+      if (!gid || !sheetId) {
+        alert("Invalid chapter configuration");
+        return;
+      }
+
+      const originalIndex = questions[currentIndex].originalIndex;
+      if (originalIndex === undefined) {
+        alert("Cannot determine original question position");
+        return;
+      }
+
+      showPDFOverlay('Deleting question...');
+      updatePDFStatus('Deleting question...', 'Please wait...');
+
       try {
-        return new Promise((resolve, reject) => {
-          const callbackName = 'authCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        const result = await deleteQuestionFromSheet(sheetId, gid, originalIndex);
+        
+        if (result && result.success) {
+          hidePDFOverlay();
+          alert('Question deleted successfully!');
           
-          const script = document.createElement('script');
+          // --- FIX: Update local arrays and shift originalIndex down by 1 ---
+          questions.splice(currentIndex, 1);
+          userAnswers.splice(currentIndex, 1);
+          userMarks.splice(currentIndex, 1);
           
-          window[callbackName] = function(data) {
-            delete window[callbackName];
-            document.body.removeChild(script);
-            
-            if (data && data.success) {
-              resolve(data);
-            } else {
-              resolve({ 
-                success: false, 
-                error: data?.error || 'Invalid username or password' 
-              });
+          // CRITICAL: Shift row indexes down so the next edit/delete targets the right row in Google Sheets
+          for (let i = currentIndex; i < questions.length; i++) {
+            if (questions[i].originalIndex !== undefined) {
+              questions[i].originalIndex -= 1;
             }
-          };
+          }
           
-          script.onerror = function() {
-            delete window[callbackName];
-            document.body.removeChild(script);
-            resolve({ 
-              success: false, 
-              error: 'Network error. Please check your connection.' 
-            });
-          };
+          // Adjust index to stay on the current position (or go back 1 if at the end)
+          if (questions.length === 0) {
+            currentIndex = 0;
+          } else if (currentIndex >= questions.length) {
+            currentIndex = questions.length - 1;
+          }
           
-          const url = `${AUTH_APPS_SCRIPT_URL}?action=authenticate&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&_t=${Date.now()}&callback=${callbackName}`;
-          script.src = url;
-          document.body.appendChild(script);
+          // Update UI without resetting the quiz!
+          quizQuestionCountEl.textContent = `${questions.length} questions`;
           
-          setTimeout(() => {
-            if (window[callbackName]) {
-              delete window[callbackName];
-              document.body.removeChild(script);
-              resolve({ 
-                success: false, 
-                error: 'Request timeout. Please try again.' 
-              });
-            }
-          }, 10000);
-        });
-
+          if (questions.length === 0) {
+            questionTextEl.innerHTML = "📝 No questions in this chapter.<br><br>Click the 'Add New Question' button below to create the first question.";
+            optionsListEl.innerHTML = "";
+            questionImageContainerEl.classList.remove('visible');
+            nextBtn.disabled = true;
+            previousBtn.disabled = true;
+            finishBtn.disabled = true;
+            questionGridEl.innerHTML = '<div style="color: #9ca3af; text-align: center; padding: 20px;">No questions</div>';
+            navigationStatsEl.innerHTML = '';
+          } else {
+            updateQuestionNavigation();
+            renderQuestion();
+          }
+        } else {
+          throw new Error(result?.error || 'Failed to delete question');
+        }
       } catch (error) {
-        console.error('Authentication error:', error);
-        return {
-          success: false,
-          error: 'Cannot connect to authentication server. Please try again later.'
-        };
+        console.error('Error deleting question:', error);
+        hidePDFOverlay();
+        
+        if (error.error === 'Question index out of range') {
+          alert('The question you are trying to delete may have already been removed. Refreshing the question list...');
+          await loadQuestionsFromGoogleSheet(topicSelectEl.value);
+        } else {
+          alert('Error deleting question: ' + (error.error || error.message));
+        }
       }
     }
+   
 
-    // ========== JSONP HELPER FUNCTION ==========
-    function jsonpRequest(url, callbackName) {
+    // ========== DELETE QUESTION FROM SHEET API ==========
+    async function deleteQuestionFromSheet(sheetId, gid, originalIndex) {
       return new Promise((resolve, reject) => {
-        const uniqueCallback = callbackName + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        const callbackName = 'deleteCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         
         const script = document.createElement('script');
         
-        window[uniqueCallback] = function(data) {
-          delete window[uniqueCallback];
-          document.body.removeChild(script);
-          
+        const timeoutId = setTimeout(() => {
+          if (window[callbackName]) {
+            delete window[callbackName];
+            if (script.parentNode) document.body.removeChild(script);
+            reject({ error: 'Request timeout after 15 seconds' });
+          }
+        }, 15000);
+        
+        window[callbackName] = function(data) {
+          clearTimeout(timeoutId);
+          delete window[callbackName];
+          if (script.parentNode) document.body.removeChild(script);
+          console.log('Delete callback received:', data);
           if (data && data.success) {
             resolve(data);
           } else {
-            reject(data?.error || 'Unknown error');
+            reject({ error: data?.error || 'Unknown error occurred' });
           }
         };
         
         script.onerror = function() {
-          delete window[uniqueCallback];
-          document.body.removeChild(script);
-          reject('Network error');
+          clearTimeout(timeoutId);
+          delete window[callbackName];
+          if (script.parentNode) document.body.removeChild(script);
+          reject({ error: 'Network error - failed to load script' });
         };
         
-        const separator = url.includes('?') ? '&' : '?';
-        script.src = `${url}${separator}callback=${uniqueCallback}`;
-        document.body.appendChild(script);
+        let url = MASTER_CONFIG_APPS_SCRIPT_URL + (MASTER_CONFIG_APPS_SCRIPT_URL.includes('?') ? '&' : '?');
+        url += 'action=deleteQuestion';
+        url += '&sheetId=' + encodeURIComponent(sheetId);
+        url += '&gid=' + encodeURIComponent(gid);
+        url += '&originalIndex=' + encodeURIComponent(originalIndex);
+        url += '&username=' + encodeURIComponent(currentUser.username);
+        url += '&role=' + encodeURIComponent(currentUser.role);
+        url += '&callback=' + encodeURIComponent(callbackName);
+        url += '&_t=' + Date.now();
         
-        setTimeout(() => {
-          if (window[uniqueCallback]) {
-            delete window[uniqueCallback];
-            document.body.removeChild(script);
-            reject('Request timeout');
+        console.log('Deleting question at original index:', originalIndex);
+        script.src = url;
+        document.body.appendChild(script);
+      });
+    }
+
+    // ========== OPEN QUESTION EDITOR ==========
+    function openQuestionEditor(index) {
+      if (!questions[index]) return;
+      
+      const q = questions[index];
+      
+      document.getElementById('editor-title').textContent = 'Edit Question';
+      document.getElementById('editor-question-type').value = q.isSubjective ? 'subjective' : 'mcq';
+      document.getElementById('editor-question').value = q.question;
+      
+      // Reset image URL toggle and hide fields by default
+      if (showImageUrlsCheckbox) {
+        showImageUrlsCheckbox.checked = false;
+        toggleImageUrlFields();
+      }
+      
+      document.getElementById('editor-image-url').value = q.imageUrl || '';
+      document.getElementById('editor-marks').value = q.marks || 1;
+      document.getElementById('editor-explanation').value = q.explanation || '';
+      
+      toggleQuestionTypeSections(q.isSubjective ? 'subjective' : 'mcq');
+      
+      // Clear previews
+      ['question', 'option-a', 'option-b', 'option-c', 'option-d'].forEach(prefix => {
+        const preview = document.getElementById(`preview-${prefix}-image`);
+        if (preview) {
+          preview.src = '';
+          preview.classList.remove('visible');
+        }
+      });
+      
+      if (!q.isSubjective) {
+        document.getElementById('editor-option-a').value = q.options[0] || '';
+        document.getElementById('editor-option-b').value = q.options[1] || '';
+        document.getElementById('editor-option-c').value = q.options[2] || '';
+        document.getElementById('editor-option-d').value = q.options[3] || '';
+        
+        if (q.optionImages) {
+          document.getElementById('editor-option-a-img').value = q.optionImages[0] || '';
+          document.getElementById('editor-option-b-img').value = q.optionImages[1] || '';
+          document.getElementById('editor-option-c-img').value = q.optionImages[2] || '';
+          document.getElementById('editor-option-d-img').value = q.optionImages[3] || '';
+        } else {
+          ['a', 'b', 'c', 'd'].forEach(letter => {
+            document.getElementById(`editor-option-${letter}-img`).value = '';
+          });
+        }
+        
+        const answerLetter = String.fromCharCode(65 + q.correctIndex);
+        document.getElementById('editor-answer-mcq').value = answerLetter;
+      } else {
+        document.getElementById('editor-answer-subjective').value = q.explanation || '';
+      }
+      
+      document.getElementById('question-editor-modal').dataset.editMode = 'edit';
+      document.getElementById('question-editor-modal').dataset.questionIndex = index;
+      document.getElementById('question-editor-modal').dataset.originalIndex = q.originalIndex;
+      document.getElementById('question-editor-modal').dataset.tempId = '';
+      
+      document.getElementById('question-editor-modal').style.display = 'flex';
+      
+      // Setup upload handlers
+      //setTimeout(setupImageUploadHandlers, 100);
+    }
+
+    // ========== OPEN NEW QUESTION EDITOR ==========
+    function openNewQuestionEditor() {
+      document.getElementById('editor-title').textContent = 'Add New Question';
+      document.getElementById('editor-question-type').value = 'mcq';
+      document.getElementById('editor-question').value = '';
+      
+      // Reset image URL toggle and hide fields by default
+      if (showImageUrlsCheckbox) {
+        showImageUrlsCheckbox.checked = false;
+        toggleImageUrlFields();
+      }
+      
+      document.getElementById('editor-image-url').value = '';
+      document.getElementById('editor-marks').value = '1';
+      document.getElementById('editor-explanation').value = '';
+      
+      // Clear all fields
+      ['a', 'b', 'c', 'd'].forEach(letter => {
+        document.getElementById(`editor-option-${letter}`).value = '';
+        document.getElementById(`editor-option-${letter}-img`).value = '';
+      });
+      
+      // Clear previews
+      ['question', 'option-a', 'option-b', 'option-c', 'option-d'].forEach(prefix => {
+        const preview = document.getElementById(`preview-${prefix}-image`);
+        if (preview) {
+          preview.src = '';
+          preview.classList.remove('visible');
+        }
+      });
+      
+      document.getElementById('editor-answer-mcq').value = 'A';
+      document.getElementById('editor-answer-subjective').value = '';
+      
+      toggleQuestionTypeSections('mcq');
+      
+      document.getElementById('question-editor-modal').dataset.editMode = 'new';
+      document.getElementById('question-editor-modal').dataset.tempId = '';
+      
+      document.getElementById('question-editor-modal').style.display = 'flex';
+      
+      // Setup upload handlers
+      //setTimeout(setupImageUploadHandlers, 100);
+    }
+
+    // ========== TOGGLE QUESTION TYPE SECTIONS ==========
+    function toggleQuestionTypeSections(type) {
+      const mcqSection = document.getElementById('mcq-options-section');
+      const answerMcq = document.getElementById('editor-answer-mcq');
+      const answerSubjective = document.getElementById('editor-answer-subjective');
+      
+      if (type === 'mcq') {
+        mcqSection.style.display = 'block';
+        answerMcq.style.display = 'block';
+        answerSubjective.style.display = 'none';
+      } else {
+        mcqSection.style.display = 'none';
+        answerMcq.style.display = 'none';
+        answerSubjective.style.display = 'block';
+      }
+    }
+
+    // ========== SAVE QUESTION CHANGES - WITH CIRCULAR ANIMATION AND TEXT ==========
+    // ========== SAVE QUESTION CHANGES ==========
+    async function saveQuestionChanges() {
+      if (!isAdmin()) {
+        alert("Unauthorized access");
+        return;
+      }
+
+      const saveBtn = document.getElementById('editor-save-btn');
+      const editMode = document.getElementById('question-editor-modal').dataset.editMode;
+      const originalIndex = document.getElementById('question-editor-modal').dataset.originalIndex;
+      const questionType = document.getElementById('editor-question-type').value;
+      const tempId = document.getElementById('question-editor-modal').dataset.tempId || '';
+      
+      const question = document.getElementById('editor-question').value.trim();
+      if (!question) {
+        alert("Please enter a question.");
+        return;
+      }
+
+      const marks = document.getElementById('editor-marks').value;
+      if (!marks || marks < 1) {
+        alert("Please enter valid marks (minimum 1).");
+        return;
+      }
+      
+      const questionImageUrl = document.getElementById('editor-image-url').value.trim();
+      const optionAImg = document.getElementById('editor-option-a-img').value.trim();
+      const optionBImg = document.getElementById('editor-option-b-img').value.trim();
+      const optionCImg = document.getElementById('editor-option-c-img').value.trim();
+      const optionDImg = document.getElementById('editor-option-d-img').value.trim();
+      
+      let rowData;
+      
+      if (questionType === 'mcq') {
+        const options = [
+          document.getElementById('editor-option-a').value.trim(),
+          document.getElementById('editor-option-b').value.trim(),
+          document.getElementById('editor-option-c').value.trim(),
+          document.getElementById('editor-option-d').value.trim()
+        ];
+        
+        const filledOptions = options.filter(opt => opt !== '');
+        if (filledOptions.length < 2) {
+          alert("Please provide at least 2 options for MCQ questions.");
+          return;
+        }
+        
+        const optionImages = [optionAImg, optionBImg, optionCImg, optionDImg];
+        const answer = document.getElementById('editor-answer-mcq').value;
+        
+        rowData = {
+          question: question,
+          option1: options[0],
+          option2: options[1],
+          option3: options[2],
+          option4: options[3],
+          answer: answer,
+          explanation: document.getElementById('editor-explanation').value.trim(),
+          marks: marks,
+          imageUrl: questionImageUrl,
+          optionImage1: optionImages[0],
+          optionImage2: optionImages[1],
+          optionImage3: optionImages[2],
+          optionImage4: optionImages[3]
+        };
+      } else {
+        const answer = document.getElementById('editor-answer-subjective').value.trim();
+        if (!answer) {
+          alert("Please provide an answer for subjective question.");
+          return;
+        }
+        
+        rowData = {
+          question: question,
+          option1: '',
+          option2: '',
+          option3: '',
+          option4: '',
+          answer: answer,
+          explanation: document.getElementById('editor-explanation').value.trim(),
+          marks: marks,
+          imageUrl: questionImageUrl,
+          optionImage1: '',
+          optionImage2: '',
+          optionImage3: '',
+          optionImage4: ''
+        };
+      }
+      
+      const originalText = saveBtn.textContent;
+      saveBtn.classList.add('saving');
+      saveBtn.innerHTML = 'Saving...';
+      saveBtn.disabled = true;
+      
+      try {
+        const trimmed = topicSelectEl.value;
+        const gid = currentSubjectConfig?.chapters?.[trimmed];
+        const sheetId = currentSubjectConfig?.sheetId;
+        
+        if (!gid || !sheetId) {
+          throw new Error("Invalid chapter configuration. Please select a chapter.");
+        }
+        
+        const result = await saveQuestionToSheet(rowData, editMode, originalIndex, sheetId, gid, tempId);
+        
+        if (result && result.success) {
+          saveBtn.classList.remove('saving');
+          saveBtn.innerHTML = originalText;
+          saveBtn.disabled = false;
+          document.getElementById('question-editor-modal').style.display = 'none';
+          
+          if (editMode === 'edit') {
+            questions[currentIndex].question = rowData.question;
+            questions[currentIndex].imageUrl = rowData.imageUrl;
+            questions[currentIndex].marks = parseFloat(rowData.marks) || 1;
+            
+            if (questionType === 'mcq') {
+              questions[currentIndex].isSubjective = false;
+              questions[currentIndex].options = [rowData.option1, rowData.option2, rowData.option3, rowData.option4];
+              questions[currentIndex].optionImages = [rowData.optionImage1, rowData.optionImage2, rowData.optionImage3, rowData.optionImage4];
+              questions[currentIndex].explanation = rowData.explanation;
+              
+              const answerUpper = rowData.answer.toUpperCase().trim();
+              if (answerUpper === 'A' || answerUpper === '1') questions[currentIndex].correctIndex = 0;
+              else if (answerUpper === 'B' || answerUpper === '2') questions[currentIndex].correctIndex = 1;
+              else if (answerUpper === 'C' || answerUpper === '3') questions[currentIndex].correctIndex = 2;
+              else if (answerUpper === 'D' || answerUpper === '4') questions[currentIndex].correctIndex = 3;
+            } else {
+              questions[currentIndex].isSubjective = true;
+              questions[currentIndex].options = [];
+              questions[currentIndex].optionImages = [];
+              questions[currentIndex].explanation = rowData.answer + (rowData.explanation ? ' - ' + rowData.explanation : '');
+            }
+          } else {
+            const newQ = {
+              question: rowData.question,
+              imageUrl: rowData.imageUrl,
+              marks: parseFloat(rowData.marks) || 1,
+              isSubjective: questionType !== 'mcq',
+              originalIndex: result.newIndex || questions.length
+            };
+            
+            if (questionType === 'mcq') {
+              newQ.options = [rowData.option1, rowData.option2, rowData.option3, rowData.option4];
+              newQ.optionImages = [rowData.optionImage1, rowData.optionImage2, rowData.optionImage3, rowData.optionImage4];
+              newQ.explanation = rowData.explanation;
+              
+              const answerUpper = rowData.answer.toUpperCase().trim();
+              if (answerUpper === 'A' || answerUpper === '1') newQ.correctIndex = 0;
+              else if (answerUpper === 'B' || answerUpper === '2') newQ.correctIndex = 1;
+              else if (answerUpper === 'C' || answerUpper === '3') newQ.correctIndex = 2;
+              else if (answerUpper === 'D' || answerUpper === '4') newQ.correctIndex = 3;
+            } else {
+              newQ.options = [];
+              newQ.optionImages = [];
+              newQ.explanation = rowData.answer + (rowData.explanation ? ' - ' + rowData.explanation : '');
+            }
+            
+            questions.push(newQ);
+            quizQuestionCountEl.textContent = `${questions.length} questions`;
+            currentIndex = questions.length - 1; 
           }
-        }, 10000);
+          
+          updateQuestionNavigation();
+          renderQuestion();
+          alert('Question saved successfully!');
+        } else {
+          throw new Error(result?.error || 'Failed to save question');
+        }
+      } catch (error) {
+        console.error('Error saving question:', error);
+        saveBtn.classList.remove('saving');
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+        alert('Error saving question: ' + (error.message || error.error || 'Unknown error'));
+      }
+    }
+    // ========== SAVE QUESTION TO SHEET API ==========
+    async function saveQuestionToSheet(questionData, editMode, originalIndex, sheetId, gid, tempId) {
+      return new Promise((resolve, reject) => {
+        const callbackName = 'saveCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        const script = document.createElement('script');
+        
+        const timeoutId = setTimeout(() => {
+          if (window[callbackName]) {
+            delete window[callbackName];
+            if (script.parentNode) document.body.removeChild(script);
+            reject({ error: 'Request timeout after 15 seconds' });
+          }
+        }, 15000);
+        
+        window[callbackName] = function(data) {
+          clearTimeout(timeoutId);
+          delete window[callbackName];
+          if (script.parentNode) document.body.removeChild(script);
+          console.log('Save callback received:', data);
+          if (data && data.success) {
+            resolve(data);
+          } else {
+            reject({ error: data?.error || 'Unknown error occurred' });
+          }
+        };
+        
+        script.onerror = function() {
+          clearTimeout(timeoutId);
+          delete window[callbackName];
+          if (script.parentNode) document.body.removeChild(script);
+          reject({ error: 'Network error - failed to load script' });
+        };
+        
+        let url = MASTER_CONFIG_APPS_SCRIPT_URL + (MASTER_CONFIG_APPS_SCRIPT_URL.includes('?') ? '&' : '?');
+        url += 'action=' + (editMode === 'new' ? 'addQuestion' : 'updateQuestion');
+        url += '&sheetId=' + encodeURIComponent(sheetId);
+        url += '&gid=' + encodeURIComponent(gid);
+        url += '&username=' + encodeURIComponent(currentUser.username);
+        url += '&role=' + encodeURIComponent(currentUser.role);
+        if (editMode !== 'new' && originalIndex !== undefined) {
+          url += '&originalIndex=' + encodeURIComponent(originalIndex);
+        }
+        if (editMode === 'new' && tempId) {
+          url += '&tempId=' + encodeURIComponent(tempId);
+        }
+        
+        const dataStr = JSON.stringify(questionData);
+        url += '&data=' + encodeURIComponent(dataStr);
+        url += '&callback=' + encodeURIComponent(callbackName);
+        url += '&_t=' + Date.now();
+        
+        console.log('Save URL:', url.substring(0, 200) + '...');
+        
+        script.src = url;
+        document.body.appendChild(script);
       });
     }
 
@@ -4575,6 +6265,8 @@
       loadClasses();
       saveSession();
 
+      updateAdminControls();
+
       if (!isRestore) sendLoginNotification(user);
     }
 
@@ -4590,6 +6282,7 @@
       hasSentLoginNotification = false;
       hasSentQuizResultNotification = false;
       currentQuizSessionId = null;
+      isQuizActive = false;
 
       document.removeEventListener('mousemove', handleUserActivity);
       document.removeEventListener('keypress', handleUserActivity);
@@ -4660,21 +6353,8 @@
       if (sent) hasSentLoginNotification = true;
     }
 
-    // ==== AUTO SEND PDF TO TELEGRAM (ONLY ONCE PER QUIZ) ====
-    async function autoSendPDFToTelegramOnce(doc, filename) {
-      if (hasSentQuizResultNotification) return;
-
-      try {
-        const pdfBase64 = doc.output('datauristring').split(',')[1];
-        const sent = await sendPDFToTelegram(pdfBase64, filename);
-        if (sent) hasSentQuizResultNotification = true;
-      } catch (e) {
-        console.error("Auto PDF Telegram send failed:", e);
-      }
-    }
-
-    // ========== UPDATED: Send quiz result notification with PDF ==========
     async function sendQuizResultNotification(stats) {
+      if (!isQuizActive) return;
       if (hasSentQuizResultNotification) return;
       if (currentUser.role === 'Admin' && !ADMIN_CONFIG.NOTIFY_ON_QUIZ_RESULT) return;
       if (!TELEGRAM_CONFIG.ENABLED) return;
@@ -4697,13 +6377,10 @@
         `📅 Date: ${date}\n\n` +
         `_A detailed PDF report is attached below._`;
 
-      // Send text message first
       const sent = await sendTelegramMessage(message);
       
-      // Then generate and send PDF
       if (sent) {
         try {
-          // Generate PDF
           const { jsPDF } = window.jspdf;
           const doc = new jsPDF({
             orientation: 'portrait',
@@ -4711,14 +6388,12 @@
             format: 'a4'
           });
 
-          // Set dark theme for PDF
           doc.setFillColor(15, 23, 42);
           doc.rect(0, 0, 210, 297, 'F');
           
           doc.setFillColor(30, 41, 59);
           doc.rect(0, 0, 210, 50, 'F');
           
-          // Add Logo
           try {
             const logoImg = new Image();
             logoImg.src = 'logo.png';
@@ -4754,7 +6429,6 @@
           doc.setTextColor(226, 232, 240);
           doc.text("PERFORMANCE REPORT", 105, 80, { align: 'center' });
           
-          // Student info
           doc.setFillColor(30, 41, 59);
           doc.roundedRect(20, 95, 170, 60, 3, 3, 'F');
           doc.setDrawColor(59, 130, 246);
@@ -4789,7 +6463,6 @@
             yPos += 7;
           }
 
-          // Results
           doc.setFillColor(30, 41, 59);
           doc.roundedRect(20, 165, 170, 100, 3, 3, 'F');
           doc.setDrawColor(34, 197, 94);
@@ -4837,7 +6510,6 @@
           doc.setTextColor(148, 163, 184);
           doc.text("PDF Generated by G.S. Tutorial App", 105, 285, { align: 'center' });
 
-          // Send PDF to Telegram
           const pdfBase64 = doc.output('datauristring').split(',')[1];
           const filename = `GS_Report_${currentUser.username.substring(0, 6)}_${currentSubject.substring(0, 3)}_${Date.now().toString().slice(-6)}.pdf`;
           await sendPDFToTelegram(pdfBase64, filename);
@@ -4908,24 +6580,49 @@
       }
     }
 
-    // ========== IMAGE HANDLING FUNCTIONS ==========
+    // ========== IMPROVED IMAGE HANDLING FUNCTIONS ==========
     function convertImageUrl(url) {
       if (!url) return '';
-      if (url.startsWith('http://') || url.startsWith('https://')) return url;
-
-      let imagePath = url.trim();
-      if (!imagePath.startsWith('images/')) {
-        if (imagePath.match(/^[a-zA-Z0-9]+\.[a-z]{3,4}$/i)) {
-          imagePath = `images/class${currentClass}/${imagePath}`;
-        } else if (imagePath.includes('/')) {
-          imagePath = `images/${imagePath}`;
+      
+      // If it's already a full URL, process it
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        // Special handling for Google Drive URLs to bypass recent embedding restrictions
+        if (url.includes('drive.google.com')) {
+          let fileId = null;
+          
+          // Match format: https://drive.google.com/file/d/FILE_ID/view
+          const matchD = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+          if (matchD && matchD[1]) {
+            fileId = matchD[1];
+          } 
+          // Match format: https://drive.google.com/open?id=FILE_ID or /uc?id=FILE_ID
+          else {
+            const matchId = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (matchId && matchId[1]) {
+              fileId = matchId[1];
+            }
+          }
+          
+          // If we successfully extracted an ID, use the thumbnail endpoint
+          if (fileId) {
+            // sz=w1000 sets a max-width of 1000px, which keeps quality high while loading fast
+            return `https://drive.google.com/thumbnail?id=${fileId}&sz=w600`;
+          }
         }
+        return url;
       }
-      return imagePath + '?t=' + Date.now();
+
+      return '';
     }
 
     function loadImageWithCache(url) {
       return new Promise((resolve, reject) => {
+        if (!url) {
+          reject(new Error('No URL provided'));
+          return;
+        }
+
+        // Check cache first
         const cached = imageCache.get(url);
         if (cached) {
           resolve(cached);
@@ -4933,14 +6630,29 @@
         }
 
         const img = new Image();
+        
+        // Set timeout for image loading
+        const timeoutId = setTimeout(() => {
+          img.onload = null;
+          img.onerror = null;
+          reject(new Error('Image loading timeout'));
+        }, 10000); // 10 second timeout
+
         img.onload = function() {
+          clearTimeout(timeoutId);
           imageCache.set(url, img);
           resolve(img);
         };
+        
         img.onerror = function() {
+          clearTimeout(timeoutId);
+          console.error(`Failed to load image: ${url}`);
           reject(new Error(`Failed to load image: ${url}`));
         };
-        img.src = url;
+        
+        // Add cache-busting parameter to prevent caching issues
+        const separator = url.includes('?') ? '&' : '?';
+        img.src = url + separator + '_t=' + Date.now();
       });
     }
 
@@ -4949,13 +6661,16 @@
 
       const imageUrls = new Set();
       chapterQuestions.forEach(q => {
-        if (q.imageUrl && q.imageUrl.trim() !== '') {
-          imageUrls.add(convertImageUrl(q.imageUrl.trim()));
+        const questionImageUrl = convertImageUrl(q.imageUrl);
+        if (questionImageUrl) {
+          imageUrls.add(questionImageUrl);
         }
+        
         if (q.optionImages) {
           q.optionImages.forEach(optImg => {
-            if (optImg && optImg.trim() !== '') {
-              imageUrls.add(convertImageUrl(optImg.trim()));
+            const optionImageUrl = convertImageUrl(optImg);
+            if (optionImageUrl) {
+              imageUrls.add(optionImageUrl);
             }
           });
         }
@@ -4970,20 +6685,25 @@
       showPreloadOverlay();
       updatePreloadProgress();
 
+      // Load images in parallel with a limit
       const CONCURRENT_LIMIT = 3;
-      const chunks = [];
       for (let i = 0; i < urlsArray.length; i += CONCURRENT_LIMIT) {
-        chunks.push(urlsArray.slice(i, i + CONCURRENT_LIMIT));
-      }
-
-      for (const chunk of chunks) {
+        const chunk = urlsArray.slice(i, i + CONCURRENT_LIMIT);
         await Promise.allSettled(
           chunk.map(url => 
             loadImageWithCache(url)
-              .then(() => { imagesPreloaded++; updatePreloadProgress(); })
-              .catch(() => { imagesPreloaded++; updatePreloadProgress(); })
+              .then(() => {
+                imagesPreloaded++;
+                updatePreloadProgress();
+              })
+              .catch((error) => {
+                console.error('Failed to preload image:', url, error);
+                imagesPreloaded++;
+                updatePreloadProgress();
+              })
           )
         );
+        // Small delay between chunks
         await new Promise(resolve => setTimeout(resolve, 100));
       }
 
@@ -5085,6 +6805,7 @@
       }
 
       updateNavigationStats();
+      updateAdminControls();
     }
 
     function updateNavigationStats() {
@@ -5096,7 +6817,6 @@
       let correctCount = 0, incorrectCount = 0, notAnsweredCount = 0;
       let questionsToUse = isReattemptMode ? reattemptQuestions : questions;
       let answersToUse = isReattemptMode ? reattemptUserAnswers : userAnswers;
-      let marksToUse = isReattemptMode ? reattemptUserMarks : userMarks;
 
       for (let i = 0; i < questionsToUse.length; i++) {
         if (answersToUse[i] !== undefined) {
@@ -5160,12 +6880,14 @@
       isReviewMode = false;
       isIncorrectReviewMode = false;
       isReattemptMode = false;
+      isQuizActive = false;
       resetInactivityTimer();
     }
 
     function showSubjectSelection(className) {
       currentClass = className;
       currentClassDisplayEl.textContent = className === 'JE' ? 'Junior Engineer' : `Class ${className}`;
+      pathClassLink.textContent = currentClassDisplayEl.textContent;
 
       classSelectionEl.style.display = "none";
       subjectSelectionEl.style.display = "block";
@@ -5177,19 +6899,14 @@
       isReviewMode = false;
       isIncorrectReviewMode = false;
       isReattemptMode = false;
+      isQuizActive = false;
       resetInactivityTimer();
     }
 
     function showQuizContainer(subjectName) {
       currentSubject = subjectName;
-
-      currentPathEl.innerHTML = `
-        <span class="path-link" onclick="showClassSelection()">Classes</span>
-        <span class="path-separator">›</span>
-        <span class="path-link" onclick="showSubjectSelection('${currentClass}')">${currentClass === 'JE' ? 'Junior Engineer' : 'Class ' + currentClass}</span>
-        <span class="path-separator">›</span>
-        <span>${subjectName}</span>
-      `;
+      pathSubjectEl.textContent = subjectName;
+      pathClassLink.textContent = currentClass === 'JE' ? 'Junior Engineer' : `Class ${currentClass}`;
       currentPathEl.style.display = "flex";
 
       subjectSelectionEl.style.display = "none";
@@ -5201,12 +6918,15 @@
       isReviewMode = false;
       isIncorrectReviewMode = false;
       isReattemptMode = false;
+      isQuizActive = false;
+      updateAdminControls();
       resetInactivityTimer();
     }
 
     // ========== QUIZ FUNCTIONS ==========
     function resetQuizState() {
       questions = [];
+      originalQuestions = [];
       currentIndex = 0;
       score = 0;
       totalMarks = 0;
@@ -5222,6 +6942,7 @@
       isReviewMode = false;
       isIncorrectReviewMode = false;
       isReattemptMode = false;
+      isQuizActive = false;
       incorrectQuestionIndices = [];
       reattemptQuestions = [];
       reattemptUserAnswers = [];
@@ -5242,7 +6963,7 @@
       finishBtn.disabled = true;
       finishBtn.textContent = "Submit";
       finishBtn.onclick = () => {
-        if (!questionsLoaded) return;
+        if (!questionsLoaded || !isQuizActive) return;
         if (confirm("Are you sure you want to finish the quiz?")) showFinalResult();
         resetInactivityTimer();
       };
@@ -5268,14 +6989,18 @@
       quizTopicNameEl.style.cssText = "";
       removeTimerNotification();
       questionWhatsappIconEl.style.display = "none";
+      questionEditIconEl.style.display = "none";
+      questionDeleteIconEl.style.display = "none";
       
-      // Remove reattempt status banner if exists
       if (reattemptStatusBanner) {
         reattemptStatusBanner.remove();
         reattemptStatusBanner = null;
       }
+      
+      updateAdminControls();
     }
 
+    // ========== REVIEW FUNCTIONS ==========
     function collectIncorrectQuestionIndices() {
       incorrectQuestionIndices = [];
       for (let i = 0; i < questions.length; i++) {
@@ -5315,7 +7040,9 @@
 
       finishBtn.style.display = "inline-block";
       finishBtn.textContent = "Back to Results";
-      finishBtn.onclick = showFinalResultWithoutNotification;
+      finishBtn.onclick = function() {
+        showFinalResultWithoutNotification();
+      };
 
       currentIndex = 0;
       renderIncorrectReviewQuestion();
@@ -5335,6 +7062,8 @@
       const existingHeader = document.getElementById('review-header');
       if (existingHeader) existingHeader.remove();
       topicSection.parentNode.insertBefore(headerDiv, topicSection.nextSibling);
+      
+      updateAdminControls();
     }
 
     function reattemptIncorrectQuestions() {
@@ -5346,7 +7075,7 @@
 
       reattemptQuestions = incorrectQuestionIndices.map(idx => ({
         ...questions[idx],
-        originalIndex: idx
+        originalIndex: questions[idx].originalIndex
       }));
       reattemptUserAnswers = new Array(reattemptQuestions.length);
       reattemptUserMarks = new Array(reattemptQuestions.length);
@@ -5381,7 +7110,6 @@
       navigationToggleBtn.classList.remove('collapsed');
       updateQuestionNavigation();
 
-      // Create reattempt status banner
       if (reattemptStatusBanner) {
         reattemptStatusBanner.remove();
       }
@@ -5393,6 +7121,8 @@
       const existingHeader = document.getElementById('reattempt-header');
       if (existingHeader) existingHeader.remove();
       topicSection.parentNode.insertBefore(reattemptStatusBanner, topicSection.nextSibling);
+      
+      updateAdminControls();
     }
 
     function renderIncorrectReviewQuestion() {
@@ -5409,23 +7139,28 @@
 
       questionWhatsappIconEl.style.display = "block";
 
-      if (q.imageUrl?.trim()) {
+      // Handle question image
+      if (q.imageUrl && q.imageUrl.trim() && q.imageUrl.trim() !== 'null' && q.imageUrl.trim() !== 'undefined') {
         const imageUrl = convertImageUrl(q.imageUrl.trim());
-        questionImageContainerEl.classList.add('visible');
-        questionImageEl.style.display = "none";
-        imageLoadingEl.style.display = "block";
-        imageErrorEl.style.display = "none";
+        if (imageUrl) {
+          questionImageContainerEl.classList.add('visible');
+          questionImageEl.style.display = "none";
+          imageLoadingEl.style.display = "block";
+          imageErrorEl.style.display = "none";
 
-        loadImageWithCache(imageUrl)
-          .then(() => {
-            questionImageEl.src = imageUrl;
-            questionImageEl.style.display = "block";
-            imageLoadingEl.style.display = "none";
-          })
-          .catch(() => {
-            imageLoadingEl.style.display = "none";
-            imageErrorEl.style.display = "block";
-          });
+          loadImageWithCache(imageUrl)
+            .then(() => {
+              questionImageEl.src = imageUrl;
+              questionImageEl.style.display = "block";
+              imageLoadingEl.style.display = "none";
+            })
+            .catch(() => {
+              imageLoadingEl.style.display = "none";
+              imageErrorEl.style.display = "block";
+            });
+        } else {
+          questionImageContainerEl.classList.remove('visible');
+        }
       } else {
         questionImageContainerEl.classList.remove('visible');
       }
@@ -5459,7 +7194,21 @@
 
           const contentDiv = document.createElement("div");
           contentDiv.className = "option-content";
-          contentDiv.textContent = opt;
+
+          // Handle option images
+          if (q.optionImages && q.optionImages[idx] && q.optionImages[idx].trim() && q.optionImages[idx].trim() !== 'null' && q.optionImages[idx].trim() !== 'undefined') {
+            const optionImageUrl = convertImageUrl(q.optionImages[idx].trim());
+            if (optionImageUrl) {
+              const wrapper = document.createElement("div");
+              wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
+              wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
+              contentDiv.appendChild(wrapper);
+            } else {
+              contentDiv.textContent = opt;
+            }
+          } else {
+            contentDiv.textContent = opt;
+          }
 
           li.appendChild(labelDiv);
           li.appendChild(contentDiv);
@@ -5499,23 +7248,28 @@
 
       questionWhatsappIconEl.style.display = "block";
 
-      if (q.imageUrl?.trim()) {
+      // Handle question image
+      if (q.imageUrl && q.imageUrl.trim() && q.imageUrl.trim() !== 'null' && q.imageUrl.trim() !== 'undefined') {
         const imageUrl = convertImageUrl(q.imageUrl.trim());
-        questionImageContainerEl.classList.add('visible');
-        questionImageEl.style.display = "none";
-        imageLoadingEl.style.display = "block";
-        imageErrorEl.style.display = "none";
+        if (imageUrl) {
+          questionImageContainerEl.classList.add('visible');
+          questionImageEl.style.display = "none";
+          imageLoadingEl.style.display = "block";
+          imageErrorEl.style.display = "none";
 
-        loadImageWithCache(imageUrl)
-          .then(() => {
-            questionImageEl.src = imageUrl;
-            questionImageEl.style.display = "block";
-            imageLoadingEl.style.display = "none";
-          })
-          .catch(() => {
-            imageLoadingEl.style.display = "none";
-            imageErrorEl.style.display = "block";
-          });
+          loadImageWithCache(imageUrl)
+            .then(() => {
+              questionImageEl.src = imageUrl;
+              questionImageEl.style.display = "block";
+              imageLoadingEl.style.display = "none";
+            })
+            .catch(() => {
+              imageLoadingEl.style.display = "none";
+              imageErrorEl.style.display = "block";
+            });
+        } else {
+          questionImageContainerEl.classList.remove('visible');
+        }
       } else {
         questionImageContainerEl.classList.remove('visible');
       }
@@ -5550,7 +7304,21 @@
 
           const contentDiv = document.createElement("div");
           contentDiv.className = "option-content";
-          contentDiv.textContent = opt;
+
+          // Handle option images
+          if (q.optionImages && q.optionImages[idx] && q.optionImages[idx].trim() && q.optionImages[idx].trim() !== 'null' && q.optionImages[idx].trim() !== 'undefined') {
+            const optionImageUrl = convertImageUrl(q.optionImages[idx].trim());
+            if (optionImageUrl) {
+              const wrapper = document.createElement("div");
+              wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
+              wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
+              contentDiv.appendChild(wrapper);
+            } else {
+              contentDiv.textContent = opt;
+            }
+          } else {
+            contentDiv.textContent = opt;
+          }
 
           li.appendChild(labelDiv);
           li.appendChild(contentDiv);
@@ -5628,17 +7396,14 @@
       updateQuestionNavigation();
       resetInactivityTimer();
       
-      // Check if all questions are answered in reattempt mode
       if (isReattemptMode) {
         const allAnswered = reattemptUserAnswers.every(ans => ans !== undefined);
         if (allAnswered) {
-          // Update banner to completed
           if (reattemptStatusBanner) {
             reattemptStatusBanner.className = 'reattempt-status completed';
             reattemptStatusBanner.innerHTML = `✅ All ${reattemptQuestions.length} questions answered! Click "Finish Reattempt" to see results.`;
           }
         } else {
-          // Update banner with progress
           const answeredCount = reattemptUserAnswers.filter(ans => ans !== undefined).length;
           if (reattemptStatusBanner) {
             reattemptStatusBanner.className = 'reattempt-status in-progress';
@@ -5680,7 +7445,6 @@
       nextBtn.disabled = false;
       updateQuestionNavigation();
       
-      // Check if all questions are answered
       const allAnswered = reattemptUserAnswers.every(ans => ans !== undefined);
       if (allAnswered) {
         if (reattemptStatusBanner) {
@@ -5696,7 +7460,7 @@
       }
     }
 
-    // ========== LOAD QUESTIONS FROM GOOGLE SHEET (FIXED IMAGE COLUMN MAPPING) ==========
+    // ========== LOAD QUESTIONS FROM GOOGLE SHEET ==========
     async function loadQuestionsFromGoogleSheet(chapterName) {
       const trimmed = chapterName.trim();
       if (!trimmed) {
@@ -5727,7 +7491,7 @@
         finishBtn.disabled = true;
         finishBtn.textContent = "Submit";
         finishBtn.onclick = () => {
-          if (!questionsLoaded) return;
+          if (!questionsLoaded || !isQuizActive) return;
           if (confirm("Are you sure you want to finish the quiz?")) showFinalResult();
           resetInactivityTimer();
         };
@@ -5749,7 +7513,28 @@
         const jsonData = JSON.parse(data.substring(47).slice(0, -2));
         const rows = jsonData.table.rows;
 
-        if (rows.length === 0) throw new Error("No questions found.");
+        // Handle empty chapter - allow admin to add questions
+        if (rows.length === 0 || rows.length < 3) {
+          questions = [];
+          questionsLoaded = true;
+          
+          // Show appropriate message based on user role
+          if (isAdmin()) {
+            questionTextEl.innerHTML = "📝 No questions found in this chapter.<br><br>Click the 'Add New Question' button below to create the first question.";
+          } else {
+            questionTextEl.innerHTML = "No questions available in this chapter yet. Please check back later.";
+          }
+          
+          optionsListEl.innerHTML = "";
+          nextBtn.disabled = true;
+          previousBtn.disabled = true;
+          finishBtn.disabled = true;
+          quizQuestionCountEl.textContent = "0 questions";
+          
+          // Make sure add button stays visible for admin
+          updateAdminControls();
+          return;
+        }
 
         const rawQuestions = [];
         let timerFromSheet = 0;
@@ -5769,7 +7554,6 @@
           const option4 = row.c[4]?.v?.toString().trim() || '';
           const answer = row.c[5]?.v?.toString().trim() || '';
           const explanation = row.c[6]?.v?.toString().trim() || '';
-          // column I (index 8) -> question image
           const imageUrl = (row.c[8]?.v?.toString().trim() || ''); 
           
           let marks = 1;
@@ -5791,7 +7575,6 @@
             if (option3) options.push(option3);
             if (option4) options.push(option4);
 
-            // Option images from columns J (index 9), K(10), L(11), M(12)
             if (row.c[9]?.v) optionImages.push(row.c[9].v.toString().trim() || '');
             if (row.c[10]?.v) optionImages.push(row.c[10].v.toString().trim() || '');
             if (row.c[11]?.v) optionImages.push(row.c[11].v.toString().trim() || '');
@@ -5824,17 +7607,37 @@
               explanation: isSubjective ? answer + (explanation ? ' - ' + explanation : '') : explanation,
               imageUrl,
               isSubjective,
-              marks: isNaN(marks) ? 1 : marks
+              marks: isNaN(marks) ? 1 : marks,
+              originalIndex: i - 2
             });
           }
         }
 
-        if (rawQuestions.length === 0) throw new Error("No valid questions found.");
+        if (rawQuestions.length === 0) {
+          questions = [];
+          questionsLoaded = true;
+          
+          if (isAdmin()) {
+            questionTextEl.innerHTML = "📝 No valid questions found in this chapter.<br><br>Click the 'Add New Question' button below to create the first question.";
+          } else {
+            questionTextEl.innerHTML = "No questions available in this chapter yet.";
+          }
+          
+          optionsListEl.innerHTML = "";
+          nextBtn.disabled = true;
+          previousBtn.disabled = true;
+          finishBtn.disabled = true;
+          quizQuestionCountEl.textContent = "0 questions";
+          
+          updateAdminControls();
+          return;
+        }
 
         if (timerFromSheet > 0) timerDuration = timerFromSheet * 60 * 1000;
 
         const randomize = randomToggleEl.checked;
-        questions = prepareQuestionBank(rawQuestions, randomize);
+        const preparedQuestions = prepareQuestionBank(rawQuestions, randomize);
+        questions = preparedQuestions;
         userAnswers = new Array(questions.length);
         userMarks = new Array(questions.length);
 
@@ -5860,8 +7663,10 @@
         }
 
         renderQuestion();
+        updateAdminControls();
         resetInactivityTimer();
       } catch (err) {
+        console.error("Error loading questions:", err);
         questionTextEl.innerHTML = `Error: ${err.message}`;
         questionImageContainerEl.classList.remove('visible');
         optionsListEl.innerHTML = "";
@@ -5891,7 +7696,8 @@
         correctIndex: q.correctIndex,
         explanation: q.explanation,
         isSubjective: q.isSubjective,
-        marks: q.marks
+        marks: q.marks,
+        originalIndex: q.originalIndex
       }));
 
       if (randomize) {
@@ -5973,9 +7779,11 @@
     }
 
     function autoFinishQuiz() {
-      showFinalResult();
-      stopTimer();
-      removeTimerNotification();
+      if (isQuizActive) {
+        showFinalResult();
+        stopTimer();
+        removeTimerNotification();
+      }
     }
 
     function formatTimeTaken() {
@@ -5996,6 +7804,8 @@
         subjectiveContainerEl.style.display = 'none';
         nextBtn.disabled = previousBtn.disabled = finishBtn.disabled = true;
         questionWhatsappIconEl.style.display = "none";
+        questionEditIconEl.style.display = "none";
+        questionDeleteIconEl.style.display = "none";
         return;
       }
 
@@ -6016,25 +7826,31 @@
         .replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>')
         .replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim() + ' ' + marksHtml;
 
-      questionWhatsappIconEl.style.display = "block";
+      // Update icons visibility
+      updateAdminControls();
 
-      if (q.imageUrl?.trim()) {
+      // Handle question image
+      if (q.imageUrl && q.imageUrl.trim() && q.imageUrl.trim() !== 'null' && q.imageUrl.trim() !== 'undefined') {
         const imageUrl = convertImageUrl(q.imageUrl.trim());
-        questionImageContainerEl.classList.add('visible');
-        questionImageEl.style.display = "none";
-        imageLoadingEl.style.display = "block";
-        imageErrorEl.style.display = "none";
+        if (imageUrl) {
+          questionImageContainerEl.classList.add('visible');
+          questionImageEl.style.display = "none";
+          imageLoadingEl.style.display = "block";
+          imageErrorEl.style.display = "none";
 
-        loadImageWithCache(imageUrl)
-          .then(() => {
-            questionImageEl.src = imageUrl;
-            questionImageEl.style.display = "block";
-            imageLoadingEl.style.display = "none";
-          })
-          .catch(() => {
-            imageLoadingEl.style.display = "none";
-            imageErrorEl.style.display = "block";
-          });
+          loadImageWithCache(imageUrl)
+            .then(() => {
+              questionImageEl.src = imageUrl;
+              questionImageEl.style.display = "block";
+              imageLoadingEl.style.display = "none";
+            })
+            .catch(() => {
+              imageLoadingEl.style.display = "none";
+              imageErrorEl.style.display = "block";
+            });
+        } else {
+          questionImageContainerEl.classList.remove('visible');
+        }
       } else {
         questionImageContainerEl.classList.remove('visible');
       }
@@ -6053,7 +7869,7 @@
         }
         
         subjectiveCorrectBtn.onclick = () => {
-          if (hasAnswered) return;
+          if (hasAnswered || !isQuizActive) return;
           resetInactivityTimer();
           subjectiveCorrectBtn.classList.add('selected-correct');
           subjectiveIncorrectBtn.classList.remove('selected-incorrect');
@@ -6063,7 +7879,7 @@
         };
         
         subjectiveIncorrectBtn.onclick = () => {
-          if (hasAnswered) return;
+          if (hasAnswered || !isQuizActive) return;
           resetInactivityTimer();
           subjectiveIncorrectBtn.classList.add('selected-incorrect');
           subjectiveCorrectBtn.classList.remove('selected-correct');
@@ -6088,12 +7904,17 @@
           const contentDiv = document.createElement("div");
           contentDiv.className = "option-content";
 
-          if (q.optionImages?.[idx]?.trim()) {
+          // Handle option images
+          if (q.optionImages && q.optionImages[idx] && q.optionImages[idx].trim() && q.optionImages[idx].trim() !== 'null' && q.optionImages[idx].trim() !== 'undefined') {
             const optionImageUrl = convertImageUrl(q.optionImages[idx].trim());
-            const wrapper = document.createElement("div");
-            wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
-            wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}">`;
-            contentDiv.appendChild(wrapper);
+            if (optionImageUrl) {
+              const wrapper = document.createElement("div");
+              wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
+              wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
+              contentDiv.appendChild(wrapper);
+            } else {
+              contentDiv.textContent = opt;
+            }
           } else {
             contentDiv.textContent = opt;
           }
@@ -6103,7 +7924,7 @@
           optionsListEl.appendChild(li);
 
           li.addEventListener("click", () => {
-            if (hasAnswered || isReviewMode) return;
+            if (hasAnswered || isReviewMode || !isQuizActive) return;
             resetInactivityTimer();
             document.querySelectorAll(".option").forEach(optEl => optEl.classList.remove("selected"));
             li.classList.add("selected");
@@ -6158,6 +7979,44 @@
         if (!isReviewMode && !isIncorrectReviewMode) {
           nextBtn.disabled = false;
         }
+      }
+
+      if (isReviewMode && userAnswers[currentIndex] === undefined) {
+        if (!q.isSubjective) {
+          document.querySelectorAll(".option").forEach((opt, idx) => {
+            opt.classList.remove("selected", "incorrect", "correct");
+            if (idx === q.correctIndex) {
+              opt.classList.add("correct");
+            }
+          });
+          if (q.explanation) {
+            let expDiv = feedbackEl.querySelector('.explanation');
+            if (!expDiv) {
+              expDiv = document.createElement("div");
+              expDiv.className = "explanation";
+              feedbackEl.appendChild(expDiv);
+            }
+            expDiv.innerHTML = `<strong>Explanation:</strong> ${q.explanation}`;
+          }
+          feedbackEl.textContent = `Correct answer is: ${q.options[q.correctIndex]}`;
+          feedbackEl.className = "feedback correct";
+          lockOptions();
+        } else {
+          if (q.explanation) {
+            let expDiv = feedbackEl.querySelector('.explanation');
+            if (!expDiv) {
+              expDiv = document.createElement("div");
+              expDiv.className = "explanation";
+              feedbackEl.appendChild(expDiv);
+            }
+            expDiv.innerHTML = `<strong>Explanation (Correct answer):</strong> ${q.explanation}`;
+          }
+          feedbackEl.textContent = `Subjective question - correct answer in explanation.`;
+          feedbackEl.className = "feedback";
+          subjectiveCorrectBtn.disabled = true;
+          subjectiveIncorrectBtn.disabled = true;
+        }
+        nextBtn.disabled = false;
       }
 
       updateQuestionNavigation();
@@ -6397,17 +8256,16 @@
       resetInactivityTimer();
     }
 
-    // ========== UPDATED: Show Final Result with circular loading animation ==========
     function showFinalResult() {
+      if (!isQuizActive) return;
+      
       stopTimer();
       removeTimerNotification();
       const stats = calculateQuizStats();
       collectIncorrectQuestionIndices();
 
-      // Show circular loading animation
       showPDFOverlay("Generating PDF Report...");
       
-      // Simulate PDF generation time (2 seconds)
       setTimeout(() => {
         hidePDFOverlay();
 
@@ -6443,10 +8301,8 @@
           </div>
           <div class="result-message">${getPerformanceRemark(parseFloat(stats.percentage))}</div>
           
-          <!-- Button Groups - New arrangement -->
           <div class="button-groups-container">
             
-            <!-- Group 1: Restart & Reattempt -->
             <div class="button-group">
               <div class="group-buttons">
                 <button class="restart-btn group-btn" onclick="restartQuiz()">⟲ Restart Quiz</button>
@@ -6454,7 +8310,6 @@
               </div>
             </div>
             
-            <!-- Group 2: PDF Downloads -->
             <div class="button-group">
               <div class="group-buttons">
                 <button class="pdf-report-btn group-btn" onclick="downloadPDFReport()">📄 Download PDF Report</button>
@@ -6462,7 +8317,6 @@
               </div>
             </div>
             
-            <!-- Group 3: Reviews -->
             <div class="button-group">
               <div class="group-buttons">
                 ${stats.incorrect > 0 ? `<button class="review-incorrect-btn group-btn" onclick="showIncorrectQuestionsReview()">❌ Review Incorrect Questions</button>` : ''}
@@ -6478,11 +8332,10 @@
 
       resetInactivityTimer();
       
-      // Send only one copy to Telegram (automatic with PDF)
       sendQuizResultNotification(stats);
+      isQuizActive = false;
     }
 
-    // ========== UPDATED: Review All Questions (shows ALL questions with answers, even not attempted) ==========
     function showQuestionReview() {
       isReviewMode = true;
       isIncorrectReviewMode = false;
@@ -6501,9 +8354,10 @@
 
       finishBtn.style.display = "inline-block";
       finishBtn.textContent = "Back to Results";
-      finishBtn.onclick = showFinalResultWithoutNotification;
+      finishBtn.onclick = function() {
+        showFinalResultWithoutNotification();
+      };
 
-      // Create a header for review mode
       const reviewHeader = document.createElement('div');
       reviewHeader.id = 'review-header';
       reviewHeader.style.cssText = 'margin:10px 0;padding:10px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:8px;text-align:center;color:#93c5fd';
@@ -6514,20 +8368,8 @@
       if (existingHeader) existingHeader.remove();
       topicSection.parentNode.insertBefore(reviewHeader, topicSection.nextSibling);
 
-      // Pre-process: for each question, if not answered, set a placeholder answer for correct highlighting
-      // but we want to show correct answer always. The render function will handle showing correct/incorrect based on userAnswers.
-      // For unattempted, we need to show correct answer but not mark as user answer. So we need to modify renderQuestion logic slightly.
-      // We'll create a temporary override for review mode: in renderQuestion, if isReviewMode is true, we still show correct answer and explanation.
-      // The existing renderQuestion already shows correct answer and explanation when userAnswers[currentIndex] exists.
-      // For unattempted questions, userAnswers is undefined. In review mode, we want to show the correct answer without marking any option as selected/incorrect.
-      // Let's add a check: if isReviewMode and userAnswers[currentIndex] === undefined, then just show correct answer (highlight correct) but no selected class.
-      // We'll modify renderQuestion for review mode: after rendering options, if in review mode and answer undefined, we highlight correct option and show explanation.
-      
-      // Override for review mode: we'll force the correct answer to be displayed.
-      // We'll adjust the renderQuestion function for review mode just below.
-
       currentIndex = 0;
-      renderQuestion(); // This will be adjusted in renderQuestion for review mode.
+      renderQuestion();
 
       questionNavigationEl.classList.remove('collapsed');
       questionNavigationEl.classList.add('expanded');
@@ -6535,65 +8377,6 @@
       navigationToggleBtn.classList.remove('collapsed');
       updateQuestionNavigation();
     }
-
-    // Modify renderQuestion to handle review mode for unattempted questions
-    const originalRenderQuestion = renderQuestion;
-    renderQuestion = function() {
-      if (!questionsLoaded || questions.length === 0) {
-        originalRenderQuestion.call(this);
-        return;
-      }
-      const q = questions[currentIndex];
-      // Call the original to set up basic UI
-      originalRenderQuestion.call(this);
-
-      // After original, if in review mode and user hasn't answered, we want to show correct answer and explanation without locking.
-      if (isReviewMode && userAnswers[currentIndex] === undefined) {
-        // Remove any existing selected classes
-        document.querySelectorAll(".option").forEach(opt => opt.classList.remove("selected", "incorrect", "correct"));
-        // Add correct class to correct option
-        if (!q.isSubjective) {
-          document.querySelectorAll(".option").forEach((opt, idx) => {
-            if (idx === q.correctIndex) {
-              opt.classList.add("correct");
-            }
-          });
-          // Show explanation
-          if (q.explanation) {
-            let expDiv = feedbackEl.querySelector('.explanation');
-            if (!expDiv) {
-              expDiv = document.createElement("div");
-              expDiv.className = "explanation";
-              feedbackEl.appendChild(expDiv);
-            }
-            expDiv.innerHTML = `<strong>Explanation:</strong> ${q.explanation}`;
-          }
-          // Notify user this is the correct answer
-          feedbackEl.textContent = `Correct answer is: ${q.options[q.correctIndex]}`;
-          feedbackEl.className = "feedback correct";
-          // Don't lock options in review mode? We want them non-interactive.
-          lockOptions();
-        } else {
-          // subjective - show correct answer as explanation
-          if (q.explanation) {
-            let expDiv = feedbackEl.querySelector('.explanation');
-            if (!expDiv) {
-              expDiv = document.createElement("div");
-              expDiv.className = "explanation";
-              feedbackEl.appendChild(expDiv);
-            }
-            expDiv.innerHTML = `<strong>Explanation (Correct answer):</strong> ${q.explanation}`;
-          }
-          feedbackEl.textContent = `Subjective question - correct answer in explanation.`;
-          feedbackEl.className = "feedback";
-          // disable buttons
-          subjectiveCorrectBtn.disabled = true;
-          subjectiveIncorrectBtn.disabled = true;
-        }
-        // Ensure next is enabled
-        nextBtn.disabled = false;
-      }
-    };
 
     function showFinalResultWithoutNotification() {
       stopTimer();
@@ -6633,10 +8416,8 @@
         </div>
         <div class="result-message">${getPerformanceRemark(parseFloat(stats.percentage))}</div>
         
-        <!-- Button Groups - New arrangement -->
         <div class="button-groups-container">
           
-          <!-- Group 1: Restart & Reattempt -->
           <div class="button-group">
             <div class="group-buttons">
               <button class="restart-btn group-btn" onclick="restartQuiz()">⟲ Restart Quiz</button>
@@ -6644,7 +8425,6 @@
             </div>
           </div>
           
-          <!-- Group 2: PDF Downloads -->
           <div class="button-group">
             <div class="group-buttons">
               <button class="pdf-report-btn group-btn" onclick="downloadPDFReport()">📄 Download PDF Report</button>
@@ -6652,7 +8432,6 @@
             </div>
           </div>
           
-          <!-- Group 3: Reviews -->
           <div class="button-group">
             <div class="group-buttons">
               ${stats.incorrect > 0 ? `<button class="review-incorrect-btn group-btn" onclick="showIncorrectQuestionsReview()">❌ Review Incorrect Questions</button>` : ''}
@@ -6666,6 +8445,7 @@
       `;
 
       resetInactivityTimer();
+      isQuizActive = false;
     }
 
     function restartQuiz() {
@@ -6686,7 +8466,7 @@
 
       finishBtn.textContent = "Submit";
       finishBtn.onclick = () => {
-        if (!questionsLoaded) return;
+        if (!questionsLoaded || !isQuizActive) return;
         if (confirm("Are you sure you want to finish the quiz?")) showFinalResult();
         resetInactivityTimer();
       };
@@ -6715,6 +8495,7 @@
 
       updateQuestionNavigation();
       hasSentQuizResultNotification = false;
+      isQuizActive = true;
 
       if (timerDuration > 0) {
         showTimerNotification();
@@ -6725,7 +8506,6 @@
       resetInactivityTimer();
     }
 
-    // New function for direct PDF download without Telegram
     function downloadPDFReport() {
       if (!currentUser || !questionsLoaded || questions.length === 0) {
         alert("No data available to generate PDF.");
@@ -6758,14 +8538,12 @@
             creator: 'G.S. Tutorial App'
           });
           
-          // Page 1: Cover
           doc.setFillColor(15, 23, 42);
           doc.rect(0, 0, 210, 297, 'F');
           
           doc.setFillColor(30, 41, 59);
           doc.rect(0, 0, 210, 50, 'F');
           
-          // Add Logo
           try {
             const logoImg = new Image();
             logoImg.src = 'logo.png';
@@ -6802,7 +8580,6 @@
           doc.setTextColor(226, 232, 240);
           doc.text("PERFORMANCE REPORT", 105, 80, { align: 'center' });
           
-          // Student info
           doc.setFillColor(30, 41, 59);
           doc.roundedRect(20, 95, 170, 60, 3, 3, 'F');
           doc.setDrawColor(59, 130, 246);
@@ -6837,7 +8614,6 @@
             yPos += 7;
           }
 
-          // Results
           doc.setFillColor(30, 41, 59);
           doc.roundedRect(20, 165, 170, 100, 3, 3, 'F');
           doc.setDrawColor(34, 197, 94);
@@ -6951,14 +8727,12 @@
           creator: 'G.S. Tutorial App'
         });
 
-        // Cover page
         doc.setFillColor(15, 23, 42);
         doc.rect(0, 0, 210, 297, 'F');
         
         doc.setFillColor(30, 41, 59);
         doc.rect(0, 0, 210, 50, 'F');
         
-        // Add Logo
         try {
           const logoImg = new Image();
           logoImg.src = 'logo.png';
@@ -7025,7 +8799,6 @@
         doc.setTextColor(148, 163, 184);
         doc.text("© 2025 G.S. Tutorial. All rights reserved.", 105, 285, { align: 'center' });
 
-        // Content pages
         doc.addPage();
 
         doc.setFillColor(15, 23, 42);
@@ -7264,8 +9037,12 @@
       }
 
       loginErrorEl.style.display = "none";
-      loginBtnEl.disabled = true;
+      
+      // Add loading animation to login button
+      const originalText = loginBtnEl.textContent;
+      loginBtnEl.classList.add('saving');
       loginBtnEl.innerHTML = 'Loading...';
+      loginBtnEl.disabled = true;
 
       const result = await authenticateWithAppsScript(username, password);
 
@@ -7293,8 +9070,10 @@
         loginErrorEl.style.display = "block";
       }
 
+      // Remove loading animation
+      loginBtnEl.classList.remove('saving');
+      loginBtnEl.innerHTML = originalText;
       loginBtnEl.disabled = false;
-      loginBtnEl.innerHTML = 'Login';
     });
 
     passwordToggleEl.addEventListener("click", togglePasswordVisibility);
@@ -7324,10 +9103,16 @@
     startBtnEl.addEventListener("click", function(e) {
       e.preventDefault();
       const chapter = topicSelectEl.value;
-      if (timerInterval) clearInterval(timerInterval);
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
       removeTimerNotification();
       resetQuizState();
-      loadQuestionsFromGoogleSheet(chapter);
+      loadQuestionsFromGoogleSheet(chapter).then(() => {
+        isQuizActive = true;
+        quizStartTime = Date.now();
+      });
       resetInactivityTimer();
     });
 
@@ -7350,7 +9135,52 @@
       resetInactivityTimer();
     });
 
+    // Setup image URL toggle
+    if (showImageUrlsCheckbox) {
+      showImageUrlsCheckbox.addEventListener('change', toggleImageUrlFields);
+    }
+
     setupQuestionWhatsAppSupport();
+    setupEditIcon();
+    setupDeleteIcon();
+
+    if (addQuestionBtn) {
+      addQuestionBtn.addEventListener("click", function() {
+        if (!isAdmin()) {
+          alert("Admin access required");
+          return;
+        }
+        if (!currentSubjectConfig || !currentTopicName) {
+          alert("Please select a chapter first.");
+          return;
+        }
+        console.log('Opening new question editor');
+        openNewQuestionEditor();
+      });
+    }
+
+    document.querySelectorAll('.modal-close').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.getElementById('question-editor-modal').style.display = 'none';
+      });
+    });
+
+    document.getElementById('editor-cancel-btn').addEventListener('click', function() {
+      document.getElementById('question-editor-modal').style.display = 'none';
+    });
+
+    document.getElementById('editor-save-btn').addEventListener('click', saveQuestionChanges);
+
+    document.getElementById('editor-question-type').addEventListener('change', function(e) {
+      toggleQuestionTypeSections(e.target.value);
+    });
+
+    window.addEventListener('click', function(e) {
+      const modal = document.getElementById('question-editor-modal');
+      if (e.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
 
     document.addEventListener('click', (e) => {
       if (questionImageEl.classList.contains('zoomed') && !e.target.closest('#question-image-container')) {
@@ -7416,9 +9246,13 @@
     setTheme(localStorage.getItem('theme') || 'dark');
 
     // ========== INITIALIZATION ==========
+   // ========== INITIALIZATION ==========
     async function initializeApp() {
       await loadTelegramConfig();
       await getUserIP();
+
+      // --- ADD THIS LINE HERE ---
+      setupImageUploadHandlers();
 
       if (loadSession()) {
         login(currentUser, true);
