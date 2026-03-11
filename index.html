@@ -5438,18 +5438,7 @@
         }
       }
     }
-    hidePDFOverlay();
-        
-        // Show more specific error message
-        if (error.error === 'Question index out of range') {
-          alert('The question you are trying to delete may have already been removed. Refreshing the question list...');
-          // Reload the chapter to get fresh data
-          await loadQuestionsFromGoogleSheet(topicSelectEl.value);
-        } else {
-          alert('Error deleting question: ' + (error.error || error.message));
-        }
-      }
-    }
+   
 
     // ========== DELETE QUESTION FROM SHEET API ==========
     async function deleteQuestionFromSheet(sheetId, gid, originalIndex) {
