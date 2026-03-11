@@ -4843,20 +4843,27 @@
 
         console.log('📤 Uploading to Google Drive...', { fileName: file.name, previewId, inputId, fieldName });
 
-        // Get the row index for the current question
+       // Get the row index for the current question
         let rowIndex = '';
-        const editMode = document.getElementById('question-editor-modal').dataset.editMode;
+        let tempId = '';
+        const modalDataset = document.getElementById('question-editor-modal').dataset;
+        const editMode = modalDataset.editMode;
         
         if (editMode === 'edit') {
-          const originalIndex = document.getElementById('question-editor-modal').dataset.originalIndex;
-          rowIndex = originalIndex;
+          rowIndex = modalDataset.originalIndex;
         } else {
-          // For new questions, generate a temporary ID
+          // For new questions, set rowIndex to 'new'
           rowIndex = 'new';
+          
+          // FIX: Check if we already created a tempId for this new question session
+          if (modalDataset.tempId && modalDataset.tempId !== '') {
+            tempId = modalDataset.tempId;
+          } else {
+            // If not, create one and immediately save it to the dataset so it gets reused!
+            tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            modalDataset.tempId = tempId;
+          }
         }
-
-        // Generate a temporary ID for new questions
-        const tempId = editMode === 'new' ? 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9) : '';
 
         // Upload to Google Drive via Apps Script
         const result = await uploadImageToDrive(file.name, base64Data, file.type, fieldName, rowIndex, tempId);
@@ -5541,7 +5548,7 @@
       document.getElementById('question-editor-modal').style.display = 'flex';
       
       // Setup upload handlers
-      setTimeout(setupImageUploadHandlers, 100);
+      //setTimeout(setupImageUploadHandlers, 100);
     }
 
     // ========== OPEN NEW QUESTION EDITOR ==========
@@ -5586,7 +5593,7 @@
       document.getElementById('question-editor-modal').style.display = 'flex';
       
       // Setup upload handlers
-      setTimeout(setupImageUploadHandlers, 100);
+      //setTimeout(setupImageUploadHandlers, 100);
     }
 
     // ========== TOGGLE QUESTION TYPE SECTIONS ==========
