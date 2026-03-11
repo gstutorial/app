@@ -6508,26 +6508,30 @@
       }
     }
 
-    // ========== IMAGE HANDLING FUNCTIONS ==========
+    // ========== IMPROVED IMAGE HANDLING FUNCTIONS ==========
     function convertImageUrl(url) {
-      if (!url) return '';
+      if (!url || url === 'null' || url === 'undefined') return '';
       
-      // If it's already a full URL (including Google Drive), return it as-is
+      // If it's already a full URL (including Google Drive), process it
       if (url.startsWith('http://') || url.startsWith('https://')) {
-        // Special handling for Google Drive URLs to ensure they work
+        // Special handling for Google Drive URLs
         if (url.includes('drive.google.com')) {
-          // If it's a view URL, convert to direct download URL
+          // Handle different Google Drive URL formats
           if (url.includes('/file/d/')) {
             const fileId = url.match(/\/d\/([^\/]+)/);
             if (fileId && fileId[1]) {
               return `https://drive.google.com/uc?export=view&id=${fileId[1]}`;
             }
           }
+          // If it's already a direct view URL, return as is
+          if (url.includes('uc?export=view')) {
+            return url;
+          }
         }
         return url;
       }
 
-      // No more GitHub path handling - only return empty string for non-URLs
+      // Return empty string for non-URLs
       return '';
     }
 
@@ -6538,6 +6542,7 @@
           return;
         }
 
+        // Check cache first
         const cached = imageCache.get(url);
         if (cached) {
           resolve(cached);
@@ -6545,14 +6550,29 @@
         }
 
         const img = new Image();
+        
+        // Set timeout for image loading
+        const timeoutId = setTimeout(() => {
+          img.onload = null;
+          img.onerror = null;
+          reject(new Error('Image loading timeout'));
+        }, 10000); // 10 second timeout
+
         img.onload = function() {
+          clearTimeout(timeoutId);
           imageCache.set(url, img);
           resolve(img);
         };
+        
         img.onerror = function() {
+          clearTimeout(timeoutId);
+          console.error(`Failed to load image: ${url}`);
           reject(new Error(`Failed to load image: ${url}`));
         };
-        img.src = url;
+        
+        // Add cache-busting parameter to prevent caching issues
+        const separator = url.includes('?') ? '&' : '?';
+        img.src = url + separator + '_t=' + Date.now();
       });
     }
 
@@ -6561,13 +6581,16 @@
 
       const imageUrls = new Set();
       chapterQuestions.forEach(q => {
-        if (q.imageUrl && q.imageUrl.trim() !== '' && q.imageUrl.startsWith('http')) {
-          imageUrls.add(convertImageUrl(q.imageUrl.trim()));
+        const questionImageUrl = convertImageUrl(q.imageUrl);
+        if (questionImageUrl) {
+          imageUrls.add(questionImageUrl);
         }
+        
         if (q.optionImages) {
           q.optionImages.forEach(optImg => {
-            if (optImg && optImg.trim() !== '' && optImg.startsWith('http')) {
-              imageUrls.add(convertImageUrl(optImg.trim()));
+            const optionImageUrl = convertImageUrl(optImg);
+            if (optionImageUrl) {
+              imageUrls.add(optionImageUrl);
             }
           });
         }
@@ -6582,20 +6605,25 @@
       showPreloadOverlay();
       updatePreloadProgress();
 
+      // Load images in parallel with a limit
       const CONCURRENT_LIMIT = 3;
-      const chunks = [];
       for (let i = 0; i < urlsArray.length; i += CONCURRENT_LIMIT) {
-        chunks.push(urlsArray.slice(i, i + CONCURRENT_LIMIT));
-      }
-
-      for (const chunk of chunks) {
+        const chunk = urlsArray.slice(i, i + CONCURRENT_LIMIT);
         await Promise.allSettled(
           chunk.map(url => 
             loadImageWithCache(url)
-              .then(() => { imagesPreloaded++; updatePreloadProgress(); })
-              .catch(() => { imagesPreloaded++; updatePreloadProgress(); })
+              .then(() => {
+                imagesPreloaded++;
+                updatePreloadProgress();
+              })
+              .catch((error) => {
+                console.error('Failed to preload image:', url, error);
+                imagesPreloaded++;
+                updatePreloadProgress();
+              })
           )
         );
+        // Small delay between chunks
         await new Promise(resolve => setTimeout(resolve, 100));
       }
 
@@ -7031,23 +7059,28 @@
 
       questionWhatsappIconEl.style.display = "block";
 
-      if (q.imageUrl?.trim() && q.imageUrl.startsWith('http')) {
+      // Handle question image
+      if (q.imageUrl && q.imageUrl.trim() && q.imageUrl.trim() !== 'null' && q.imageUrl.trim() !== 'undefined') {
         const imageUrl = convertImageUrl(q.imageUrl.trim());
-        questionImageContainerEl.classList.add('visible');
-        questionImageEl.style.display = "none";
-        imageLoadingEl.style.display = "block";
-        imageErrorEl.style.display = "none";
+        if (imageUrl) {
+          questionImageContainerEl.classList.add('visible');
+          questionImageEl.style.display = "none";
+          imageLoadingEl.style.display = "block";
+          imageErrorEl.style.display = "none";
 
-        loadImageWithCache(imageUrl)
-          .then(() => {
-            questionImageEl.src = imageUrl;
-            questionImageEl.style.display = "block";
-            imageLoadingEl.style.display = "none";
-          })
-          .catch(() => {
-            imageLoadingEl.style.display = "none";
-            imageErrorEl.style.display = "block";
-          });
+          loadImageWithCache(imageUrl)
+            .then(() => {
+              questionImageEl.src = imageUrl;
+              questionImageEl.style.display = "block";
+              imageLoadingEl.style.display = "none";
+            })
+            .catch(() => {
+              imageLoadingEl.style.display = "none";
+              imageErrorEl.style.display = "block";
+            });
+        } else {
+          questionImageContainerEl.classList.remove('visible');
+        }
       } else {
         questionImageContainerEl.classList.remove('visible');
       }
@@ -7081,7 +7114,21 @@
 
           const contentDiv = document.createElement("div");
           contentDiv.className = "option-content";
-          contentDiv.textContent = opt;
+
+          // Handle option images
+          if (q.optionImages && q.optionImages[idx] && q.optionImages[idx].trim() && q.optionImages[idx].trim() !== 'null' && q.optionImages[idx].trim() !== 'undefined') {
+            const optionImageUrl = convertImageUrl(q.optionImages[idx].trim());
+            if (optionImageUrl) {
+              const wrapper = document.createElement("div");
+              wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
+              wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
+              contentDiv.appendChild(wrapper);
+            } else {
+              contentDiv.textContent = opt;
+            }
+          } else {
+            contentDiv.textContent = opt;
+          }
 
           li.appendChild(labelDiv);
           li.appendChild(contentDiv);
@@ -7121,23 +7168,28 @@
 
       questionWhatsappIconEl.style.display = "block";
 
-      if (q.imageUrl?.trim() && q.imageUrl.startsWith('http')) {
+      // Handle question image
+      if (q.imageUrl && q.imageUrl.trim() && q.imageUrl.trim() !== 'null' && q.imageUrl.trim() !== 'undefined') {
         const imageUrl = convertImageUrl(q.imageUrl.trim());
-        questionImageContainerEl.classList.add('visible');
-        questionImageEl.style.display = "none";
-        imageLoadingEl.style.display = "block";
-        imageErrorEl.style.display = "none";
+        if (imageUrl) {
+          questionImageContainerEl.classList.add('visible');
+          questionImageEl.style.display = "none";
+          imageLoadingEl.style.display = "block";
+          imageErrorEl.style.display = "none";
 
-        loadImageWithCache(imageUrl)
-          .then(() => {
-            questionImageEl.src = imageUrl;
-            questionImageEl.style.display = "block";
-            imageLoadingEl.style.display = "none";
-          })
-          .catch(() => {
-            imageLoadingEl.style.display = "none";
-            imageErrorEl.style.display = "block";
-          });
+          loadImageWithCache(imageUrl)
+            .then(() => {
+              questionImageEl.src = imageUrl;
+              questionImageEl.style.display = "block";
+              imageLoadingEl.style.display = "none";
+            })
+            .catch(() => {
+              imageLoadingEl.style.display = "none";
+              imageErrorEl.style.display = "block";
+            });
+        } else {
+          questionImageContainerEl.classList.remove('visible');
+        }
       } else {
         questionImageContainerEl.classList.remove('visible');
       }
@@ -7172,7 +7224,21 @@
 
           const contentDiv = document.createElement("div");
           contentDiv.className = "option-content";
-          contentDiv.textContent = opt;
+
+          // Handle option images
+          if (q.optionImages && q.optionImages[idx] && q.optionImages[idx].trim() && q.optionImages[idx].trim() !== 'null' && q.optionImages[idx].trim() !== 'undefined') {
+            const optionImageUrl = convertImageUrl(q.optionImages[idx].trim());
+            if (optionImageUrl) {
+              const wrapper = document.createElement("div");
+              wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
+              wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
+              contentDiv.appendChild(wrapper);
+            } else {
+              contentDiv.textContent = opt;
+            }
+          } else {
+            contentDiv.textContent = opt;
+          }
 
           li.appendChild(labelDiv);
           li.appendChild(contentDiv);
@@ -7683,23 +7749,28 @@
       // Update icons visibility
       updateAdminControls();
 
-      if (q.imageUrl?.trim() && q.imageUrl.startsWith('http')) {
+      // Handle question image
+      if (q.imageUrl && q.imageUrl.trim() && q.imageUrl.trim() !== 'null' && q.imageUrl.trim() !== 'undefined') {
         const imageUrl = convertImageUrl(q.imageUrl.trim());
-        questionImageContainerEl.classList.add('visible');
-        questionImageEl.style.display = "none";
-        imageLoadingEl.style.display = "block";
-        imageErrorEl.style.display = "none";
+        if (imageUrl) {
+          questionImageContainerEl.classList.add('visible');
+          questionImageEl.style.display = "none";
+          imageLoadingEl.style.display = "block";
+          imageErrorEl.style.display = "none";
 
-        loadImageWithCache(imageUrl)
-          .then(() => {
-            questionImageEl.src = imageUrl;
-            questionImageEl.style.display = "block";
-            imageLoadingEl.style.display = "none";
-          })
-          .catch(() => {
-            imageLoadingEl.style.display = "none";
-            imageErrorEl.style.display = "block";
-          });
+          loadImageWithCache(imageUrl)
+            .then(() => {
+              questionImageEl.src = imageUrl;
+              questionImageEl.style.display = "block";
+              imageLoadingEl.style.display = "none";
+            })
+            .catch(() => {
+              imageLoadingEl.style.display = "none";
+              imageErrorEl.style.display = "block";
+            });
+        } else {
+          questionImageContainerEl.classList.remove('visible');
+        }
       } else {
         questionImageContainerEl.classList.remove('visible');
       }
@@ -7753,12 +7824,17 @@
           const contentDiv = document.createElement("div");
           contentDiv.className = "option-content";
 
-          if (q.optionImages?.[idx]?.trim() && q.optionImages[idx].startsWith('http')) {
+          // Handle option images
+          if (q.optionImages && q.optionImages[idx] && q.optionImages[idx].trim() && q.optionImages[idx].trim() !== 'null' && q.optionImages[idx].trim() !== 'undefined') {
             const optionImageUrl = convertImageUrl(q.optionImages[idx].trim());
-            const wrapper = document.createElement("div");
-            wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
-            wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}">`;
-            contentDiv.appendChild(wrapper);
+            if (optionImageUrl) {
+              const wrapper = document.createElement("div");
+              wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
+              wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
+              contentDiv.appendChild(wrapper);
+            } else {
+              contentDiv.textContent = opt;
+            }
           } else {
             contentDiv.textContent = opt;
           }
