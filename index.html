@@ -5383,27 +5383,34 @@
       try {
         const result = await deleteQuestionFromSheet(sheetId, gid, originalIndex);
         
-        if (result && result.success) {
-          // Remove question from local array
+       if (result && result.success) {
+          hidePDFOverlay();
+          alert('Question deleted successfully!');
+          
+          // --- FIX: Update local arrays and shift originalIndex down by 1 ---
           questions.splice(currentIndex, 1);
           userAnswers.splice(currentIndex, 1);
           userMarks.splice(currentIndex, 1);
           
-          // Adjust current index if needed
+          // CRITICAL: Shift row indexes down so the next edit/delete targets the right row in Google Sheets
+          for (let i = currentIndex; i < questions.length; i++) {
+            if (questions[i].originalIndex !== undefined) {
+              questions[i].originalIndex -= 1;
+            }
+          }
+          
+          // Adjust index to stay on the current position (or go back 1 if at the end)
           if (questions.length === 0) {
             currentIndex = 0;
           } else if (currentIndex >= questions.length) {
             currentIndex = questions.length - 1;
           }
           
-          // Update UI
+          // Update UI without resetting the quiz!
           quizQuestionCountEl.textContent = `${questions.length} questions`;
           
           if (questions.length === 0) {
-            // No questions left
-            questionTextEl.innerHTML = isAdmin() ? 
-              "📝 No questions in this chapter.<br><br>Click the 'Add New Question' button below to create the first question." :
-              "No questions available in this chapter yet.";
+            questionTextEl.innerHTML = "📝 No questions in this chapter.<br><br>Click the 'Add New Question' button below to create the first question.";
             optionsListEl.innerHTML = "";
             questionImageContainerEl.classList.remove('visible');
             nextBtn.disabled = true;
@@ -5415,7 +5422,9 @@
             updateQuestionNavigation();
             renderQuestion();
           }
-          
+        } else {
+          throw new Error(result?.error || 'Failed to delete question');
+        }
           hidePDFOverlay();
           alert('Question deleted successfully!');
         } else {
@@ -5470,7 +5479,7 @@
           reject({ error: 'Network error - failed to load script' });
         };
         
-        let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?';
+        let url = MASTER_CONFIG_APPS_SCRIPT_URL + (MASTER_CONFIG_APPS_SCRIPT_URL.includes('?') ? '&' : '?');
         url += 'action=deleteQuestion';
         url += '&sheetId=' + encodeURIComponent(sheetId);
         url += '&gid=' + encodeURIComponent(gid);
@@ -5735,34 +5744,77 @@
         
         console.log('Save result from Apps Script:', result);
         
-        if (result && result.success) {
-          // Reload the chapter to get fresh data with correct image URLs
-          await loadQuestionsFromGoogleSheet(trimmed);
-          
+       if (result && result.success) {
           // Remove loading animation and close modal
           saveBtn.classList.remove('saving');
           saveBtn.innerHTML = originalText;
           saveBtn.disabled = false;
           document.getElementById('question-editor-modal').style.display = 'none';
-          alert('Question saved successfully!');
           
-          // Stay on the same question index after save
-          if (editMode === 'edit' && currentQuestionIndex !== undefined) {
-            currentIndex = currentQuestionIndex;
-            renderQuestion();
+          // --- FIX: Update data locally to preserve quiz state and position ---
+          if (editMode === 'edit') {
+            // Update existing question
+            questions[currentIndex].question = rowData.question;
+            questions[currentIndex].imageUrl = rowData.imageUrl;
+            questions[currentIndex].marks = parseFloat(rowData.marks) || 1;
+            
+            if (questionType === 'mcq') {
+              questions[currentIndex].isSubjective = false;
+              questions[currentIndex].options = [rowData.option1, rowData.option2, rowData.option3, rowData.option4];
+              questions[currentIndex].optionImages = [rowData.optionImage1, rowData.optionImage2, rowData.optionImage3, rowData.optionImage4];
+              questions[currentIndex].explanation = rowData.explanation;
+              
+              const answerUpper = rowData.answer.toUpperCase().trim();
+              if (answerUpper === 'A' || answerUpper === '1') questions[currentIndex].correctIndex = 0;
+              else if (answerUpper === 'B' || answerUpper === '2') questions[currentIndex].correctIndex = 1;
+              else if (answerUpper === 'C' || answerUpper === '3') questions[currentIndex].correctIndex = 2;
+              else if (answerUpper === 'D' || answerUpper === '4') questions[currentIndex].correctIndex = 3;
+            } else {
+              questions[currentIndex].isSubjective = true;
+              questions[currentIndex].options = [];
+              questions[currentIndex].optionImages = [];
+              questions[currentIndex].explanation = rowData.answer + (rowData.explanation ? ' - ' + rowData.explanation : '');
+            }
+            // User stays on exact same question!
+          } else {
+            // Handle NEW question being added
+            const newQ = {
+              question: rowData.question,
+              imageUrl: rowData.imageUrl,
+              marks: parseFloat(rowData.marks) || 1,
+              isSubjective: questionType !== 'mcq',
+              originalIndex: result.newIndex || questions.length
+            };
+            
+            if (questionType === 'mcq') {
+              newQ.options = [rowData.option1, rowData.option2, rowData.option3, rowData.option4];
+              newQ.optionImages = [rowData.optionImage1, rowData.optionImage2, rowData.optionImage3, rowData.optionImage4];
+              newQ.explanation = rowData.explanation;
+              
+              const answerUpper = rowData.answer.toUpperCase().trim();
+              if (answerUpper === 'A' || answerUpper === '1') newQ.correctIndex = 0;
+              else if (answerUpper === 'B' || answerUpper === '2') newQ.correctIndex = 1;
+              else if (answerUpper === 'C' || answerUpper === '3') newQ.correctIndex = 2;
+              else if (answerUpper === 'D' || answerUpper === '4') newQ.correctIndex = 3;
+            } else {
+              newQ.options = [];
+              newQ.optionImages = [];
+              newQ.explanation = rowData.answer + (rowData.explanation ? ' - ' + rowData.explanation : '');
+            }
+            
+            questions.push(newQ);
+            quizQuestionCountEl.textContent = `${questions.length} questions`;
+            currentIndex = questions.length - 1; // Jump directly to the newly added question
           }
+          
+          // Re-render instantly!
+          updateQuestionNavigation();
+          renderQuestion();
+          
+          alert('Question saved successfully!');
         } else {
           throw new Error(result?.error || 'Failed to save question');
         }
-      } catch (error) {
-        console.error('Error saving question:', error);
-        saveBtn.classList.remove('saving');
-        saveBtn.innerHTML = originalText;
-        saveBtn.disabled = false;
-        alert('Error saving question: ' + error.message);
-      }
-    }
-
     // ========== SAVE QUESTION TO SHEET API ==========
     async function saveQuestionToSheet(questionData, editMode, originalIndex, sheetId, gid, tempId) {
       return new Promise((resolve, reject) => {
@@ -5797,7 +5849,7 @@
           reject({ error: 'Network error - failed to load script' });
         };
         
-        let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?';
+        let url = MASTER_CONFIG_APPS_SCRIPT_URL + (MASTER_CONFIG_APPS_SCRIPT_URL.includes('?') ? '&' : '?');
         url += 'action=' + (editMode === 'new' ? 'addQuestion' : 'updateQuestion');
         url += '&sheetId=' + encodeURIComponent(sheetId);
         url += '&gid=' + encodeURIComponent(gid);
@@ -9214,9 +9266,13 @@
     setTheme(localStorage.getItem('theme') || 'dark');
 
     // ========== INITIALIZATION ==========
+   // ========== INITIALIZATION ==========
     async function initializeApp() {
       await loadTelegramConfig();
       await getUserIP();
+
+      // --- ADD THIS LINE HERE ---
+      setupImageUploadHandlers();
 
       if (loadSession()) {
         login(currentUser, true);
