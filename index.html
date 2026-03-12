@@ -4420,7 +4420,7 @@
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwf3FEX0Lcpq7IUOdM01uje7T4vWfVVSjObcFy4x4pPVikU5JshK_5-aCAV_T1swZ5cJQ/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbcq4sy82KMC0jKHQRtMCPuRSv4TEAPRvcjOyQrMns9ieiRa7s08BBNHQeJCPD-xT2/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaZunpwmyfVC_7yoLnl-mZEr-5xWMBtjjATj3E95A-fYQWJGCiULxwuPbFQLu8zCVv/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -5513,7 +5513,7 @@
     }
 
     // ========== OPEN QUESTION EDITOR ==========
-   function openQuestionEditor(index) {
+  function openQuestionEditor(index) {
       if (!questions[index]) return;
       
       const q = questions[index];
@@ -5544,18 +5544,28 @@
         }
       });
       
-      // SECURITY: Role-based Upload Button Control
-      const uploadButtons = document.querySelectorAll('.upload-image-btn');
-      const isAdmin = currentUser && currentUser.role && currentUser.role.toString().toLowerCase() === 'admin';
+      // --- SECURITY FIX: Target specific Upload Area IDs ---
+      const isAdminUser = currentUser && currentUser.role && currentUser.role.toString().toLowerCase() === 'admin';
       
-      uploadButtons.forEach(btn => {
-        if (isAdmin) {
-          btn.style.display = 'inline-block';
-          btn.disabled = false;
-          btn.style.opacity = '1';
-        } else {
-          btn.style.display = 'none';
-          btn.disabled = true;
+      const uploadAreaIds = [
+        'upload-question-image', 
+        'upload-option-a-image', 
+        'upload-option-b-image', 
+        'upload-option-c-image', 
+        'upload-option-d-image'
+      ];
+
+      uploadAreaIds.forEach(id => {
+        const area = document.getElementById(id);
+        if (area) {
+          if (isAdminUser) {
+            area.style.display = 'block';
+            area.style.pointerEvents = 'auto';
+            area.style.opacity = '1';
+          } else {
+            // Hide for students to prevent unauthorized upload attempts
+            area.style.display = 'none'; 
+          }
         }
       });
 
