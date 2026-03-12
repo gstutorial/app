@@ -5217,24 +5217,25 @@
 
     // ========== SUBSCRIPTION EXPIRED FUNCTIONS ==========
     function showSubscriptionExpired(user, joiningDate, lastDate) {
-    expiredUsernameEl.textContent = user.name;
-    expiredJoiningDateEl.textContent = formatDisplayDate(joiningDate);
-    expiredLastDateEl.textContent = formatDisplayDate(lastDate);
-    
-    const whatsappMessage = `Hello Admin, my G.S. Tutorial subscription has expired. Username: ${user.username}`;
-    const encodedMessage = encodeURIComponent(whatsappMessage);
-    expiredWhatsappBtnEl.href = `https://wa.me/919706195457?text=${encodedMessage}`;
-    
-    fixedHeaderEl.style.display = "none";
-    loginContainerEl.style.display = "none";
-    classSelectionEl.style.display = "none";
-    subjectSelectionEl.style.display = "none";
-    quizContainerEl.style.display = "none";
-    accountConfigErrorEl.style.display = "none"; // Ensure this is hidden
-    subscriptionExpiredEl.style.display = "block"; // Show this
-    
-    resetInactivityTimer();
-}
+        expiredUsernameEl.textContent = user.name;
+        expiredJoiningDateEl.textContent = formatDisplayDate(joiningDate);
+        expiredLastDateEl.textContent = formatDisplayDate(lastDate);
+        
+        const whatsappMessage = `Hello Admin, my G.S. Tutorial subscription has expired. Username: ${user.username}`;
+        const encodedMessage = encodeURIComponent(whatsappMessage);
+        expiredWhatsappBtnEl.href = `https://wa.me/919706195457?text=${encodedMessage}`;
+        
+        fixedHeaderEl.style.display = "none";
+        loginContainerEl.style.display = "none";
+        classSelectionEl.style.display = "none";
+        subjectSelectionEl.style.display = "none";
+        quizContainerEl.style.display = "none";
+        accountConfigErrorEl.style.display = "none";
+        subscriptionExpiredEl.style.display = "block";
+        
+        resetInactivityTimer();
+    }
+
     // ========== ACCOUNT CONFIGURATION ERROR FUNCTIONS ==========
     function showAccountConfigError(user, errorType, errorDetails = {}) {
         accountConfigErrorUsernameEl.textContent = user.name;
@@ -6263,81 +6264,118 @@
 
    
    // ========== VALIDATION FUNCTIONS ==========
-    function validateUserAccount(user) {
-      // SECURITY UPGRADE: Reject anyone trying to login without a server-generated token
-      if (!user.token) {
-        console.warn("Security Alert: Blocked unauthorized login attempt without token.");
-        return { valid: false, error: 'unknown' };
-      }
-
-      const validRoles = ['Admin', 'Teacher', 'User', 'Student'];
-      if (!validRoles.includes(user.role)) {
-        return { valid: false, error: 'invalid_role' };
-      }
-
-      const userClassValue = user.class || "";
-      const assignedClasses = userClassValue
-        .split(',')
-        .map(c => c.trim())
-        .filter(c => c && c.toLowerCase() !== 'none' && c.toLowerCase() !== 'null');
-
-      if (user.role === 'Admin') {
-        return { valid: true, assignedClasses: [] };
-      }
-
-      if (user.role === 'Teacher' || user.role === 'User') {
-        if (assignedClasses.length === 0) {
-          return { valid: false, error: 'no_class_assigned', assignedClasses: [] };
-        }
-        return { valid: true, assignedClasses: assignedClasses };
-      }
-
-      if (user.role === 'Student') {
-        if (assignedClasses.length === 0) {
-          return { valid: false, error: 'no_class_assigned', assignedClasses: [] };
-        }
-        return { valid: true, assignedClasses: [assignedClasses[0]] };
-      }
-
-      return { valid: false, error: 'unknown' };
-    }
-    // ========== LOGIN FUNCTION ==========
-   function login(user, isRestore = false) {
-  // --- 1. PRIORITY CHECK: Is the Subscription Over? ---
-  // Based on checkSubscriptionStatus from your Apps Script [cite: 32, 36]
-  if (user.subscriptionValid === false || user.subscriptionReason === 'expired') {
-    showSubscriptionExpired(user, user.joiningDate, user.lastDate);
-    return; // STOP HERE. Do not show classes.
+   // ========== VALIDATION FUNCTIONS ==========
+function validateUserAccount(user) {
+  // SECURITY UPGRADE: Reject anyone trying to login without a server-generated token
+  if (!user.token) {
+    console.warn("Security Alert: Blocked unauthorized login attempt without token.");
+    return { valid: false, error: 'unknown' };
   }
 
-  // --- 2. VALIDATION CHECK: Role and Class assigned? ---
+  // --- NEW: SUBSCRIPTION EXPIRY CHECK ---
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  if (user.lastDate && user.lastDate.toString().trim() !== '') {
+    try {
+      let lastDateValue = user.lastDate;
+      let lastDate = null;
+      
+      // Parse AppSheet / Google Sheets Date formats
+      if (typeof lastDateValue === "string" && lastDateValue.startsWith("Date(")) {
+        const parts = lastDateValue.replace("Date(", "").replace(")", "").split(",").map(Number);
+        lastDate = new Date(parts[0], parts[1], parts[2]);
+      } else if (typeof lastDateValue === "string") {
+        lastDate = new Date(lastDateValue);
+      } else if (typeof lastDateValue === "number") {
+        // Convert serial date to JS Date
+        lastDate = new Date(Math.round((lastDateValue - 25569) * 86400 * 1000));
+      }
+
+      if (lastDate && !isNaN(lastDate.getTime())) {
+        lastDate.setHours(23, 59, 59, 999); // Allow access until the very end of their last day
+        if (lastDate < today) {
+          return { valid: false, error: 'expired' };
+        }
+      }
+    } catch (e) {
+      console.error("Date parsing error on frontend", e);
+    }
+  }
+
+  // --- EXISTING: ROLE & CLASS CHECKS ---
+  const validRoles = ['Admin', 'Teacher', 'User', 'Student'];
+  if (!validRoles.includes(user.role)) {
+    return { valid: false, error: 'invalid_role' };
+  }
+
+  const userClassValue = user.class || "";
+  const assignedClasses = userClassValue
+    .split(',')
+    .map(c => c.trim())
+    .filter(c => c && c.toLowerCase() !== 'none' && c.toLowerCase() !== 'null');
+
+  if (user.role === 'Admin') {
+    return { valid: true, assignedClasses: [] };
+  }
+
+  if (user.role === 'Teacher' || user.role === 'User') {
+    if (assignedClasses.length === 0) {
+      return { valid: false, error: 'no_class_assigned', assignedClasses: [] };
+    }
+    return { valid: true, assignedClasses: assignedClasses };
+  }
+
+  if (user.role === 'Student') {
+    if (assignedClasses.length === 0) {
+      return { valid: false, error: 'no_class_assigned', assignedClasses: [] };
+    }
+    return { valid: true, assignedClasses: [assignedClasses[0]] };
+  }
+
+  return { valid: false, error: 'unknown' };
+}
+   
+    // ========== LOGIN FUNCTION ==========
+function login(user, isRestore = false) {
   const validation = validateUserAccount(user);
 
   if (!validation.valid) {
-    showAccountConfigError(user, validation.error, {
-      assignedClasses: validation.assignedClasses
-    });
-    return; // STOP HERE.
+    if (validation.error === 'expired') {
+      showSubscriptionExpired(user, user.joiningDate, user.lastDate);
+    } else {
+      showAccountConfigError(user, validation.error, {
+        assignedClasses: validation.assignedClasses
+      });
+    }
+    return;
   }
 
-  // --- 3. ACCESS GRANTED ---
   currentUser = user;
   currentUser.validatedAssignedClasses = validation.assignedClasses;
-  
-  sideUsername.textContent = user.name;
-  fixedHeaderEl.style.display = "block";
-  loginContainerEl.style.display = "none";
-  classSelectionEl.style.display = "block"; // Only reaches here if NOT expired
+  // ... leave the rest of the login function as is ...
+      
+      sideUsername.textContent = user.name;
 
-  // Initialization routines
-  resetFailedAttempts();
-  resetInactivityTimer();
-  loadClasses();
-  saveSession();
-  updateAdminControls();
+      fixedHeaderEl.style.display = "block";
+      loginContainerEl.style.display = "none";
+      accountConfigErrorEl.style.display = "none";
+      subscriptionExpiredEl.style.display = "none";
+      classSelectionEl.style.display = "block";
 
-  if (!isRestore) sendLoginNotification(user);
-}
+      const roleDisplay = user.role === 'Admin' ? 'Admin' : (user.role === 'Student' ? 'Student' : user.role);
+      greetingMessageEl.innerHTML = `Welcome, <span>${user.name}</span> (${roleDisplay})`;
+
+      resetFailedAttempts();
+      resetInactivityTimer();
+      loadClasses();
+      saveSession();
+
+      updateAdminControls();
+
+      if (!isRestore) sendLoginNotification(user);
+    }
+
     // ========== LOGOUT FUNCTION ==========
     function logout() {
       if (timerInterval) clearInterval(timerInterval);
@@ -9118,18 +9156,10 @@
         resetFailedAttempts();
         const user = result.user;
 
-        if (!result.subscriptionValid) {
-          showSubscriptionExpired(user, user.joiningDate, user.lastDate);
-        } else {
-          const validation = validateUserAccount(user);
-          if (!validation.valid) {
-            showAccountConfigError(user, validation.error, {
-              assignedClasses: validation.assignedClasses
-            });
-          } else {
-            login(user, false);
-          }
-        }
+        // NEW LOGIC: Just pass the user straight to login().
+        // The updated login() and validateUserAccount() functions handle everything now!
+        login(user, false);
+        
       } else {
         recordFailedAttempt();
         loginErrorEl.textContent = failedAttempts >= MAX_ATTEMPTS ? 
