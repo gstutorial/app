@@ -4420,7 +4420,7 @@
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwf3FEX0Lcpq7IUOdM01uje7T4vWfVVSjObcFy4x4pPVikU5JshK_5-aCAV_T1swZ5cJQ/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCEZ0Zf8hiANftKtPNCg8of_TuUWVpNrE-yg5ehFahpb41cPhrFDv_CDVeQJ_o7q24/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbcq4sy82KMC0jKHQRtMCPuRSv4TEAPRvcjOyQrMns9ieiRa7s08BBNHQeJCPD-xT2/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -4717,39 +4717,57 @@
     }
 
     // ========== UPLOAD IMAGE TO GOOGLE DRIVE - FIXED WITH FETCH ==========
-   async function uploadImageToDrive(fileName, fileData, mimeType, fieldId, rowIndex, tempId) {
-      console.log('🚀 Starting fetch upload...', { fileName, mimeType, fieldId, rowIndex, tempId });
+  async function uploadImageToDrive(fileName, fileData, mimeType, fieldId, rowIndex, tempId) {
+      console.log('🚀 Starting fetch upload...', { fileName, fieldId, rowIndex });
+
+      // --- CRITICAL SAFETY CHECK ---
+      // If the token is missing, stop immediately. 
+      // This prevents "Unauthorized" errors from cluttering your server logs.
+      if (!currentUser || !currentUser.token) {
+        alert("Session Error: Please log in again before uploading images.");
+        logout();
+        return { success: false, error: "No valid session" };
+      }
       
       const formData = new FormData();
-      // 1. Tell the server what to do
-      formData.append('action', 'uploadImage'); 
       
-      // 2. Use the correct variables passed to the function
+      // 1. Mandatory Action & Credentials
+      formData.append('action', 'uploadImage'); 
+      formData.append('username', currentUser.username);
+      formData.append('token', currentUser.token);
+      // Optional: send role just for logging, though backend should verify via token
+      formData.append('role', currentUser.role || 'Student'); 
+      
+      // 2. File Data
       formData.append('fileData', fileData);
       formData.append('fileName', fileName); 
       formData.append('mimeType', mimeType);
       
-      // 3. Send credentials for security check
-      formData.append('username', currentUser ? currentUser.username : '');
-      formData.append('role', currentUser ? currentUser.role : '');
-      formData.append('token', currentUser ? currentUser.token : ''); 
-      
+      // 3. Location Data (Where to write the image link in Google Sheets)
       formData.append('fieldId', fieldId);
       formData.append('sheetId', currentSubjectConfig?.sheetId || '');
       formData.append('gid', currentSubjectConfig?.chapters?.[topicSelectEl.value] || '');
       formData.append('rowIndex', rowIndex);
       formData.append('tempId', tempId);
 
+      
+
       try {
         const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
           method: 'POST',
           body: formData
         });
+
+        // Apps Script sometimes returns a redirect or an error page if it crashes
+        if (!response.ok) {
+          throw new Error(`Server responded with ${response.status}`);
+        }
+
         const result = await response.json();
         return result;
       } catch (error) {
         console.error('❌ Upload fetch error:', error);
-        throw error;
+        return { success: false, error: "Network Error: " + error.toString() };
       }
     }
     // ========== HANDLE IMAGE UPLOAD ==========
@@ -5129,27 +5147,18 @@
     }
 
     // ========== LOAD ALL CONFIG AT ONCE ==========
-    async function loadAllConfigAtOnce() {
-      // 1. Check if valid cache exists
+   async function loadAllConfigAtOnce() {
       if (ALL_CONFIG_CACHE && ALL_CONFIG_CACHE_TIME && 
           (Date.now() - ALL_CONFIG_CACHE_TIME < CACHE_DURATION)) {
-        console.log("Using cached config");
         return ALL_CONFIG_CACHE;
       }
 
-      // 2. Ensure we have credentials before making the request
-      if (!currentUser || !currentUser.username || !currentUser.token) {
-        console.warn("No valid user session found for loading config.");
-        return null;
-      }
-
       try {
-        // 3. ADD CREDENTIALS TO THE URL
-        // We append username and token so the backend verifySession() can validate the request
+        // ADDED: username and token parameters to pass the security gate
         const url = MASTER_CONFIG_APPS_SCRIPT_URL + 
                     '?action=getAllConfig' +
-                    '&username=' + encodeURIComponent(currentUser.username) +
-                    '&token=' + encodeURIComponent(currentUser.token) +
+                    '&username=' + encodeURIComponent(currentUser?.username || '') +
+                    '&token=' + encodeURIComponent(currentUser?.token || '') +
                     '&_t=' + Date.now();
 
         const data = await jsonpRequest(url, 'allConfigCallback');
@@ -5157,15 +5166,10 @@
         if (data.success) {
           ALL_CONFIG_CACHE = data;
           ALL_CONFIG_CACHE_TIME = Date.now();
-          console.log("All config loaded and cached successfully");
           return data;
         } else {
-          // 4. SECURITY HANDSHAKE FAILURE
-          // If the server explicitly says "Unauthorized", the session is fake or expired
-          if (data.error && data.error.includes("Unauthorized")) {
-            console.error("Session rejected by server. Logging out.");
-            logout(); // Kick out the user to the login screen
-          }
+          // If server rejects the token, force a logout
+          if (data.error && data.error.includes("Unauthorized")) logout();
           throw new Error(data.error || 'Failed to load config');
         }
       } catch (error) {
@@ -5509,10 +5513,11 @@
     }
 
     // ========== OPEN QUESTION EDITOR ==========
-    function openQuestionEditor(index) {
+   function openQuestionEditor(index) {
       if (!questions[index]) return;
       
       const q = questions[index];
+      const modal = document.getElementById('question-editor-modal');
       
       document.getElementById('editor-title').textContent = 'Edit Question';
       document.getElementById('editor-question-type').value = q.isSubjective ? 'subjective' : 'mcq';
@@ -5530,7 +5535,7 @@
       
       toggleQuestionTypeSections(q.isSubjective ? 'subjective' : 'mcq');
       
-      // Clear previews
+      // Clear and Reset Previews
       ['question', 'option-a', 'option-b', 'option-c', 'option-d'].forEach(prefix => {
         const preview = document.getElementById(`preview-${prefix}-image`);
         if (preview) {
@@ -5539,6 +5544,21 @@
         }
       });
       
+      // SECURITY: Role-based Upload Button Control
+      const uploadButtons = document.querySelectorAll('.upload-image-btn');
+      const isAdmin = currentUser && currentUser.role && currentUser.role.toString().toLowerCase() === 'admin';
+      
+      uploadButtons.forEach(btn => {
+        if (isAdmin) {
+          btn.style.display = 'inline-block';
+          btn.disabled = false;
+          btn.style.opacity = '1';
+        } else {
+          btn.style.display = 'none';
+          btn.disabled = true;
+        }
+      });
+
       if (!q.isSubjective) {
         document.getElementById('editor-option-a').value = q.options[0] || '';
         document.getElementById('editor-option-b').value = q.options[1] || '';
@@ -5550,10 +5570,6 @@
           document.getElementById('editor-option-b-img').value = q.optionImages[1] || '';
           document.getElementById('editor-option-c-img').value = q.optionImages[2] || '';
           document.getElementById('editor-option-d-img').value = q.optionImages[3] || '';
-        } else {
-          ['a', 'b', 'c', 'd'].forEach(letter => {
-            document.getElementById(`editor-option-${letter}-img`).value = '';
-          });
         }
         
         const answerLetter = String.fromCharCode(65 + q.correctIndex);
@@ -5562,15 +5578,16 @@
         document.getElementById('editor-answer-subjective').value = q.explanation || '';
       }
       
-      document.getElementById('question-editor-modal').dataset.editMode = 'edit';
-      document.getElementById('question-editor-modal').dataset.questionIndex = index;
-      document.getElementById('question-editor-modal').dataset.originalIndex = q.originalIndex;
-      document.getElementById('question-editor-modal').dataset.tempId = '';
+      // Set Metadata for the Save/Update action
+      modal.dataset.editMode = 'edit';
+      modal.dataset.questionIndex = index;
+      modal.dataset.originalIndex = q.originalIndex;
+      modal.dataset.tempId = '';
       
-      document.getElementById('question-editor-modal').style.display = 'flex';
+      modal.style.display = 'flex';
       
-      // Setup upload handlers
-      //setTimeout(setupImageUploadHandlers, 100);
+      // Refresh handlers to ensure they use the current token
+      setupImageUploadHandlers();
     }
 
     // ========== OPEN NEW QUESTION EDITOR ==========
