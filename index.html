@@ -4420,7 +4420,7 @@
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwf3FEX0Lcpq7IUOdM01uje7T4vWfVVSjObcFy4x4pPVikU5JshK_5-aCAV_T1swZ5cJQ/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaZunpwmyfVC_7yoLnl-mZEr-5xWMBtjjATj3E95A-fYQWJGCiULxwuPbFQLu8zCVv/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw7MB-ziRjyvZBiVl2VERzCHUpUF1Cs8VTgwDhxbN51g55bOOcZwgRihzM4IooeBJvR/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -5597,7 +5597,7 @@
       modal.style.display = 'flex';
       
       // Refresh handlers to ensure they use the current token
-      setupImageUploadHandlers();
+      //setupImageUploadHandlers();
     }
 
     // ========== OPEN NEW QUESTION EDITOR ==========
@@ -9318,13 +9318,13 @@
 
     // ========== INITIALIZATION ==========
    // ========== INITIALIZATION (SECURE VERSION) ==========
-    async function initializeApp() {
+   async function initializeApp() {
       // 1. Get initial configurations
       await loadTelegramConfig();
       await getUserIP();
       setupImageUploadHandlers();
 
-      const savedSession = localStorage.getItem(SESSION_KEY);
+      const savedSession = localStorage.getItem('gs_tutorial_session');
       
       if (savedSession) {
         try {
@@ -9374,6 +9374,9 @@
 
       resetFailedAttempts();
     }
+    
+    // Start the app and load configs
+    window.addEventListener('DOMContentLoaded', initializeApp);
   </script>
   
   <!-- NO SERVICE WORKER REGISTRATION - Completely disabled -->
