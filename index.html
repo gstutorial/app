@@ -4420,7 +4420,7 @@
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwf3FEX0Lcpq7IUOdM01uje7T4vWfVVSjObcFy4x4pPVikU5JshK_5-aCAV_T1swZ5cJQ/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxkuwrZtWysXG8Uk887q-8u2Bdd9fY2hK7xRJbpsVS85E5DXOBjuHl1kcWxjU9JVg/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCEZ0Zf8hiANftKtPNCg8of_TuUWVpNrE-yg5ehFahpb41cPhrFDv_CDVeQJ_o7q24/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -5130,24 +5130,42 @@
 
     // ========== LOAD ALL CONFIG AT ONCE ==========
     async function loadAllConfigAtOnce() {
+      // 1. Check if valid cache exists
       if (ALL_CONFIG_CACHE && ALL_CONFIG_CACHE_TIME && 
           (Date.now() - ALL_CONFIG_CACHE_TIME < CACHE_DURATION)) {
         console.log("Using cached config");
         return ALL_CONFIG_CACHE;
       }
 
+      // 2. Ensure we have credentials before making the request
+      if (!currentUser || !currentUser.username || !currentUser.token) {
+        console.warn("No valid user session found for loading config.");
+        return null;
+      }
+
       try {
-        const data = await jsonpRequest(
-          MASTER_CONFIG_APPS_SCRIPT_URL + '?action=getAllConfig&_t=' + Date.now(),
-          'allConfigCallback'
-        );
+        // 3. ADD CREDENTIALS TO THE URL
+        // We append username and token so the backend verifySession() can validate the request
+        const url = MASTER_CONFIG_APPS_SCRIPT_URL + 
+                    '?action=getAllConfig' +
+                    '&username=' + encodeURIComponent(currentUser.username) +
+                    '&token=' + encodeURIComponent(currentUser.token) +
+                    '&_t=' + Date.now();
+
+        const data = await jsonpRequest(url, 'allConfigCallback');
         
         if (data.success) {
           ALL_CONFIG_CACHE = data;
           ALL_CONFIG_CACHE_TIME = Date.now();
-          console.log("All config loaded and cached for 5 minutes");
+          console.log("All config loaded and cached successfully");
           return data;
         } else {
+          // 4. SECURITY HANDSHAKE FAILURE
+          // If the server explicitly says "Unauthorized", the session is fake or expired
+          if (data.error && data.error.includes("Unauthorized")) {
+            console.error("Session rejected by server. Logging out.");
+            logout(); // Kick out the user to the login screen
+          }
           throw new Error(data.error || 'Failed to load config');
         }
       } catch (error) {
@@ -5155,7 +5173,6 @@
         return null;
       }
     }
-
     // ========== JSONP HELPER FUNCTION ==========
     function jsonpRequest(url, callbackName) {
       return new Promise((resolve, reject) => {
@@ -5886,34 +5903,53 @@
           </div>
         `;
 
+        // This call MUST now send the token internally (check your loadAllConfigAtOnce)
         const allData = await loadAllConfigAtOnce();
         
-        if (!allData || !allData.classes) {
-          throw new Error("No classes data");
+        // 1. IMPROVED ERROR CHECKING
+        // If the server rejected the token, allData will be null or have an error
+        if (!allData || !allData.success) {
+           const errorMsg = (allData && allData.error) ? allData.error : "No classes data found";
+           throw new Error(errorMsg);
         }
 
-        let availableClasses = allData.classes;
+        let availableClasses = allData.classes || [];
 
+        // 2. ROLE-BASED FILTERING
+        // Ensuring we only show classes assigned to the student
         if (currentUser && currentUser.role !== 'Admin') {
           const assignedClasses = currentUser.validatedAssignedClasses || [];
-          availableClasses = allData.classes.filter(cls => 
+          availableClasses = availableClasses.filter(cls => 
             assignedClasses.some(assigned => assigned.toString().trim() === cls.id.toString().trim())
           );
+        }
+
+        if (availableClasses.length === 0) {
+           classGridEl.innerHTML = `<div class="no-data">No classes assigned to your account.</div>`;
+           return;
         }
 
         renderClassGrid(availableClasses);
 
       } catch (error) {
         console.error("Error in loadClasses:", error);
+        
+        // 3. SECURITY REDIRECT
+        // If the error is an Unauthorized error, the session is fake/expired
+        if (error.message.includes("Unauthorized")) {
+          alert("Your session has expired. Please log in again.");
+          logout();
+          return;
+        }
+
         classGridEl.innerHTML = `
           <div style="text-align: center; padding: 40px; color: #fca5a5;">
-            <div style="font-size: 1.2rem; margin-bottom: 10px;">Error loading classes</div>
+            <div style="font-size: 1.2rem; margin-bottom: 10px;">Error: ${error.message}</div>
             <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Retry</button>
           </div>
         `;
       }
     }
-
     function renderClassGrid(classes) {
       classGridEl.innerHTML = "";
 
