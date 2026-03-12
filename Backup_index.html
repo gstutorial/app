@@ -4419,8 +4419,8 @@
     const version = Date.now();
     
     // ========== APPS SCRIPT CONFIGURATION ==========
-    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx06h9aa6wDmtDz3jBwNgOuoiz7-NZY1nJaEwts3A7vIHRkWfAU5O3N4UNUooCwvEm7Lw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwMkaSO_2udBaJn_K3bRdtHRo-8tPpIeBax15Lc5lg4DOaJChPSa6zTMGTminjA22m3/exec';
+    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwf3FEX0Lcpq7IUOdM01uje7T4vWfVVSjObcFy4x4pPVikU5JshK_5-aCAV_T1swZ5cJQ/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw7MB-ziRjyvZBiVl2VERzCHUpUF1Cs8VTgwDhxbN51g55bOOcZwgRihzM4IooeBJvR/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -4717,21 +4717,40 @@
     }
 
     // ========== UPLOAD IMAGE TO GOOGLE DRIVE - FIXED WITH FETCH ==========
-    async function uploadImageToDrive(fileName, fileData, mimeType, fieldId, rowIndex, tempId) {
-      console.log('🚀 Starting fetch upload...', { fileName, mimeType, fieldId, rowIndex, tempId });
+  async function uploadImageToDrive(fileName, fileData, mimeType, fieldId, rowIndex, tempId) {
+      console.log('🚀 Starting fetch upload...', { fileName, fieldId, rowIndex });
+
+      // --- CRITICAL SAFETY CHECK ---
+      // If the token is missing, stop immediately. 
+      // This prevents "Unauthorized" errors from cluttering your server logs.
+      if (!currentUser || !currentUser.token) {
+        alert("Session Error: Please log in again before uploading images.");
+        logout();
+        return { success: false, error: "No valid session" };
+      }
       
       const formData = new FormData();
-      formData.append('action', 'uploadImage');
-      formData.append('fileName', fileName);
-      formData.append('mimeType', mimeType);
+      
+      // 1. Mandatory Action & Credentials
+      formData.append('action', 'uploadImage'); 
+      formData.append('username', currentUser.username);
+      formData.append('token', currentUser.token);
+      // Optional: send role just for logging, though backend should verify via token
+      formData.append('role', currentUser.role || 'Student'); 
+      
+      // 2. File Data
       formData.append('fileData', fileData);
-      formData.append('username', currentUser ? currentUser.username : '');
-      formData.append('role', currentUser ? currentUser.role : '');
+      formData.append('fileName', fileName); 
+      formData.append('mimeType', mimeType);
+      
+      // 3. Location Data (Where to write the image link in Google Sheets)
       formData.append('fieldId', fieldId);
       formData.append('sheetId', currentSubjectConfig?.sheetId || '');
       formData.append('gid', currentSubjectConfig?.chapters?.[topicSelectEl.value] || '');
       formData.append('rowIndex', rowIndex);
       formData.append('tempId', tempId);
+
+      
 
       try {
         const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
@@ -4739,19 +4758,18 @@
           body: formData
         });
 
+        // Apps Script sometimes returns a redirect or an error page if it crashes
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          throw new Error(`Server responded with ${response.status}`);
         }
 
         const result = await response.json();
-        console.log('📥 Upload response:', result);
         return result;
       } catch (error) {
         console.error('❌ Upload fetch error:', error);
-        throw error;
+        return { success: false, error: "Network Error: " + error.toString() };
       }
     }
-
     // ========== HANDLE IMAGE UPLOAD ==========
     async function handleImageUpload(file, previewId, inputId, fieldName) {
       if (!file.type.startsWith('image/')) {
@@ -5129,25 +5147,29 @@
     }
 
     // ========== LOAD ALL CONFIG AT ONCE ==========
-    async function loadAllConfigAtOnce() {
+   async function loadAllConfigAtOnce() {
       if (ALL_CONFIG_CACHE && ALL_CONFIG_CACHE_TIME && 
           (Date.now() - ALL_CONFIG_CACHE_TIME < CACHE_DURATION)) {
-        console.log("Using cached config");
         return ALL_CONFIG_CACHE;
       }
 
       try {
-        const data = await jsonpRequest(
-          MASTER_CONFIG_APPS_SCRIPT_URL + '?action=getAllConfig&_t=' + Date.now(),
-          'allConfigCallback'
-        );
+        // ADDED: username and token parameters to pass the security gate
+        const url = MASTER_CONFIG_APPS_SCRIPT_URL + 
+                    '?action=getAllConfig' +
+                    '&username=' + encodeURIComponent(currentUser?.username || '') +
+                    '&token=' + encodeURIComponent(currentUser?.token || '') +
+                    '&_t=' + Date.now();
+
+        const data = await jsonpRequest(url, 'allConfigCallback');
         
         if (data.success) {
           ALL_CONFIG_CACHE = data;
           ALL_CONFIG_CACHE_TIME = Date.now();
-          console.log("All config loaded and cached for 5 minutes");
           return data;
         } else {
+          // If server rejects the token, force a logout
+          if (data.error && data.error.includes("Unauthorized")) logout();
           throw new Error(data.error || 'Failed to load config');
         }
       } catch (error) {
@@ -5155,7 +5177,6 @@
         return null;
       }
     }
-
     // ========== JSONP HELPER FUNCTION ==========
     function jsonpRequest(url, callbackName) {
       return new Promise((resolve, reject) => {
@@ -5481,6 +5502,7 @@
         url += '&originalIndex=' + encodeURIComponent(originalIndex);
         url += '&username=' + encodeURIComponent(currentUser.username);
         url += '&role=' + encodeURIComponent(currentUser.role);
+        url += '&token=' + encodeURIComponent(currentUser.token); // <--- Token added here!
         url += '&callback=' + encodeURIComponent(callbackName);
         url += '&_t=' + Date.now();
         
@@ -5491,10 +5513,11 @@
     }
 
     // ========== OPEN QUESTION EDITOR ==========
-    function openQuestionEditor(index) {
+  function openQuestionEditor(index) {
       if (!questions[index]) return;
       
       const q = questions[index];
+      const modal = document.getElementById('question-editor-modal');
       
       document.getElementById('editor-title').textContent = 'Edit Question';
       document.getElementById('editor-question-type').value = q.isSubjective ? 'subjective' : 'mcq';
@@ -5512,7 +5535,7 @@
       
       toggleQuestionTypeSections(q.isSubjective ? 'subjective' : 'mcq');
       
-      // Clear previews
+      // Clear and Reset Previews
       ['question', 'option-a', 'option-b', 'option-c', 'option-d'].forEach(prefix => {
         const preview = document.getElementById(`preview-${prefix}-image`);
         if (preview) {
@@ -5521,6 +5544,31 @@
         }
       });
       
+      // --- SECURITY FIX: Target specific Upload Area IDs ---
+      const isAdminUser = currentUser && currentUser.role && currentUser.role.toString().toLowerCase() === 'admin';
+      
+      const uploadAreaIds = [
+        'upload-question-image', 
+        'upload-option-a-image', 
+        'upload-option-b-image', 
+        'upload-option-c-image', 
+        'upload-option-d-image'
+      ];
+
+      uploadAreaIds.forEach(id => {
+        const area = document.getElementById(id);
+        if (area) {
+          if (isAdminUser) {
+            area.style.display = 'block';
+            area.style.pointerEvents = 'auto';
+            area.style.opacity = '1';
+          } else {
+            // Hide for students to prevent unauthorized upload attempts
+            area.style.display = 'none'; 
+          }
+        }
+      });
+
       if (!q.isSubjective) {
         document.getElementById('editor-option-a').value = q.options[0] || '';
         document.getElementById('editor-option-b').value = q.options[1] || '';
@@ -5532,10 +5580,6 @@
           document.getElementById('editor-option-b-img').value = q.optionImages[1] || '';
           document.getElementById('editor-option-c-img').value = q.optionImages[2] || '';
           document.getElementById('editor-option-d-img').value = q.optionImages[3] || '';
-        } else {
-          ['a', 'b', 'c', 'd'].forEach(letter => {
-            document.getElementById(`editor-option-${letter}-img`).value = '';
-          });
         }
         
         const answerLetter = String.fromCharCode(65 + q.correctIndex);
@@ -5544,15 +5588,16 @@
         document.getElementById('editor-answer-subjective').value = q.explanation || '';
       }
       
-      document.getElementById('question-editor-modal').dataset.editMode = 'edit';
-      document.getElementById('question-editor-modal').dataset.questionIndex = index;
-      document.getElementById('question-editor-modal').dataset.originalIndex = q.originalIndex;
-      document.getElementById('question-editor-modal').dataset.tempId = '';
+      // Set Metadata for the Save/Update action
+      modal.dataset.editMode = 'edit';
+      modal.dataset.questionIndex = index;
+      modal.dataset.originalIndex = q.originalIndex;
+      modal.dataset.tempId = '';
       
-      document.getElementById('question-editor-modal').style.display = 'flex';
+      modal.style.display = 'flex';
       
-      // Setup upload handlers
-      //setTimeout(setupImageUploadHandlers, 100);
+      // Refresh handlers to ensure they use the current token
+      //setupImageUploadHandlers();
     }
 
     // ========== OPEN NEW QUESTION EDITOR ==========
@@ -5829,12 +5874,13 @@
           reject({ error: 'Network error - failed to load script' });
         };
         
-        let url = MASTER_CONFIG_APPS_SCRIPT_URL + (MASTER_CONFIG_APPS_SCRIPT_URL.includes('?') ? '&' : '?');
-        url += 'action=' + (editMode === 'new' ? 'addQuestion' : 'updateQuestion');
+       let url = MASTER_CONFIG_APPS_SCRIPT_URL + (MASTER_CONFIG_APPS_SCRIPT_URL.includes('?') ? '&' : '?');
+        url += 'action=' + (editMode === 'edit' ? 'updateQuestion' : 'addQuestion');
         url += '&sheetId=' + encodeURIComponent(sheetId);
         url += '&gid=' + encodeURIComponent(gid);
         url += '&username=' + encodeURIComponent(currentUser.username);
         url += '&role=' + encodeURIComponent(currentUser.role);
+        url += '&token=' + encodeURIComponent(currentUser.token); // <--- Token added here!
         if (editMode !== 'new' && originalIndex !== undefined) {
           url += '&originalIndex=' + encodeURIComponent(originalIndex);
         }
@@ -5884,34 +5930,53 @@
           </div>
         `;
 
+        // This call MUST now send the token internally (check your loadAllConfigAtOnce)
         const allData = await loadAllConfigAtOnce();
         
-        if (!allData || !allData.classes) {
-          throw new Error("No classes data");
+        // 1. IMPROVED ERROR CHECKING
+        // If the server rejected the token, allData will be null or have an error
+        if (!allData || !allData.success) {
+           const errorMsg = (allData && allData.error) ? allData.error : "No classes data found";
+           throw new Error(errorMsg);
         }
 
-        let availableClasses = allData.classes;
+        let availableClasses = allData.classes || [];
 
+        // 2. ROLE-BASED FILTERING
+        // Ensuring we only show classes assigned to the student
         if (currentUser && currentUser.role !== 'Admin') {
           const assignedClasses = currentUser.validatedAssignedClasses || [];
-          availableClasses = allData.classes.filter(cls => 
+          availableClasses = availableClasses.filter(cls => 
             assignedClasses.some(assigned => assigned.toString().trim() === cls.id.toString().trim())
           );
+        }
+
+        if (availableClasses.length === 0) {
+           classGridEl.innerHTML = `<div class="no-data">No classes assigned to your account.</div>`;
+           return;
         }
 
         renderClassGrid(availableClasses);
 
       } catch (error) {
         console.error("Error in loadClasses:", error);
+        
+        // 3. SECURITY REDIRECT
+        // If the error is an Unauthorized error, the session is fake/expired
+        if (error.message.includes("Unauthorized")) {
+          alert("Your session has expired. Please log in again.");
+          logout();
+          return;
+        }
+
         classGridEl.innerHTML = `
           <div style="text-align: center; padding: 40px; color: #fca5a5;">
-            <div style="font-size: 1.2rem; margin-bottom: 10px;">Error loading classes</div>
+            <div style="font-size: 1.2rem; margin-bottom: 10px;">Error: ${error.message}</div>
             <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Retry</button>
           </div>
         `;
       }
     }
-
     function renderClassGrid(classes) {
       classGridEl.innerHTML = "";
 
@@ -6197,8 +6262,15 @@
       if (failedAttempts >= MAX_ATTEMPTS) startCooldown();
     }
 
-    // ========== VALIDATION FUNCTIONS ==========
+   
+   // ========== VALIDATION FUNCTIONS ==========
     function validateUserAccount(user) {
+      // SECURITY UPGRADE: Reject anyone trying to login without a server-generated token
+      if (!user.token) {
+        console.warn("Security Alert: Blocked unauthorized login attempt without token.");
+        return { valid: false, error: 'unknown' };
+      }
+
       const validRoles = ['Admin', 'Teacher', 'User', 'Student'];
       if (!validRoles.includes(user.role)) {
         return { valid: false, error: 'invalid_role' };
@@ -6230,7 +6302,6 @@
 
       return { valid: false, error: 'unknown' };
     }
-
     // ========== LOGIN FUNCTION ==========
     function login(user, isRestore = false) {
       const validation = validateUserAccount(user);
@@ -9246,20 +9317,55 @@
     setTheme(localStorage.getItem('theme') || 'dark');
 
     // ========== INITIALIZATION ==========
-   // ========== INITIALIZATION ==========
-    async function initializeApp() {
+   // ========== INITIALIZATION (SECURE VERSION) ==========
+   async function initializeApp() {
+      // 1. Get initial configurations
       await loadTelegramConfig();
       await getUserIP();
-
-      // --- ADD THIS LINE HERE ---
       setupImageUploadHandlers();
 
-      if (loadSession()) {
-        login(currentUser, true);
+      const savedSession = localStorage.getItem('gs_tutorial_session');
+      
+      if (savedSession) {
+        try {
+          const sessionData = JSON.parse(savedSession);
+          const user = sessionData.user;
+
+          // 2. THE SECURITY HANDSHAKE
+          // Ask the server to verify the token before letting the user in
+          const verifyUrl = `${MASTER_CONFIG_APPS_SCRIPT_URL}?action=verifyToken&username=${user.username}&token=${user.token}&callback=handleTokenVerification`;
+          
+          const isTokenValid = await new Promise((resolve) => {
+            window.handleTokenVerification = function(response) {
+              resolve(response && response.success === true);
+            };
+            
+            const script = document.createElement('script');
+            script.src = verifyUrl;
+            // Handle network errors (server down)
+            script.onerror = () => resolve(false);
+            document.head.appendChild(script);
+          });
+
+          if (isTokenValid) {
+            // Token is real! Log the user in normally
+            currentUser = user;
+            login(currentUser, true);
+          } else {
+            // TOKEN IS FAKE OR EXPIRED - CLEAR EVERYTHING
+            console.error("Security Alert: Invalid session detected. Clearing storage.");
+            logout(); // This clears the fake localStorage data
+          }
+        } catch (e) {
+          console.error("Session Corrupted:", e);
+          logout();
+        }
       } else {
+        // No session found, show the login screen
         usernameEl.focus();
       }
 
+      // 3. Set up activity listeners
       document.addEventListener('mousemove', handleUserActivity);
       document.addEventListener('keypress', handleUserActivity);
       document.addEventListener('click', handleUserActivity);
@@ -9268,8 +9374,9 @@
 
       resetFailedAttempts();
     }
-
-    document.addEventListener("DOMContentLoaded", initializeApp);
+    
+    // Start the app and load configs
+    window.addEventListener('DOMContentLoaded', initializeApp);
   </script>
   
   <!-- NO SERVICE WORKER REGISTRATION - Completely disabled -->
