@@ -5217,25 +5217,24 @@
 
     // ========== SUBSCRIPTION EXPIRED FUNCTIONS ==========
     function showSubscriptionExpired(user, joiningDate, lastDate) {
-        expiredUsernameEl.textContent = user.name;
-        expiredJoiningDateEl.textContent = formatDisplayDate(joiningDate);
-        expiredLastDateEl.textContent = formatDisplayDate(lastDate);
-        
-        const whatsappMessage = `Hello Admin, my G.S. Tutorial subscription has expired. Username: ${user.username}`;
-        const encodedMessage = encodeURIComponent(whatsappMessage);
-        expiredWhatsappBtnEl.href = `https://wa.me/919706195457?text=${encodedMessage}`;
-        
-        fixedHeaderEl.style.display = "none";
-        loginContainerEl.style.display = "none";
-        classSelectionEl.style.display = "none";
-        subjectSelectionEl.style.display = "none";
-        quizContainerEl.style.display = "none";
-        accountConfigErrorEl.style.display = "none";
-        subscriptionExpiredEl.style.display = "block";
-        
-        resetInactivityTimer();
-    }
-
+    expiredUsernameEl.textContent = user.name;
+    expiredJoiningDateEl.textContent = formatDisplayDate(joiningDate);
+    expiredLastDateEl.textContent = formatDisplayDate(lastDate);
+    
+    const whatsappMessage = `Hello Admin, my G.S. Tutorial subscription has expired. Username: ${user.username}`;
+    const encodedMessage = encodeURIComponent(whatsappMessage);
+    expiredWhatsappBtnEl.href = `https://wa.me/919706195457?text=${encodedMessage}`;
+    
+    fixedHeaderEl.style.display = "none";
+    loginContainerEl.style.display = "none";
+    classSelectionEl.style.display = "none";
+    subjectSelectionEl.style.display = "none";
+    quizContainerEl.style.display = "none";
+    accountConfigErrorEl.style.display = "none"; // Ensure this is hidden
+    subscriptionExpiredEl.style.display = "block"; // Show this
+    
+    resetInactivityTimer();
+}
     // ========== ACCOUNT CONFIGURATION ERROR FUNCTIONS ==========
     function showAccountConfigError(user, errorType, errorDetails = {}) {
         accountConfigErrorUsernameEl.textContent = user.name;
@@ -6304,43 +6303,44 @@
     }
     // ========== LOGIN FUNCTION ==========
     function login(user, isRestore = false) {
-      const validation = validateUserAccount(user);
+  // FIX: Check subscription status FIRST before any other validation
+  if (user.subscriptionValid === false || user.subscriptionReason === 'expired') {
+    showSubscriptionExpired(user, user.joiningDate, user.lastDate);
+    return;
+  }
 
-      if (!validation.valid) {
-        if (user.subscriptionReason === 'expired') {
-          showSubscriptionExpired(user, user.joiningDate, user.lastDate);
-        } else {
-          showAccountConfigError(user, validation.error, {
-            assignedClasses: validation.assignedClasses
-          });
-        }
-        return;
-      }
+  const validation = validateUserAccount(user);
 
-      currentUser = user;
-      currentUser.validatedAssignedClasses = validation.assignedClasses;
-      
-      sideUsername.textContent = user.name;
+  if (!validation.valid) {
+    showAccountConfigError(user, validation.error, {
+      assignedClasses: validation.assignedClasses
+    });
+    return;
+  }
 
-      fixedHeaderEl.style.display = "block";
-      loginContainerEl.style.display = "none";
-      accountConfigErrorEl.style.display = "none";
-      subscriptionExpiredEl.style.display = "none";
-      classSelectionEl.style.display = "block";
+  currentUser = user;
+  currentUser.validatedAssignedClasses = validation.assignedClasses;
+  
+  sideUsername.textContent = user.name;
 
-      const roleDisplay = user.role === 'Admin' ? 'Admin' : (user.role === 'Student' ? 'Student' : user.role);
-      greetingMessageEl.innerHTML = `Welcome, <span>${user.name}</span> (${roleDisplay})`;
+  fixedHeaderEl.style.display = "block";
+  loginContainerEl.style.display = "none";
+  accountConfigErrorEl.style.display = "none";
+  subscriptionExpiredEl.style.display = "none";
+  classSelectionEl.style.display = "block";
 
-      resetFailedAttempts();
-      resetInactivityTimer();
-      loadClasses();
-      saveSession();
+  const roleDisplay = user.role === 'Admin' ? 'Admin' : (user.role === 'Student' ? 'Student' : user.role);
+  greetingMessageEl.innerHTML = `Welcome, <span>${user.name}</span> (${roleDisplay})`;
 
-      updateAdminControls();
+  resetFailedAttempts();
+  resetInactivityTimer();
+  loadClasses();
+  saveSession();
 
-      if (!isRestore) sendLoginNotification(user);
-    }
+  updateAdminControls();
 
+  if (!isRestore) sendLoginNotification(user);
+}
     // ========== LOGOUT FUNCTION ==========
     function logout() {
       if (timerInterval) clearInterval(timerInterval);
