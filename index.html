@@ -6151,7 +6151,7 @@ body.light-mode .pdf-name {
       }
     }
 
-    function renderSubjectGrid(subjects) {
+   function renderSubjectGrid(subjects) {
       subjectGridEl.innerHTML = "";
 
       if (subjects.length === 0) {
@@ -6172,18 +6172,23 @@ body.light-mode .pdf-name {
           <div class="subject-desc">${subject.desc}</div>
         `;
 
-       card.addEventListener("click", () => {
-  currentSubject = subject.name;
-  
-  // Intercept if the subject is "Previous Year Questions"
-  if (subject.name.toLowerCase().includes('previous year') || subject.name.toLowerCase().includes('pyq')) {
-    showPyqContainer(currentSubject);
-  } else {
-    showQuizContainer(currentSubject);
-  }
-  resetInactivityTimer();
-});
+        card.addEventListener("click", () => {
+          currentSubject = subject.name;
+          
+          // Intercept if the subject is "Previous Year Questions"
+          if (subject.name.toLowerCase().includes('previous year') || subject.name.toLowerCase().includes('pyq')) {
+            showPyqContainer(currentSubject);
+          } else {
+            showQuizContainer(currentSubject);
+          }
+          resetInactivityTimer();
+        });
 
+        // THESE THREE LINES WERE MISSING:
+        subjectGridEl.appendChild(card);
+      });
+    }
+     
     // ========== LOAD CHAPTERS ==========
     async function loadChapters() {
       try {
