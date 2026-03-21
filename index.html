@@ -7198,7 +7198,6 @@ function login(user, isRestore = false) {
           if (pdfName && pdfUrl) {
             hasPdfs = true;
             
-            // Generate both a download URL and a view URL
             let downloadUrl = pdfUrl;
             let viewUrl = pdfUrl;
             
@@ -7213,29 +7212,27 @@ function login(user, isRestore = false) {
             const item = document.createElement('div');
             item.className = 'pdf-item';
             
-            // We use a button instead of an 'a' tag to control the UI states
+            // Added fixed width to the button and text truncation to the PDF name
             item.innerHTML = `
-              <div class="pdf-info">
+              <div class="pdf-info" style="flex: 1; overflow: hidden; margin-right: 10px;">
                 <div class="pdf-icon">📄</div>
-                <div class="pdf-name">${pdfName}</div>
+                <div class="pdf-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${pdfName}">${pdfName}</div>
               </div>
-              <button class="download-btn" id="pdf-btn-${i}" style="display:flex; align-items:center; justify-content:center; gap:6px; min-width:110px;">Download</button>
+              <button class="download-btn" id="pdf-btn-${i}" style="display:flex; align-items:center; justify-content:center; gap:6px; width: 120px; flex-shrink: 0; padding: 8px 0; margin: 0; box-sizing: border-box; text-align: center;">Download</button>
             `;
             container.appendChild(item);
 
-            // Add the click logic for the animation and download
             const btn = document.getElementById(`pdf-btn-${i}`);
             btn.addEventListener('click', function(e) {
               e.preventDefault();
               
-              // If already downloaded, open it in a new tab so they can read it immediately
               if (btn.classList.contains('downloaded')) {
                 window.open(viewUrl, '_blank');
                 return;
               }
 
-              // 1. Show Loading Animation
-              btn.innerHTML = `<span style="display:inline-block; width:14px; height:14px; border:2px solid rgba(96,165,250,0.3); border-top-color:#60a5fa; border-radius:50%; animation:spin 1s linear infinite;"></span> Downloading...`;
+              // 1. Show Loading Animation (Slightly smaller text to fit the fixed 120px width)
+              btn.innerHTML = `<span style="display:inline-block; width:12px; height:12px; border:2px solid rgba(96,165,250,0.3); border-top-color:#60a5fa; border-radius:50%; animation:spin 1s linear infinite;"></span> <span style="font-size: 0.8rem;">Downloading</span>`;
               btn.style.pointerEvents = 'none';
 
               // 2. Trigger the invisible download
@@ -7246,9 +7243,9 @@ function login(user, isRestore = false) {
               a.click();
               document.body.removeChild(a);
 
-              // 3. Change to "Downloaded" state after a realistic delay
+              // 3. Change to "Downloaded" state (No green tick)
               setTimeout(() => {
-                btn.innerHTML = `✅ Downloaded`;
+                btn.innerHTML = `Downloaded`;
                 btn.classList.add('downloaded');
                 btn.style.background = 'rgba(34, 197, 94, 0.15)'; // Green tint
                 btn.style.borderColor = 'rgba(34, 197, 94, 0.4)';
@@ -7260,7 +7257,7 @@ function login(user, isRestore = false) {
                   btn.style.background = '#dcfce7';
                   btn.style.color = '#166534';
                 }
-              }, 2000); // 2-second fake loading timer for UX
+              }, 2000); 
             });
           }
         }
