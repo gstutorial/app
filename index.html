@@ -4143,7 +4143,7 @@ body.light-mode .pdf-name {
       </div>
     </div>
     
-    <!-- Subject Selection Screen -->
+   <!-- Subject Selection Screen -->
     <div class="subject-selection" id="subject-selection">
       <div class="screen-header">
         <div class="screen-title">Select Subject</div>
@@ -4157,44 +4157,47 @@ body.light-mode .pdf-name {
       </button>
     </div>
     
+    <!-- PDF / Previous Year Questions Container -->
+    <div class="quiz-container" id="pyq-container" style="display: none;">
+      <div class="screen-header">
+        <div class="screen-title" id="pyq-title">Previous Year Questions</div>
+        <div class="screen-subtitle" id="pyq-subtitle">Download past papers</div>
+      </div>
+
+      <!-- Admin Upload Section -->
+      <div id="admin-pdf-upload" class="admin-add-question" style="display: none; text-align: left;">
+        <h4 style="margin-top:0; color:#10b981;">+ Upload New PDF</h4>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <input type="text" id="new-pdf-name" class="form-input" placeholder="Enter PDF Name (e.g., Math 2024 Set A)">
+        </div>
+        <div class="image-upload-container" style="margin: 0;">
+          <div class="upload-area" id="upload-pdf-area">
+            <div class="upload-icon">📄</div>
+            <div class="upload-text">Click to select PDF</div>
+          </div>
+          <input type="file" id="pdf-file-input" accept="application/pdf" style="display: none;">
+          <div class="upload-progress" id="pdf-upload-progress">
+            <div class="upload-progress-bar" id="pdf-progress-bar"></div>
+          </div>
+          <div class="upload-status" id="pdf-upload-status"></div>
+        </div>
+        <button id="submit-pdf-btn" class="btn-success" style="margin-top: 10px;" disabled>Upload & Save</button>
+      </div>
+
+      <!-- PDF List -->
+      <div id="pdf-list-container" style="margin-top: 20px;">
+        <!-- Populated dynamically via JS -->
+      </div>
+
+      <button class="back-btn" onclick="navigateToSubjects()" style="margin-top: 20px;">
+        ← Back to Subjects
+      </button>
+    </div>
+
     <!-- Quiz Container -->
     <div class="quiz-container" id="quiz-container">
-      <!-- PDF / Previous Year Questions Container -->
-<div class="quiz-container" id="pyq-container" style="display: none;">
-  <div class="screen-header">
-    <div class="screen-title" id="pyq-title">Previous Year Questions</div>
-    <div class="screen-subtitle" id="pyq-subtitle">Download past papers</div>
-  </div>
-
-  <!-- Admin Upload Section -->
-  <div id="admin-pdf-upload" class="admin-add-question" style="display: none; text-align: left;">
-    <h4 style="margin-top:0; color:#10b981;">+ Upload New PDF</h4>
-    <div class="form-group" style="margin-bottom: 10px;">
-      <input type="text" id="new-pdf-name" class="form-input" placeholder="Enter PDF Name (e.g., Math 2024 Set A)">
-    </div>
-    <div class="image-upload-container" style="margin: 0;">
-      <div class="upload-area" id="upload-pdf-area">
-        <div class="upload-icon">📄</div>
-        <div class="upload-text">Click to select PDF</div>
-      </div>
-      <input type="file" id="pdf-file-input" accept="application/pdf" style="display: none;">
-      <div class="upload-progress" id="pdf-upload-progress">
-        <div class="upload-progress-bar" id="pdf-progress-bar"></div>
-      </div>
-      <div class="upload-status" id="pdf-upload-status"></div>
-    </div>
-    <button id="submit-pdf-btn" class="btn-success" style="margin-top: 10px;" disabled>Upload & Save</button>
-  </div>
-
-  <!-- PDF List -->
-  <div id="pdf-list-container" style="margin-top: 20px;">
-    <!-- Populated dynamically via JS -->
-  </div>
-
-  <button class="back-btn" onclick="navigateToSubjects()" style="margin-top: 20px;">
-    ← Back to Subjects
-  </button>
-</div>
+      <!-- Path Display - Fixed navigation -->
+      <div id="current-path" class="current-path" style="display: none;">
       <!-- Path Display - Fixed navigation -->
       <div id="current-path" class="current-path" style="display: none;">
         <span class="path-link" onclick="navigateToClasses()">Classes</span>
