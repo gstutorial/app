@@ -6510,6 +6510,7 @@ function login(user, isRestore = false) {
       classSelectionEl.style.display = "none";
       subjectSelectionEl.style.display = "none";
       quizContainerEl.style.display = "none";
+      pyqContainerEl.style.display = "none";
       accountConfigErrorEl.style.display = "none";
       subscriptionExpiredEl.style.display = "none";
       loginContainerEl.style.display = "flex";
@@ -7087,6 +7088,7 @@ function login(user, isRestore = false) {
       classSelectionEl.style.display = "block";
       subjectSelectionEl.style.display = "none";
       quizContainerEl.style.display = "none";
+      pyqContainerEl.style.display = "none";
       accountConfigErrorEl.style.display = "none";
       subscriptionExpiredEl.style.display = "none";
       resetQuizState();
@@ -7105,6 +7107,7 @@ function login(user, isRestore = false) {
       classSelectionEl.style.display = "none";
       subjectSelectionEl.style.display = "block";
       quizContainerEl.style.display = "none";
+      pyqContainerEl.style.display = "none";
       accountConfigErrorEl.style.display = "none";
       subscriptionExpiredEl.style.display = "none";
 
@@ -7124,6 +7127,7 @@ function login(user, isRestore = false) {
 
       subjectSelectionEl.style.display = "none";
       quizContainerEl.style.display = "block";
+      pyqContainerEl.style.display = "none";
       accountConfigErrorEl.style.display = "none";
       subscriptionExpiredEl.style.display = "none";
 
@@ -7192,10 +7196,20 @@ function login(user, isRestore = false) {
           if (!row.c) continue;
           
           const pdfName = row.c[0]?.v?.toString().trim();
-          const pdfUrl = row.c[1]?.v?.toString().trim();
+          let pdfUrl = row.c[1]?.v?.toString().trim();
 
           if (pdfName && pdfUrl) {
             hasPdfs = true;
+            
+            // --- FIX FOR DIRECT DOWNLOAD ---
+            // Convert Google Drive view URLs to direct download URLs
+            if (pdfUrl.includes('drive.google.com')) {
+              const matchId = pdfUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/) || pdfUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || pdfUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+              if (matchId && matchId[1]) {
+                pdfUrl = `https://drive.google.com/uc?export=download&id=${matchId[1]}`;
+              }
+            }
+
             const item = document.createElement('div');
             item.className = 'pdf-item';
             item.innerHTML = `
@@ -7203,7 +7217,7 @@ function login(user, isRestore = false) {
                 <div class="pdf-icon">📄</div>
                 <div class="pdf-name">${pdfName}</div>
               </div>
-              <a href="${pdfUrl}" target="_blank" class="download-btn">Download</a>
+              <a href="${pdfUrl}" target="_blank" class="download-btn" download>Download</a>
             `;
             container.appendChild(item);
           }
