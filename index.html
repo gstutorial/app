@@ -20,6 +20,66 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   
   <style>
+.pdf-item {
+  background: rgba(15, 23, 42, 0.7);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+body.light-mode .pdf-item {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.pdf-item:hover {
+  transform: translateY(-2px);
+  border-color: #3b82f6;
+}
+
+.pdf-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pdf-icon {
+  font-size: 1.8rem;
+}
+
+.pdf-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+body.light-mode .pdf-name {
+  color: #1f2937;
+}
+
+.download-btn {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.download-btn:hover {
+  background: #3b82f6;
+  color: white;
+}
+    
     /* ===== ORIGINAL STYLES - COMPLETELY PRESERVED ===== */
     * {
       box-sizing: border-box;
@@ -4099,6 +4159,42 @@
     
     <!-- Quiz Container -->
     <div class="quiz-container" id="quiz-container">
+      <!-- PDF / Previous Year Questions Container -->
+<div class="quiz-container" id="pyq-container" style="display: none;">
+  <div class="screen-header">
+    <div class="screen-title" id="pyq-title">Previous Year Questions</div>
+    <div class="screen-subtitle" id="pyq-subtitle">Download past papers</div>
+  </div>
+
+  <!-- Admin Upload Section -->
+  <div id="admin-pdf-upload" class="admin-add-question" style="display: none; text-align: left;">
+    <h4 style="margin-top:0; color:#10b981;">+ Upload New PDF</h4>
+    <div class="form-group" style="margin-bottom: 10px;">
+      <input type="text" id="new-pdf-name" class="form-input" placeholder="Enter PDF Name (e.g., Math 2024 Set A)">
+    </div>
+    <div class="image-upload-container" style="margin: 0;">
+      <div class="upload-area" id="upload-pdf-area">
+        <div class="upload-icon">📄</div>
+        <div class="upload-text">Click to select PDF</div>
+      </div>
+      <input type="file" id="pdf-file-input" accept="application/pdf" style="display: none;">
+      <div class="upload-progress" id="pdf-upload-progress">
+        <div class="upload-progress-bar" id="pdf-progress-bar"></div>
+      </div>
+      <div class="upload-status" id="pdf-upload-status"></div>
+    </div>
+    <button id="submit-pdf-btn" class="btn-success" style="margin-top: 10px;" disabled>Upload & Save</button>
+  </div>
+
+  <!-- PDF List -->
+  <div id="pdf-list-container" style="margin-top: 20px;">
+    <!-- Populated dynamically via JS -->
+  </div>
+
+  <button class="back-btn" onclick="navigateToSubjects()" style="margin-top: 20px;">
+    ← Back to Subjects
+  </button>
+</div>
       <!-- Path Display - Fixed navigation -->
       <div id="current-path" class="current-path" style="display: none;">
         <span class="path-link" onclick="navigateToClasses()">Classes</span>
@@ -4420,7 +4516,7 @@
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwf3FEX0Lcpq7IUOdM01uje7T4vWfVVSjObcFy4x4pPVikU5JshK_5-aCAV_T1swZ5cJQ/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw7MB-ziRjyvZBiVl2VERzCHUpUF1Cs8VTgwDhxbN51g55bOOcZwgRihzM4IooeBJvR/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz8Qf2CFTvkOs7V_Pg_PysWNpViLXbqw-H9NoewMGEJd1Pkqam4bMnzKV_Ma7AT9Sj2/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -4505,6 +4601,7 @@
     const classSelectionEl = document.getElementById("class-selection");
     const subjectSelectionEl = document.getElementById("subject-selection");
     const quizContainerEl = document.getElementById("quiz-container");
+    const pyqContainerEl = document.getElementById("pyq-container");
     const accountConfigErrorEl = document.getElementById("account-config-error");
     const subscriptionExpiredEl = document.getElementById("subscription-expired");
     
@@ -6075,15 +6172,17 @@
           <div class="subject-desc">${subject.desc}</div>
         `;
 
-        card.addEventListener("click", () => {
-          currentSubject = subject.name;
-          showQuizContainer(currentSubject);
-          resetInactivityTimer();
-        });
-
-        subjectGridEl.appendChild(card);
-      });
-    }
+       card.addEventListener("click", () => {
+  currentSubject = subject.name;
+  
+  // Intercept if the subject is "Previous Year Questions"
+  if (subject.name.toLowerCase().includes('previous year') || subject.name.toLowerCase().includes('pyq')) {
+    showPyqContainer(currentSubject);
+  } else {
+    showQuizContainer(currentSubject);
+  }
+  resetInactivityTimer();
+});
 
     // ========== LOAD CHAPTERS ==========
     async function loadChapters() {
@@ -7027,6 +7126,190 @@ function login(user, isRestore = false) {
       isQuizActive = false;
       updateAdminControls();
       resetInactivityTimer();
+    }
+
+        // ========== PYQ / PDF LOGIC ==========
+    async function showPyqContainer(subjectName) {
+      subjectSelectionEl.style.display = "none";
+      quizContainerEl.style.display = "none";
+      pyqContainerEl.style.display = "block";
+      
+      document.getElementById("pyq-title").textContent = subjectName;
+
+      // Check admin rights to show upload area
+      const adminUploadDiv = document.getElementById("admin-pdf-upload");
+      if (isAdmin()) {
+        adminUploadDiv.style.display = "block";
+        setupPdfUpload();
+      } else {
+        adminUploadDiv.style.display = "none";
+      }
+
+      await loadPdfList();
+    }
+
+    async function loadPdfList() {
+      const container = document.getElementById("pdf-list-container");
+      container.innerHTML = `
+        <div class="loading-container">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Loading PDFs...</div>
+        </div>
+      `;
+
+      try {
+        const allData = await loadAllConfigAtOnce();
+        const key = `${currentClass}_${currentSubject.toLowerCase()}`;
+        
+        if (!allData.config[key]) throw new Error("No configuration found for this subject");
+
+        const sheetId = allData.config[key].sheetId;
+        // Grab the first chapter's GID (Assuming all PDFs are in one sheet for this subject)
+        const firstChapterKey = Object.keys(allData.config[key].chapters)[0]; 
+        const gid = allData.config[key].chapters[firstChapterKey];
+
+        // Fetch using the exact same visualization API you use for questions
+        const apiUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&gid=${gid}&_t=${Date.now()}`;
+        const response = await fetch(apiUrl);
+        const dataText = await response.text();
+        const jsonData = JSON.parse(dataText.substring(47).slice(0, -2));
+        const rows = jsonData.table.rows;
+
+        container.innerHTML = "";
+        let hasPdfs = false;
+
+        // Start from index 1 assuming row 0 is headers (Pdf Name | Download URL)
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row.c) continue;
+          
+          const pdfName = row.c[0]?.v?.toString().trim();
+          const pdfUrl = row.c[1]?.v?.toString().trim();
+
+          if (pdfName && pdfUrl) {
+            hasPdfs = true;
+            const item = document.createElement('div');
+            item.className = 'pdf-item';
+            item.innerHTML = `
+              <div class="pdf-info">
+                <div class="pdf-icon">📄</div>
+                <div class="pdf-name">${pdfName}</div>
+              </div>
+              <a href="${pdfUrl}" target="_blank" class="download-btn">Download</a>
+            `;
+            container.appendChild(item);
+          }
+        }
+
+        if (!hasPdfs) {
+          container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 20px;">No PDFs available yet.</div>';
+        }
+
+        // Save routing info globally so the upload function knows where to push
+        window.currentPyqContext = { sheetId, gid };
+
+      } catch (error) {
+        container.innerHTML = `<div style="color: #ef4444; text-align: center;">Error loading PDFs: ${error.message}</div>`;
+      }
+    }
+
+    function setupPdfUpload() {
+      const uploadArea = document.getElementById("upload-pdf-area");
+      const fileInput = document.getElementById("pdf-file-input");
+      const submitBtn = document.getElementById("submit-pdf-btn");
+      const nameInput = document.getElementById("new-pdf-name");
+      
+      // Prevent duplicate listeners
+      const newUploadArea = uploadArea.cloneNode(true);
+      uploadArea.parentNode.replaceChild(newUploadArea, uploadArea);
+      
+      let selectedFile = null;
+
+      newUploadArea.addEventListener("click", () => fileInput.click());
+      
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files.length > 0) {
+          selectedFile = e.target.files[0];
+          if (selectedFile.type !== "application/pdf") {
+            alert("Please select a valid PDF file.");
+            selectedFile = null;
+            return;
+          }
+          newUploadArea.querySelector(".upload-text").textContent = `Selected: ${selectedFile.name}`;
+          submitBtn.disabled = false;
+          
+          // Auto-fill name if empty
+          if (!nameInput.value) {
+            nameInput.value = selectedFile.name.replace('.pdf', '');
+          }
+        }
+      });
+
+      submitBtn.onclick = async () => {
+        if (!selectedFile || !nameInput.value.trim()) {
+          alert("Please provide both a PDF file and a Name.");
+          return;
+        }
+
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = "Uploading...";
+        submitBtn.disabled = true;
+        
+        document.getElementById("pdf-upload-progress").style.display = "block";
+        document.getElementById("pdf-progress-bar").style.width = "50%";
+        document.getElementById("pdf-upload-status").textContent = "Uploading to Drive...";
+
+        try {
+          const base64Data = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.readAsDataURL(selectedFile);
+          });
+
+          const formData = new FormData();
+          formData.append('action', 'uploadPdf');
+          formData.append('username', currentUser.username);
+          formData.append('token', currentUser.token);
+          formData.append('role', currentUser.role);
+          formData.append('fileData', base64Data);
+          formData.append('fileName', selectedFile.name);
+          formData.append('mimeType', 'application/pdf');
+          formData.append('pdfNameText', nameInput.value.trim());
+          formData.append('sheetId', window.currentPyqContext.sheetId);
+          formData.append('gid', window.currentPyqContext.gid);
+
+          const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: formData
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            document.getElementById("pdf-progress-bar").style.width = "100%";
+            document.getElementById("pdf-upload-status").textContent = "Success!";
+            document.getElementById("pdf-upload-status").style.color = "#22c55e";
+            
+            // Reset form and reload
+            nameInput.value = "";
+            selectedFile = null;
+            newUploadArea.querySelector(".upload-text").textContent = "Click to select PDF";
+            
+            setTimeout(() => {
+              document.getElementById("pdf-upload-progress").style.display = "none";
+              document.getElementById("pdf-upload-status").textContent = "";
+              loadPdfList();
+            }, 1500);
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (err) {
+          alert("Upload failed: " + err.message);
+          document.getElementById("pdf-upload-progress").style.display = "none";
+        } finally {
+          submitBtn.textContent = originalText;
+        }
+      };
     }
 
     // ========== QUIZ FUNCTIONS ==========
