@@ -7160,7 +7160,7 @@ function login(user, isRestore = false) {
       await loadPdfList();
     }
 
-    async function loadPdfList() {
+   async function loadPdfList() {
       const container = document.getElementById("pdf-list-container");
       container.innerHTML = `
         <div class="loading-container">
@@ -7198,26 +7198,70 @@ function login(user, isRestore = false) {
           if (pdfName && pdfUrl) {
             hasPdfs = true;
             
-            // --- FIX FOR DIRECT DOWNLOAD ON MOBILE ---
+            // Generate both a download URL and a view URL
+            let downloadUrl = pdfUrl;
+            let viewUrl = pdfUrl;
+            
             if (pdfUrl.includes('drive.google.com') || pdfUrl.includes('docs.google.com')) {
               const matchId = pdfUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/) || pdfUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || pdfUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
               if (matchId && matchId[1]) {
-                // Using drive.usercontent.google.com bypasses the Drive App intent filter
-                pdfUrl = `https://drive.usercontent.google.com/download?id=${matchId[1]}&export=download&authuser=0`;
+                downloadUrl = `https://drive.usercontent.google.com/download?id=${matchId[1]}&export=download&authuser=0`;
+                viewUrl = `https://drive.google.com/file/d/${matchId[1]}/view`;
               }
             }
 
             const item = document.createElement('div');
             item.className = 'pdf-item';
-            // Removed target="_blank" so the OS doesn't throw it to the Google Drive app
+            
+            // We use a button instead of an 'a' tag to control the UI states
             item.innerHTML = `
               <div class="pdf-info">
                 <div class="pdf-icon">📄</div>
                 <div class="pdf-name">${pdfName}</div>
               </div>
-              <a href="${pdfUrl}" class="download-btn" download="${pdfName}.pdf">Download</a>
+              <button class="download-btn" id="pdf-btn-${i}" style="display:flex; align-items:center; justify-content:center; gap:6px; min-width:110px;">Download</button>
             `;
             container.appendChild(item);
+
+            // Add the click logic for the animation and download
+            const btn = document.getElementById(`pdf-btn-${i}`);
+            btn.addEventListener('click', function(e) {
+              e.preventDefault();
+              
+              // If already downloaded, open it in a new tab so they can read it immediately
+              if (btn.classList.contains('downloaded')) {
+                window.open(viewUrl, '_blank');
+                return;
+              }
+
+              // 1. Show Loading Animation
+              btn.innerHTML = `<span style="display:inline-block; width:14px; height:14px; border:2px solid rgba(96,165,250,0.3); border-top-color:#60a5fa; border-radius:50%; animation:spin 1s linear infinite;"></span> Downloading...`;
+              btn.style.pointerEvents = 'none';
+
+              // 2. Trigger the invisible download
+              const a = document.createElement('a');
+              a.href = downloadUrl;
+              a.download = `${pdfName}.pdf`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+
+              // 3. Change to "Downloaded" state after a realistic delay
+              setTimeout(() => {
+                btn.innerHTML = `✅ Downloaded`;
+                btn.classList.add('downloaded');
+                btn.style.background = 'rgba(34, 197, 94, 0.15)'; // Green tint
+                btn.style.borderColor = 'rgba(34, 197, 94, 0.4)';
+                btn.style.color = '#22c55e'; // Green text
+                btn.style.pointerEvents = 'auto'; // Re-enable clicks so they can open it
+                
+                // Change light mode styles dynamically if needed
+                if (document.body.classList.contains('light-mode')) {
+                  btn.style.background = '#dcfce7';
+                  btn.style.color = '#166534';
+                }
+              }, 2000); // 2-second fake loading timer for UX
+            });
           }
         }
 
