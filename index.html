@@ -7198,23 +7198,24 @@ function login(user, isRestore = false) {
           if (pdfName && pdfUrl) {
             hasPdfs = true;
             
-            // --- FIX FOR DIRECT DOWNLOAD ---
-            // Bypass Android Google Drive App intent by using docs.google.com
-            if (pdfUrl.includes('drive.google.com')) {
+            // --- FIX FOR DIRECT DOWNLOAD ON MOBILE ---
+            if (pdfUrl.includes('drive.google.com') || pdfUrl.includes('docs.google.com')) {
               const matchId = pdfUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/) || pdfUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || pdfUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
               if (matchId && matchId[1]) {
-                pdfUrl = `https://docs.google.com/uc?export=download&id=${matchId[1]}`;
+                // Using drive.usercontent.google.com bypasses the Drive App intent filter
+                pdfUrl = `https://drive.usercontent.google.com/download?id=${matchId[1]}&export=download&authuser=0`;
               }
             }
 
             const item = document.createElement('div');
             item.className = 'pdf-item';
+            // Removed target="_blank" so the OS doesn't throw it to the Google Drive app
             item.innerHTML = `
               <div class="pdf-info">
                 <div class="pdf-icon">📄</div>
                 <div class="pdf-name">${pdfName}</div>
               </div>
-              <a href="${pdfUrl}" class="download-btn" download>Download</a>
+              <a href="${pdfUrl}" class="download-btn" download="${pdfName}.pdf">Download</a>
             `;
             container.appendChild(item);
           }
