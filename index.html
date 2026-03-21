@@ -7220,11 +7220,12 @@ function login(user, isRestore = false) {
               const sheetRowIndex = i + 1; 
               const safeName = pdfName.replace(/'/g, "\\'").replace(/"/g, "&quot;");
               
+              // Added event.stopPropagation() so clicking these doesn't trigger the download
               actionButtons += `
-                <button title="Edit PDF Name" onclick="editPdfName(${sheetRowIndex}, '${safeName}')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; width:38px; height:38px;">
+                <button title="Edit PDF Name" onclick="event.stopPropagation(); editPdfName(${sheetRowIndex}, '${safeName}')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; width:38px; height:38px;">
                   <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24'%3E%3Cpath fill='%233b82f6' d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/%3E%3C/svg%3E" alt="Edit">
                 </button>
-                <button title="Delete PDF" onclick="deletePdfItem(${sheetRowIndex})" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; width:38px; height:38px;">
+                <button title="Delete PDF" onclick="event.stopPropagation(); deletePdfItem(${sheetRowIndex})" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; width:38px; height:38px;">
                   <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24'%3E%3Cpath fill='%23ef4444' d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/%3E%3C/svg%3E" alt="Delete">
                 </button>
               `;
@@ -7232,8 +7233,9 @@ function login(user, isRestore = false) {
 
             const item = document.createElement('div');
             item.className = 'pdf-item';
+            // Make the entire block look clickable
+            item.style.cursor = 'pointer';
             
-            // Text gets flex: 1 to take all available space. Buttons are grouped in a row taking minimum space.
             item.innerHTML = `
               <div class="pdf-info" style="flex: 1; margin-right: 12px; align-items: flex-start; display: flex;">
                 <div class="pdf-icon" style="font-size: 1.5rem; margin-top: 2px; margin-right: 8px;">📄</div>
@@ -7245,9 +7247,15 @@ function login(user, isRestore = false) {
             `;
             container.appendChild(item);
 
-            const btn = document.getElementById(`pdf-btn-${i}`);
-            btn.addEventListener('click', function(e) {
+            // Add click listener to the ENTIRE row
+            item.addEventListener('click', function(e) {
+              // Safety catch: If they managed to click the edit/delete buttons, abort the download logic
+              if(e.target.closest('button[title="Edit PDF Name"]') || e.target.closest('button[title="Delete PDF"]')) {
+                return;
+              }
+              
               e.preventDefault();
+              const btn = document.getElementById(`pdf-btn-${i}`);
               
               // If already downloaded, open it in a new tab so they can read it immediately
               if (btn.classList.contains('downloaded')) {
@@ -7255,7 +7263,7 @@ function login(user, isRestore = false) {
                 return;
               }
 
-              // 1. Circular Loading Animation
+              // 1. Circular Loading Animation on the download icon
               btn.innerHTML = `<span style="display:inline-block; width:18px; height:18px; border:2px solid rgba(96,165,250,0.3); border-top-color:#60a5fa; border-radius:50%; animation:spin 1s linear infinite;"></span>`;
               btn.style.pointerEvents = 'none';
 
@@ -7274,7 +7282,9 @@ function login(user, isRestore = false) {
                 btn.style.background = 'rgba(34, 197, 94, 0.15)'; // Green tint
                 btn.style.borderColor = 'rgba(34, 197, 94, 0.4)';
                 btn.style.color = '#22c55e'; // Green icon
-                btn.style.pointerEvents = 'auto'; // Re-enable clicks so they can open it
+                
+                // Allow the entire row to be clicked again, which will now trigger the "View" logic
+                btn.style.pointerEvents = 'none'; 
                 
                 if (document.body.classList.contains('light-mode')) {
                   btn.style.background = '#dcfce7';
