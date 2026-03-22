@@ -6472,24 +6472,24 @@ function validateUserAccount(user) {
   return { valid: false, error: 'unknown' };
 }
    
-    // ========== LOGIN FUNCTION ==========
-function login(user, isRestore = false) {
-  const validation = validateUserAccount(user);
+   // ========== LOGIN FUNCTION ==========
+    // 🚨 ADDED "async" HERE
+    async function login(user, isRestore = false) {
+      const validation = validateUserAccount(user);
 
-  if (!validation.valid) {
-    if (validation.error === 'expired') {
-      showSubscriptionExpired(user, user.joiningDate, user.lastDate);
-    } else {
-      showAccountConfigError(user, validation.error, {
-        assignedClasses: validation.assignedClasses
-      });
-    }
-    return;
-  }
+      if (!validation.valid) {
+        if (validation.error === 'expired') {
+          showSubscriptionExpired(user, user.joiningDate, user.lastDate);
+        } else {
+          showAccountConfigError(user, validation.error, {
+            assignedClasses: validation.assignedClasses
+          });
+        }
+        return;
+      }
 
-  currentUser = user;
-  currentUser.validatedAssignedClasses = validation.assignedClasses;
-  // ... leave the rest of the login function as is ...
+      currentUser = user;
+      currentUser.validatedAssignedClasses = validation.assignedClasses;
       
       sideUsername.textContent = user.name;
 
@@ -6506,13 +6506,14 @@ function login(user, isRestore = false) {
       resetInactivityTimer();
       loadClasses();
       saveSession();
-  await loadTelegramConfig();
+      
+      // 🚨 ADDED "await" HERE to pause the code until the keys arrive!
+      await loadTelegramConfig();
 
       updateAdminControls();
 
       if (!isRestore) sendLoginNotification(user);
     }
-
     // ========== LOGOUT FUNCTION ==========
     function logout() {
       if (timerInterval) clearInterval(timerInterval);
