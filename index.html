@@ -9866,7 +9866,7 @@ function login(user, isRestore = false) {
     
     setTheme(localStorage.getItem('theme') || 'dark');
 
-    // ========== INITIALIZATION ==========
+    
    // ========== INITIALIZATION (SECURE VERSION) ==========
    async function initializeApp() {
       // 1. Get initial configurations
@@ -9887,13 +9887,25 @@ function login(user, isRestore = false) {
           
           const isTokenValid = await new Promise((resolve) => {
             window.handleTokenVerification = function(response) {
+              // Only let them in if Google explicitly says TRUE
               resolve(response && response.success === true);
             };
-            
+
             const script = document.createElement('script');
             script.src = verifyUrl;
-            // Handle network errors (server down)
-            script.onerror = () => resolve(false);
+            
+            // STRICT SECURITY: If Google doesn't answer in 15 seconds, lock them out.
+            setTimeout(() => {
+              console.error("Server timeout. Enforcing security lockout.");
+              resolve(false); 
+            }, 15000); 
+
+            // STRICT SECURITY: If their internet drops completely, lock them out.
+            script.onerror = () => {
+              console.error("Network error. Enforcing security lockout.");
+              resolve(false);
+            };
+            
             document.head.appendChild(script);
           });
 
