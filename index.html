@@ -6018,16 +6018,20 @@ body.light-mode .pdf-name {
     }
 
     // ========== LOAD TELEGRAM CONFIG ==========
-    async function loadTelegramConfig() {
+   async function loadTelegramConfig() {
+      // 🚨 ADDED: Don't try to load if there is no token yet!
+      if (!currentUser || !currentUser.token) {
+         console.log("Waiting for login to fetch Telegram config...");
+         return; 
+      }
+
       try {
-        // ADDED: username and token parameters to pass the security gate
         const url = MASTER_CONFIG_APPS_SCRIPT_URL + 
                     '?action=getTelegramConfig' +
                     '&username=' + encodeURIComponent(currentUser?.username || '') +
                     '&token=' + encodeURIComponent(currentUser?.token || '') +
                     '&_t=' + Date.now();
 
-        // Pass the new secure URL into your existing jsonpRequest
         const data = await jsonpRequest(url, 'telegramCallback');
         
         if (data.success) {
@@ -6042,7 +6046,6 @@ body.light-mode .pdf-name {
         console.error("Error loading Telegram config:", error);
       }
     }
-
     // ========== LOAD CLASSES ==========
     async function loadClasses() {
       try {
@@ -6503,6 +6506,7 @@ function login(user, isRestore = false) {
       resetInactivityTimer();
       loadClasses();
       saveSession();
+  loadTelegramConfig();
 
       updateAdminControls();
 
