@@ -6506,7 +6506,7 @@ function login(user, isRestore = false) {
       resetInactivityTimer();
       loadClasses();
       saveSession();
-  loadTelegramConfig();
+  await loadTelegramConfig();
 
       updateAdminControls();
 
