@@ -6514,6 +6514,8 @@ function login(user, isRestore = false) {
 
       imageCache.clear();
       clearSession();
+      ALL_CONFIG_CACHE = null;
+      ALL_CONFIG_CACHE_TIME = null;
 
       hasSentLoginNotification = false;
       hasSentQuizResultNotification = false;
