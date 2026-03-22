@@ -7176,7 +7176,36 @@ function login(user, isRestore = false) {
       await loadPdfList();
     }
 
- async function loadPdfList() {
+ // ========== SAVE SORT PREFERENCE ==========
+    // Defined properly so it is always available to the dropdown
+    async function savePdfSortOrder(order) {
+      window.pendingSortOrder = order; // Save preference locally to bypass 5-min Google cache
+      showPDFOverlay("Saving sort preference...");
+      try {
+        let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=setPdfSortOrder';
+        url += '&sheetId=' + window.currentPyqContext.sheetId;
+        url += '&gid=' + window.currentPyqContext.gid;
+        url += '&order=' + encodeURIComponent(order);
+        url += '&username=' + encodeURIComponent(currentUser.username);
+        url += '&role=' + encodeURIComponent(currentUser.role);
+        url += '&token=' + encodeURIComponent(currentUser.token);
+        url += '&_t=' + Date.now();
+        
+        const data = await jsonpRequest(url, 'sortPdfCb');
+        hidePDFOverlay();
+        if (data && data.success) {
+          loadPdfList(); // Instantly apply the new order visually
+        } else {
+          alert("Error saving sort preference: " + (data.error || "Unknown"));
+        }
+      } catch(e) {
+        hidePDFOverlay();
+        alert("Network error: " + e);
+      }
+    }
+
+    // ========== LOAD PDF LIST ==========
+    async function loadPdfList() {
       const container = document.getElementById("pdf-list-container");
       container.innerHTML = `
         <div class="loading-container">
@@ -7201,13 +7230,13 @@ function login(user, isRestore = false) {
         const jsonData = JSON.parse(dataText.substring(47).slice(0, -2));
         const rows = jsonData.table.rows;
 
-        // --- FIX: FETCH SORT PREFERENCE WITH CACHE BYPASS ---
+        // --- FETCH SORT PREFERENCE WITH CACHE BYPASS ---
         let sortOrder = 'asc'; 
         if (rows[0] && rows[0].c && rows[0].c[2] && rows[0].c[2].v) {
           sortOrder = rows[0].c[2].v.toString().trim().toLowerCase();
         }
         
-        // If the admin just changed it, use their choice immediately instead of waiting for Google's cache to clear
+        // If the admin just changed it, use their choice immediately
         if (window.pendingSortOrder) {
           sortOrder = window.pendingSortOrder;
         }
@@ -7217,6 +7246,7 @@ function login(user, isRestore = false) {
           const sortDropdown = document.getElementById('admin-pdf-sort');
           if (sortDropdown) {
             sortDropdown.value = sortOrder;
+            // Link safely to our function
             sortDropdown.onchange = (e) => savePdfSortOrder(e.target.value);
           }
         }
@@ -7268,9 +7298,6 @@ function login(user, isRestore = false) {
             if (matchId && matchId[1]) {
               const fileId = matchId[1];
               downloadUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=download&authuser=0`;
-              
-              // FIX: Mobile Account prompt & Intent Bypass
-              // We use Google's native Document Viewer service to render the PDF entirely in the browser
               viewUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(downloadUrl)}&embedded=true`;
             }
           }
@@ -7337,7 +7364,7 @@ function login(user, isRestore = false) {
               btn.style.background = 'rgba(34, 197, 94, 0.15)'; 
               btn.style.borderColor = 'rgba(34, 197, 94, 0.4)';
               btn.style.color = '#22c55e'; 
-              btn.style.pointerEvents = 'auto'; // Let them click it again if they want
+              btn.style.pointerEvents = 'auto';
               
               if (document.body.classList.contains('light-mode')) {
                 btn.style.background = '#dcfce7';
@@ -7348,11 +7375,9 @@ function login(user, isRestore = false) {
 
           // ITEM CLICK: View PDF in Browser
           item.addEventListener('click', function(e) {
-            // Safety check: ignore if they somehow hit the edit/delete buttons
             if(e.target.closest('button[title="Edit PDF Name"]') || e.target.closest('button[title="Delete PDF"]')) return;
-            
             e.preventDefault();
-            window.open(viewUrl, '_blank'); // Directly view the PDF in the browser viewer
+            window.open(viewUrl, '_blank'); 
           });
         });
 
