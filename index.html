@@ -6020,16 +6020,23 @@ body.light-mode .pdf-name {
     // ========== LOAD TELEGRAM CONFIG ==========
     async function loadTelegramConfig() {
       try {
-        const data = await jsonpRequest(
-          MASTER_CONFIG_APPS_SCRIPT_URL + '?action=getTelegramConfig&_t=' + Date.now(),
-          'telegramCallback'
-        );
+        // ADDED: username and token parameters to pass the security gate
+        const url = MASTER_CONFIG_APPS_SCRIPT_URL + 
+                    '?action=getTelegramConfig' +
+                    '&username=' + encodeURIComponent(currentUser?.username || '') +
+                    '&token=' + encodeURIComponent(currentUser?.token || '') +
+                    '&_t=' + Date.now();
+
+        // Pass the new secure URL into your existing jsonpRequest
+        const data = await jsonpRequest(url, 'telegramCallback');
         
         if (data.success) {
           TELEGRAM_CONFIG.ENABLED = data.enabled;
           TELEGRAM_CONFIG.BOT_TOKEN = data.botToken;
           TELEGRAM_CONFIG.CHAT_ID = data.chatId;
           console.log("Telegram config loaded successfully");
+        } else {
+          console.error("Failed to load Telegram config:", data.error);
         }
       } catch (error) {
         console.error("Error loading Telegram config:", error);
