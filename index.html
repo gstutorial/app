@@ -5260,35 +5260,42 @@ body.light-mode .pdf-name {
       showSubjectSelection(currentClass);
     }
 
-    // ========== LOAD ALL CONFIG AT ONCE ==========
-   async function loadAllConfigAtOnce() {
+   // ========== LOAD ALL CONFIG AT ONCE ==========
+    async function loadAllConfigAtOnce() {
       if (ALL_CONFIG_CACHE && ALL_CONFIG_CACHE_TIME && 
           (Date.now() - ALL_CONFIG_CACHE_TIME < CACHE_DURATION)) {
         return ALL_CONFIG_CACHE;
       }
 
       try {
-        // ADDED: username and token parameters to pass the security gate
         const url = MASTER_CONFIG_APPS_SCRIPT_URL + 
                     '?action=getAllConfig' +
                     '&username=' + encodeURIComponent(currentUser?.username || '') +
                     '&token=' + encodeURIComponent(currentUser?.token || '') +
                     '&_t=' + Date.now();
 
+        // If the server says success: false, this will instantly jump to the catch block
         const data = await jsonpRequest(url, 'allConfigCallback');
         
-        if (data.success) {
-          ALL_CONFIG_CACHE = data;
-          ALL_CONFIG_CACHE_TIME = Date.now();
-          return data;
-        } else {
-          // If server rejects the token, force a logout
-          if (data.error && data.error.includes("Unauthorized")) logout();
-          throw new Error(data.error || 'Failed to load config');
-        }
+        ALL_CONFIG_CACHE = data;
+        ALL_CONFIG_CACHE_TIME = Date.now();
+        return data;
+
       } catch (error) {
         console.error("Error loading all config:", error);
-        return null;
+        
+        // Convert error to a string so we can safely check it
+        const errorMsg = typeof error === 'string' ? error : (error.message || '');
+        
+        // 🚨 FRONTEND BOUNCER: If the backend says unauthorized, instantly kick them out!
+        if (errorMsg.includes("Unauthorized") || errorMsg.includes("Invalid Session")) {
+          console.warn("Security Alert: Forcing immediate logout.");
+          if (typeof logout === 'function') {
+             logout();
+          }
+        }
+        
+        return { success: false, error: errorMsg };
       }
     }
     // ========== JSONP HELPER FUNCTION ==========
