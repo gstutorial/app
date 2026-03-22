@@ -5172,7 +5172,7 @@ body.light-mode .pdf-name {
       if (subjectLower.includes('elect')) return '⚡';
       if (subjectLower.includes('english')) return '📖';
       if (subjectLower.includes('social')) return '🌍';
-      if (subjectLower.includes('previous year') || subjectLower.includes('pyq') || subjectLower.includes('download')) return '📄';
+      if (subjectLower.includes('previous year') || subjectLower.includes('question answer') || subjectLower.includes('download')) return '📄';
       return '📚';
     }
 
@@ -5185,7 +5185,7 @@ body.light-mode .pdf-name {
       if (subjectLower.includes('bio')) return 'Biology - Life processes, Cells';
       if (subjectLower.includes('mech')) return 'Mechanical Engineering - Machines';
       if (subjectLower.includes('elect')) return 'Electrical Engineering - Circuits';
-      if (subjectLower.includes('previous year') || subjectLower.includes('pyq') || subjectLower.includes('download')) return 'Download PDF resources';
+      if (subjectLower.includes('previous year') || subjectLower.includes('question answer') || subjectLower.includes('download')) return 'Download PDF resources';
       return 'Interactive Learning';
     }
 
@@ -6209,7 +6209,7 @@ body.light-mode .pdf-name {
           const lowerName = subject.name.toLowerCase();
           
           // Intercept if the subject is "Previous Year Questions", "PYQ", or "Download"
-          if (lowerName.includes('previous year') || lowerName.includes('pyq') || lowerName.includes('download')) {
+          if (lowerName.includes('previous year') || lowerName.includes('question answer') || lowerName.includes('download')) {
             showPyqContainer(currentSubject);
           } else {
             showQuizContainer(currentSubject);
