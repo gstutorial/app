@@ -7477,15 +7477,21 @@ function login(user, isRestore = false) {
           } else {
             throw new Error(result.error);
           }
-        } catch (err) {
-          alert("Upload failed: " + err.message);
+       } catch (err) {
+          let errorMsg = err.message;
+          // Detect if the browser killed the connection (like in Incognito mode)
+          if (errorMsg === "Failed to fetch" || errorMsg.includes("NetworkError")) {
+            errorMsg = "The browser blocked the upload. If you are using Incognito/Private mode, please switch to a normal window, as strict tracking protection blocks Google Drive uploads.";
+          }
+          
+          alert("Upload failed: " + errorMsg);
           document.getElementById("pdf-upload-progress").style.display = "none";
+          document.getElementById("pdf-upload-status").textContent = "";
         } finally {
           submitBtn.textContent = originalText;
         }
       };
     }
-
     // ========== QUIZ FUNCTIONS ==========
     function resetQuizState() {
       questions = [];
