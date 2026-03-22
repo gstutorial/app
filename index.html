@@ -7310,12 +7310,14 @@ function validateUserAccount(user) {
           let downloadUrl = pdf.url;
           let viewUrl = pdf.url;
           
-          if (pdf.url.includes('drive.google.com') || pdf.url.includes('docs.google.com')) {
+        if (pdf.url.includes('drive.google.com') || pdf.url.includes('docs.google.com')) {
             const matchId = pdf.url.match(/[?&]id=([a-zA-Z0-9_-]+)/) || pdf.url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || pdf.url.match(/\/d\/([a-zA-Z0-9_-]+)/);
             if (matchId && matchId[1]) {
               const fileId = matchId[1];
               downloadUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=download&authuser=0`;
-              viewUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(downloadUrl)}&embedded=true`;
+              
+              // 🚨 FIX: Use the native Google Drive preview URL for perfect mobile scaling
+              viewUrl = `https://drive.google.com/file/d/${fileId}/view`;
             }
           }
 
