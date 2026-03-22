@@ -6178,8 +6178,11 @@ body.light-mode .pdf-name {
         card.addEventListener("click", () => {
           currentSubject = subject.name;
           
-          // Intercept if the subject is "Previous Year Questions"
-          if (subject.name.toLowerCase().includes('previous year') || subject.name.toLowerCase().includes('pyq')) || subject.name.toLowerCase().includes('download')) {
+          // Cleaner approach: store it in a variable first
+          const lowerName = subject.name.toLowerCase();
+          
+          // Intercept if the subject is "Previous Year Questions", "PYQ", or "Download"
+          if (lowerName.includes('previous year') || lowerName.includes('pyq') || lowerName.includes('download')) {
             showPyqContainer(currentSubject);
           } else {
             showQuizContainer(currentSubject);
@@ -6187,11 +6190,10 @@ body.light-mode .pdf-name {
           resetInactivityTimer();
         });
 
-        // THESE THREE LINES WERE MISSING:
+        // Add the card to the grid
         subjectGridEl.appendChild(card);
       });
     }
-     
     // ========== LOAD CHAPTERS ==========
     async function loadChapters() {
       try {
