@@ -7176,7 +7176,7 @@ function login(user, isRestore = false) {
       await loadPdfList();
     }
 
-  async function loadPdfList() {
+ async function loadPdfList() {
       const container = document.getElementById("pdf-list-container");
       container.innerHTML = `
         <div class="loading-container">
@@ -7201,10 +7201,15 @@ function login(user, isRestore = false) {
         const jsonData = JSON.parse(dataText.substring(47).slice(0, -2));
         const rows = jsonData.table.rows;
 
-        // --- NEW: FETCH SORT PREFERENCE ---
-        let sortOrder = 'asc'; // Default
+        // --- FIX: FETCH SORT PREFERENCE WITH CACHE BYPASS ---
+        let sortOrder = 'asc'; 
         if (rows[0] && rows[0].c && rows[0].c[2] && rows[0].c[2].v) {
           sortOrder = rows[0].c[2].v.toString().trim().toLowerCase();
+        }
+        
+        // If the admin just changed it, use their choice immediately instead of waiting for Google's cache to clear
+        if (window.pendingSortOrder) {
+          sortOrder = window.pendingSortOrder;
         }
 
         // Apply admin dropdown state and listener
@@ -7212,13 +7217,13 @@ function login(user, isRestore = false) {
           const sortDropdown = document.getElementById('admin-pdf-sort');
           if (sortDropdown) {
             sortDropdown.value = sortOrder;
-            sortDropdown.onchange = () => savePdfSortOrder(sortDropdown.value);
+            sortDropdown.onchange = (e) => savePdfSortOrder(e.target.value);
           }
         }
 
         // --- STEP 1: COLLECT ALL PDFS INTO AN ARRAY ---
         let pdfArray = [];
-        for (let i = 1; i < rows.length; i++) { // Start at 1 to skip header
+        for (let i = 1; i < rows.length; i++) { 
           const row = rows[i];
           if (!row || !row.c) continue;
           
@@ -7229,7 +7234,7 @@ function login(user, isRestore = false) {
 
           if (pdfName && pdfUrl) {
             pdfArray.push({
-              index: i, // Original sheet index (needed for Edit/Delete)
+              index: i, 
               name: pdfName,
               url: pdfUrl
             });
@@ -7238,13 +7243,12 @@ function login(user, isRestore = false) {
 
         // --- STEP 2: APPLY THE SORTING LOGIC ---
         if (sortOrder === 'desc') {
-          pdfArray.reverse(); // Bottom of sheet to top
+          pdfArray.reverse(); 
         } else if (sortOrder === 'name_asc') {
           pdfArray.sort((a, b) => a.name.localeCompare(b.name));
         } else if (sortOrder === 'name_desc') {
           pdfArray.sort((a, b) => b.name.localeCompare(a.name));
         }
-        // 'asc' does nothing, keeps default chronological order
 
         container.innerHTML = "";
         
@@ -7262,8 +7266,12 @@ function login(user, isRestore = false) {
           if (pdf.url.includes('drive.google.com') || pdf.url.includes('docs.google.com')) {
             const matchId = pdf.url.match(/[?&]id=([a-zA-Z0-9_-]+)/) || pdf.url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || pdf.url.match(/\/d\/([a-zA-Z0-9_-]+)/);
             if (matchId && matchId[1]) {
-              downloadUrl = `https://drive.usercontent.google.com/download?id=${matchId[1]}&export=download&authuser=0`;
-              viewUrl = `https://drive.google.com/file/d/${matchId[1]}/view`;
+              const fileId = matchId[1];
+              downloadUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=download&authuser=0`;
+              
+              // FIX: Mobile Account prompt & Intent Bypass
+              // We use Google's native Document Viewer service to render the PDF entirely in the browser
+              viewUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(downloadUrl)}&embedded=true`;
             }
           }
 
@@ -7302,11 +7310,11 @@ function login(user, isRestore = false) {
           `;
           container.appendChild(item);
 
-          // --- FIX 1: DOWNLOAD BUTTON CLICK ---
+          // BUTTON CLICK: Download File
           const btn = document.getElementById(`pdf-btn-${renderIndex}`);
           btn.addEventListener('click', function(e) {
             e.preventDefault();
-            e.stopPropagation(); // Stops the click from bubbling up to the item block
+            e.stopPropagation(); 
             
             if (btn.classList.contains('downloaded')) {
               window.open(viewUrl, '_blank');
@@ -7338,13 +7346,13 @@ function login(user, isRestore = false) {
             }, 2000); 
           });
 
-          // --- FIX 2: BLOCK CLICK (VIEW ONLY) ---
+          // ITEM CLICK: View PDF in Browser
           item.addEventListener('click', function(e) {
             // Safety check: ignore if they somehow hit the edit/delete buttons
             if(e.target.closest('button[title="Edit PDF Name"]') || e.target.closest('button[title="Delete PDF"]')) return;
             
             e.preventDefault();
-            window.open(viewUrl, '_blank'); // Directly view the PDF
+            window.open(viewUrl, '_blank'); // Directly view the PDF in the browser viewer
           });
         });
 
