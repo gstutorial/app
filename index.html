@@ -4161,7 +4161,7 @@ body.light-mode .pdf-name {
     <div class="quiz-container" id="pyq-container" style="display: none;">
       <div class="screen-header">
         <div class="screen-title" id="pyq-title">Previous Year Questions</div>
-        <div class="screen-subtitle" id="pyq-subtitle">Download past papers</div>
+        <div class="screen-subtitle" id="pyq-subtitle">Download PDF</div>
       </div>
 
       <!-- Admin Upload Section -->
@@ -5158,7 +5158,7 @@ body.light-mode .pdf-name {
       if (subjectLower.includes('elect')) return '⚡';
       if (subjectLower.includes('english')) return '📖';
       if (subjectLower.includes('social')) return '🌍';
-      if (subjectLower.includes('previous year') || subjectLower.includes('pyq')) return '📄';
+      if (subjectLower.includes('previous year') || subjectLower.includes('pyq')) || subjectLower.includes('download')) return '📄';
       return '📚';
     }
 
@@ -5171,7 +5171,7 @@ body.light-mode .pdf-name {
       if (subjectLower.includes('bio')) return 'Biology - Life processes, Cells';
       if (subjectLower.includes('mech')) return 'Mechanical Engineering - Machines';
       if (subjectLower.includes('elect')) return 'Electrical Engineering - Circuits';
-      if (subjectLower.includes('previous year') || subjectLower.includes('pyq')) return 'Download past papers';
+      if (subjectLower.includes('previous year') || subjectLower.includes('pyq')) || subjectLower.includes('download')) return 'Download PDF';
       return 'Interactive Learning';
     }
 
@@ -6179,7 +6179,7 @@ body.light-mode .pdf-name {
           currentSubject = subject.name;
           
           // Intercept if the subject is "Previous Year Questions"
-          if (subject.name.toLowerCase().includes('previous year') || subject.name.toLowerCase().includes('pyq')) {
+          if (subject.name.toLowerCase().includes('previous year') || subject.name.toLowerCase().includes('pyq')) || subject.name.toLowerCase().includes('download')) {
             showPyqContainer(currentSubject);
           } else {
             showQuizContainer(currentSubject);
