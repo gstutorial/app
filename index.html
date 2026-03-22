@@ -4531,7 +4531,7 @@ body.light-mode .pdf-name {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwf3FEX0Lcpq7IUOdM01uje7T4vWfVVSjObcFy4x4pPVikU5JshK_5-aCAV_T1swZ5cJQ/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwhOpJ_bTCksJAPapJ6aBZY2pza7xG0P8lgINNXjdOVJURClN_E4RLxUQaDpEmVTz_5/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzza0xaYtDKUabseu3qn5fOmJI6emHXTQ6asRqaw-1PmrcwP7qXwGq1gkJFLlvxmFCt/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -9900,8 +9900,8 @@ function validateUserAccount(user) {
 
           // 2. THE SECURITY HANDSHAKE
           // Ask the server to verify the token before letting the user in
-          const verifyUrl = `${MASTER_CONFIG_APPS_SCRIPT_URL}?action=verifyToken&username=${user.username}&token=${user.token}&callback=handleTokenVerification`;
           
+          const verifyUrl = `${MASTER_CONFIG_APPS_SCRIPT_URL}?action=verifyToken&username=${encodeURIComponent(user.username)}&token=${encodeURIComponent(user.token)}&callback=handleTokenVerification`;
           const isTokenValid = await new Promise((resolve) => {
             window.handleTokenVerification = function(response) {
               // Only let them in if Google explicitly says TRUE
