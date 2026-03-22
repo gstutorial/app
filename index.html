@@ -7274,7 +7274,6 @@ function login(user, isRestore = false) {
           `;
 
           if (isAdmin()) {
-            // pdf.index is the original loop index. Add 1 because rows[0] is sheet row 1.
             const sheetRowIndex = pdf.index + 1; 
             const safeName = pdf.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
             
@@ -7303,11 +7302,11 @@ function login(user, isRestore = false) {
           `;
           container.appendChild(item);
 
-          item.addEventListener('click', function(e) {
-            if(e.target.closest('button[title="Edit PDF Name"]') || e.target.closest('button[title="Delete PDF"]')) return;
-            
+          // --- FIX 1: DOWNLOAD BUTTON CLICK ---
+          const btn = document.getElementById(`pdf-btn-${renderIndex}`);
+          btn.addEventListener('click', function(e) {
             e.preventDefault();
-            const btn = document.getElementById(`pdf-btn-${renderIndex}`);
+            e.stopPropagation(); // Stops the click from bubbling up to the item block
             
             if (btn.classList.contains('downloaded')) {
               window.open(viewUrl, '_blank');
@@ -7330,13 +7329,22 @@ function login(user, isRestore = false) {
               btn.style.background = 'rgba(34, 197, 94, 0.15)'; 
               btn.style.borderColor = 'rgba(34, 197, 94, 0.4)';
               btn.style.color = '#22c55e'; 
-              btn.style.pointerEvents = 'none'; 
+              btn.style.pointerEvents = 'auto'; // Let them click it again if they want
               
               if (document.body.classList.contains('light-mode')) {
                 btn.style.background = '#dcfce7';
                 btn.style.color = '#166534';
               }
             }, 2000); 
+          });
+
+          // --- FIX 2: BLOCK CLICK (VIEW ONLY) ---
+          item.addEventListener('click', function(e) {
+            // Safety check: ignore if they somehow hit the edit/delete buttons
+            if(e.target.closest('button[title="Edit PDF Name"]') || e.target.closest('button[title="Delete PDF"]')) return;
+            
+            e.preventDefault();
+            window.open(viewUrl, '_blank'); // Directly view the PDF
           });
         });
 
@@ -7346,32 +7354,6 @@ function login(user, isRestore = false) {
         container.innerHTML = `<div style="color: #ef4444; text-align: center;">Error loading PDFs: ${error.message}</div>`;
       }
     }
-
-    // ========== SAVE SORT PREFERENCE ==========
-    window.savePdfSortOrder = async function(order) {
-      showPDFOverlay("Saving sort preference...");
-      try {
-        let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=setPdfSortOrder';
-        url += '&sheetId=' + window.currentPyqContext.sheetId;
-        url += '&gid=' + window.currentPyqContext.gid;
-        url += '&order=' + encodeURIComponent(order);
-        url += '&username=' + encodeURIComponent(currentUser.username);
-        url += '&role=' + encodeURIComponent(currentUser.role);
-        url += '&token=' + encodeURIComponent(currentUser.token);
-        url += '&_t=' + Date.now();
-        
-        const data = await jsonpRequest(url, 'sortPdfCb');
-        hidePDFOverlay();
-        if (data && data.success) {
-          loadPdfList(); // Instantly apply the new order visually
-        } else {
-          alert("Error saving sort preference: " + (data.error || "Unknown"));
-        }
-      } catch(e) {
-        hidePDFOverlay();
-        alert("Network error: " + e);
-      }
-    };
     function setupPdfUpload() {
       const uploadArea = document.getElementById("upload-pdf-area");
       const fileInput = document.getElementById("pdf-file-input");
