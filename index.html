@@ -3946,6 +3946,8 @@ body.light-mode .pdf-name {
       }
     }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 </head>
 <body>
   <!-- Image Preloading Overlay -->
@@ -4791,8 +4793,83 @@ body.light-mode .pdf-name {
     }
 
     // ========== IMAGE UPLOAD FUNCTIONS ==========
+   // ========== CROPPER LOGIC & IMAGE UPLOAD SETUP ==========
     let currentUploadField = null;
+    let cropperInstance = null;
+    let currentCropParams = null;
 
+    function openCropperModal(file, previewId, inputId, fieldName) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file (JPEG, PNG, GIF)');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const cropperModal = document.getElementById('cropper-modal');
+        const cropperImgEl = document.getElementById('cropper-image');
+        
+        cropperImgEl.src = event.target.result;
+        cropperModal.style.display = 'flex';
+        
+        currentCropParams = { previewId, inputId, fieldName, originalName: file.name };
+
+        if (cropperInstance) cropperInstance.destroy();
+
+        cropperInstance = new Cropper(cropperImgEl, {
+          viewMode: 1,
+          dragMode: 'move',
+          autoCropArea: 1,
+          restore: false,
+          guides: true,
+          center: true,
+          highlight: false,
+          cropBoxMovable: true,
+          cropBoxResizable: true,
+          toggleDragModeOnDblclick: false,
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function closeCropperModal() {
+      document.getElementById('cropper-modal').style.display = 'none';
+      if (cropperInstance) {
+        cropperInstance.destroy();
+        cropperInstance = null;
+      }
+      currentCropParams = null;
+    }
+
+    // Cropper Button Listeners
+    document.addEventListener('click', function(e) {
+      if (e.target && e.target.id === 'cancel-crop-btn') {
+        e.preventDefault();
+        closeCropperModal();
+      }
+      if (e.target && e.target.id === 'save-crop-btn') {
+        e.preventDefault();
+        if (!cropperInstance || !currentCropParams) return;
+
+        const canvas = cropperInstance.getCroppedCanvas({
+            maxWidth: 1200,
+            maxHeight: 1200,
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        });
+
+        // Convert the cropped area to a compressed JPEG file
+        canvas.toBlob(function(blob) {
+            const croppedFile = new File([blob], "cropped_" + currentCropParams.originalName, { type: "image/jpeg", lastModified: Date.now() });
+            
+            // Pass the cropped file cleanly into your existing Google Drive upload logic!
+            handleImageUpload(croppedFile, currentCropParams.previewId, currentCropParams.inputId, currentCropParams.fieldName);
+            closeCropperModal();
+        }, 'image/jpeg', 0.85); 
+      }
+    });
+
+    // Modified setup to intercept images and open Cropper
     function setupImageUpload(fieldId, previewId, inputId, fieldName) {
       const uploadArea = document.getElementById(fieldId);
       if (!uploadArea) return;
@@ -4804,13 +4881,11 @@ body.light-mode .pdf-name {
       fileInput.id = 'file-input-' + fieldId;
       document.body.appendChild(fileInput);
 
-      // Handle click on upload area
       uploadArea.addEventListener('click', () => {
         currentUploadField = { previewId, inputId };
         fileInput.click();
       });
 
-      // Handle drag and drop
       uploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
         uploadArea.classList.add('dragover');
@@ -4827,16 +4902,15 @@ body.light-mode .pdf-name {
         const files = e.dataTransfer.files;
         if (files.length > 0) {
           currentUploadField = { previewId, inputId };
-          handleImageUpload(files[0], previewId, inputId, fieldName);
+          openCropperModal(files[0], previewId, inputId, fieldName); // <--- Intercepted!
         }
       });
 
-      // Handle file selection
       fileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
-          handleImageUpload(e.target.files[0], previewId, inputId, fieldName);
+          openCropperModal(e.target.files[0], previewId, inputId, fieldName); // <--- Intercepted!
         }
-        fileInput.value = ''; // Reset so same file can be selected again
+        fileInput.value = ''; 
       });
     }
 
@@ -7663,7 +7737,7 @@ function validateUserAccount(user) {
         return style.display === 'block' || style.display === 'flex';
     }
 
-    function setupMobileBackButton() {
+function setupMobileBackButton() {
       if (backButtonListenerAdded) return;
       backButtonListenerAdded = true;
 
@@ -7674,6 +7748,14 @@ function validateUserAccount(user) {
 
         // Force trap to stay alive
         window.history.pushState({ isAppTrap: true }, "");
+        
+        // 1. Trap Back Button for the Cropper Modal (Perfectly placed!)
+        const cropperModalEl = document.getElementById('cropper-modal');
+        if (cropperModalEl && isScreenVisible('cropper-modal')) { 
+            const cancelBtn = document.getElementById('cancel-crop-btn');
+            if (cancelBtn) cancelBtn.click();
+            return; 
+        }
 
         // Close UI Menus
         const sideMenu = document.getElementById('sideMenu');
@@ -7681,6 +7763,7 @@ function validateUserAccount(user) {
         
         const editModal = document.getElementById('edit-pdf-modal');
         if (editModal && isScreenVisible('edit-pdf-modal')) { editModal.style.display = 'none'; return; }
+
 
         const qModal = document.getElementById('question-editor-modal');
         if (qModal && isScreenVisible('question-editor-modal')) { qModal.style.display = 'none'; return; }
@@ -10148,6 +10231,15 @@ function validateUserAccount(user) {
         <button onclick="document.getElementById('edit-pdf-modal').style.display='none'" style="padding: 10px 15px; border-radius: 8px; border: none; background: #64748b; color: white; cursor: pointer;">Cancel</button>
         <button onclick="savePdfEditDetails()" style="padding: 10px 15px; border-radius: 8px; border: none; background: #3b82f6; color: white; cursor: pointer;">Save Changes</button>
       </div>
+    </div>
+  </div>
+  <div id="cropper-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10005; justify-content: center; align-items: center; flex-direction: column;">
+    <div style="width: 100%; height: calc(100% - 80px); padding: 10px; box-sizing: border-box; display: flex; justify-content: center; align-items: center;">
+      <img id="cropper-image" style="max-width: 100%; max-height: 100%; display: block;">
+    </div>
+    <div style="display: flex; gap: 15px; height: 80px; align-items: center; justify-content: center; width: 100%; background: #0f172a; border-top: 1px solid #334155;">
+      <button id="cancel-crop-btn" style="padding: 12px 24px; border-radius: 8px; border: none; background: #ef4444; color: white; font-weight: bold; font-size: 1rem; cursor: pointer;">Cancel</button>
+      <button id="save-crop-btn" style="padding: 12px 24px; border-radius: 8px; border: none; background: #22c55e; color: white; font-weight: bold; font-size: 1rem; cursor: pointer;">Crop & Save</button>
     </div>
   </div>
   <!-- NO SERVICE WORKER REGISTRATION - Completely disabled -->
