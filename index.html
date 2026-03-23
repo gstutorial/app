@@ -4181,13 +4181,15 @@ body.light-mode .pdf-name {
           </div>
         </div>
 
-       <div class="form-group" style="margin-bottom: 10px;">
+      <div class="form-group" style="margin-bottom: 10px;">
           <input type="text" id="new-pdf-name" class="form-input" placeholder="Enter PDF Name (e.g., Math 2024 Set A)">
         </div>
+
         <div class="form-group" style="margin-bottom: 10px;">
           <input type="text" id="new-pdf-category" class="form-input" placeholder="Category/Folder (Optional, e.g., Math, 2024)" list="existing-categories">
           <datalist id="existing-categories"></datalist>
         </div>
+
         <div class="image-upload-container" style="margin: 0;">
           <div class="upload-area" id="upload-pdf-area">
             <div class="upload-icon">📄</div>
@@ -4535,7 +4537,7 @@ body.light-mode .pdf-name {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwf3FEX0Lcpq7IUOdM01uje7T4vWfVVSjObcFy4x4pPVikU5JshK_5-aCAV_T1swZ5cJQ/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx55kL43PkAmIHVgTecHhTm2Bq_lxRhrQFjHouUtfT0IY0skd7hM75hqcWPFejeruc9/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbys_o3jhgWVC3UOFSZW6EgxDfkOhNH07S6AhkyHLpgNLuS4P3EX--hijwaM8HV4kS7Q/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -7437,9 +7439,10 @@ function validateUserAccount(user) {
       if (isAdmin()) {
         const sheetRowIndex = pdf.index + 1; 
         const safeName = pdf.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const safeCategory = (pdf.category || "").replace(/'/g, "\\'").replace(/"/g, "&quot;"); // <-- NEW
         
         actionButtons += `
-          <button title="Edit PDF Name" onclick="event.stopPropagation(); editPdfName(${sheetRowIndex}, '${safeName}')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; width:38px; height:38px;">
+          <button title="Edit PDF Details" onclick="event.stopPropagation(); editPdfDetails(${sheetRowIndex}, '${safeName}', '${safeCategory}')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; width:38px; height:38px;">
             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24'%3E%3Cpath fill='%233b82f6' d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/%3E%3C/svg%3E" alt="Edit">
           </button>
           <button title="Delete PDF" onclick="event.stopPropagation(); deletePdfItem(${sheetRowIndex})" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; width:38px; height:38px;">
@@ -7447,7 +7450,6 @@ function validateUserAccount(user) {
           </button>
         `;
       }
-
       const item = document.createElement('div');
       item.className = 'pdf-item';
       item.style.cursor = 'pointer';
@@ -7506,12 +7508,20 @@ function validateUserAccount(user) {
       });
     }
 
-    // ========== ADMIN PDF ACTIONS (EDIT / DELETE) ==========
-    window.editPdfName = async function(rowIndex, currentName) {
+   // ========== ADMIN PDF ACTIONS (EDIT / DELETE) ==========
+    window.editPdfDetails = async function(rowIndex, currentName, currentCategory) {
+      // Prompt 1: Get new Name
       const newName = prompt("Enter new name for this PDF:", currentName);
-      if (!newName || newName.trim() === "" || newName.trim() === currentName) return;
+      if (newName === null) return; // User cancelled
       
-      showPDFOverlay("Updating PDF name...");
+      // Prompt 2: Get new Category
+      const newCategory = prompt("Enter new category/folder for this PDF (Leave blank for no category):", currentCategory);
+      if (newCategory === null) return; // User cancelled
+      
+      // Check if anything actually changed
+      if (newName.trim() === currentName && newCategory.trim() === currentCategory) return; 
+      
+      showPDFOverlay("Updating PDF details...");
       
       try {
         let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=updatePdfName';
@@ -7519,6 +7529,7 @@ function validateUserAccount(user) {
         url += '&gid=' + window.currentPyqContext.gid;
         url += '&rowIndex=' + rowIndex;
         url += '&newName=' + encodeURIComponent(newName.trim());
+        url += '&newCategory=' + encodeURIComponent(newCategory.trim()); // <-- Send category to backend
         url += '&username=' + encodeURIComponent(currentUser.username);
         url += '&role=' + encodeURIComponent(currentUser.role);
         url += '&token=' + encodeURIComponent(currentUser.token);
@@ -7528,7 +7539,7 @@ function validateUserAccount(user) {
         hidePDFOverlay();
         
         if (data && data.success) {
-          loadPdfList(); // Instantly reload to show the new name!
+          loadPdfList(); // Instantly reload to show the updated name and folder!
         } else {
           alert("Error updating PDF: " + (data.error || "Unknown error"));
         }
@@ -7537,7 +7548,6 @@ function validateUserAccount(user) {
         alert("Network error: " + e);
       }
     };
-
     window.deletePdfItem = async function(rowIndex) {
       if (!confirm("⚠️ Are you sure you want to delete this PDF?\\n\\nThis will remove it from the app AND automatically move the file to the Google Drive Trash. This cannot be undone!")) return;
       
@@ -9984,10 +9994,92 @@ function validateUserAccount(user) {
     }
     
     setTheme(localStorage.getItem('theme') || 'dark');
+// ========== MOBILE BACK BUTTON ROUTER ==========
+    let backButtonListenerAdded = false;
+    let allowAppExit = false;
 
+    function setupMobileBackButton() {
+      if (backButtonListenerAdded) return;
+      backButtonListenerAdded = true;
+
+      // Push an initial state into history to trap the back button
+      window.history.pushState({ isAppTrap: true }, "");
+
+      window.addEventListener('popstate', function(event) {
+        // If user already confirmed exit, allow native behavior
+        if (allowAppExit) return;
+
+        // 1. Immediately re-push state to trap the NEXT back press
+        window.history.pushState({ isAppTrap: true }, "");
+
+        // 2. Close Side Menu if open
+        const sideMenu = document.getElementById('sideMenu');
+        if (sideMenu && sideMenu.classList.contains('open')) {
+            toggleMenu();
+            return;
+        }
+
+        // 3. Close Admin Editor Modal if open
+        const modal = document.getElementById('question-editor-modal');
+        if (modal && modal.style.display === 'flex') {
+            modal.style.display = 'none';
+            return;
+        }
+
+        // 4. Inside a PDF Sub-Folder -> Go back to Main Folders
+        if (document.getElementById('pyq-container') && document.getElementById('pyq-container').style.display === 'block' && window.currentPdfCategory) {
+            window.currentPdfCategory = null;
+            if (typeof renderPdfView === 'function') renderPdfView();
+            return;
+        }
+
+        // 5. In PYQ Container (Main Directory) -> Go back to Subjects
+        if (document.getElementById('pyq-container') && document.getElementById('pyq-container').style.display === 'block') {
+            if (typeof navigateToSubjects === 'function') navigateToSubjects();
+            return;
+        }
+
+        // 6. In Quiz Container -> Go back to Subjects
+        if (document.getElementById('quiz-container') && document.getElementById('quiz-container').style.display === 'block') {
+            if (isQuizActive) {
+                if (confirm("Quiz is in progress. Are you sure you want to leave? Your progress will be lost.")) {
+                    if (typeof navigateToSubjects === 'function') navigateToSubjects();
+                }
+            } else {
+                if (typeof navigateToSubjects === 'function') navigateToSubjects();
+            }
+            return;
+        }
+
+        // 7. In Subject Selection -> Go back to Classes
+        if (document.getElementById('subject-selection') && document.getElementById('subject-selection').style.display === 'block') {
+            if (typeof navigateToClasses === 'function') navigateToClasses();
+            return;
+        }
+
+        // 8. In Class Selection (Root of app) -> Exit App Confirmation
+        if (document.getElementById('class-selection') && document.getElementById('class-selection').style.display === 'block') {
+            if (confirm("Are you sure you want to exit the app?")) {
+                allowAppExit = true;
+                window.history.back(); // Proceed with exit
+            }
+            return;
+        }
+        
+        // 9. Login Screen -> Exit natively
+        if (document.getElementById('login-container') && document.getElementById('login-container').style.display !== 'none') {
+            allowAppExit = true;
+            window.history.back();
+            return;
+        }
+      });
+    }
     
-   // ========== INITIALIZATION (SECURE VERSION) ==========
+  // ========== INITIALIZATION (SECURE VERSION) ==========
    async function initializeApp() {
+      // Activate the back button router
+      setupMobileBackButton();
+
       // 1. Get initial configurations
       await loadTelegramConfig();
       await getUserIP();
