@@ -4809,39 +4809,42 @@ body.light-mode .pdf-name {
         const cropperModal = document.getElementById('cropper-modal');
         const cropperImgEl = document.getElementById('cropper-image');
         
-        // CRITICAL FIX: Destroy old instance BEFORE setting new image source
         if (cropperInstance) {
             cropperInstance.destroy();
             cropperInstance = null;
         }
 
-        cropperImgEl.src = event.target.result;
+        // Show modal FIRST
         cropperModal.style.display = 'flex';
-        
         currentCropParams = { previewId, inputId, fieldName, originalName: file.name };
 
-        // CRITICAL FIX: Wait 150ms for the modal to be fully drawn by the mobile browser 
-        // before calculating the crop box dimensions.
-        setTimeout(() => {
-            cropperInstance = new Cropper(cropperImgEl, {
-              viewMode: 1, // Restricts crop box to the canvas size
-              dragMode: 'move', // Allows moving the image with one finger (great for mobile)
-              autoCropArea: 0.9, // Starts the crop box nicely at 90% size
-              restore: false,
-              guides: true,
-              center: true,
-              highlight: false,
-              cropBoxMovable: true,
-              cropBoxResizable: true,
-              toggleDragModeOnDblclick: false,
-              responsive: true,
-              background: false // Looks cleaner on our dark background
-            });
-        }, 150); 
+        // CRITICAL FIX: Clear old onload, then wait for the NEW image pixels to fully load
+        cropperImgEl.onload = null;
+        cropperImgEl.onload = function() {
+            // Add a tiny micro-delay to let the mobile browser finish its layout reflow
+            setTimeout(() => {
+                cropperInstance = new Cropper(cropperImgEl, {
+                  viewMode: 1, // Restricts crop box to not exceed canvas
+                  dragMode: 'move', // One-finger dragging
+                  autoCropArea: 0.9, 
+                  restore: false,
+                  guides: true,
+                  center: true,
+                  highlight: false,
+                  cropBoxMovable: true,
+                  cropBoxResizable: true,
+                  toggleDragModeOnDblclick: false,
+                  responsive: true,
+                  background: false
+                });
+            }, 50);
+        };
+
+        // Set the source AFTER defining the onload function
+        cropperImgEl.src = event.target.result;
       };
       reader.readAsDataURL(file);
     }
-
     function closeCropperModal() {
       document.getElementById('cropper-modal').style.display = 'none';
       if (cropperInstance) {
@@ -10244,10 +10247,10 @@ function setupMobileBackButton() {
     </div>
   </div>
   <div id="cropper-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10005; flex-direction: column;">
-    <div style="width: 100%; height: calc(100% - 80px); padding: 20px; box-sizing: border-box; display: block;">
+    <div style="width: 100%; flex: 1; min-height: 0; padding: 15px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; overflow: hidden;">
       <img id="cropper-image" style="display: block; max-width: 100%; max-height: 100%;">
     </div>
-    <div style="display: flex; gap: 15px; height: 80px; align-items: center; justify-content: center; width: 100%; background: #0f172a; border-top: 1px solid #334155;">
+    <div style="display: flex; gap: 15px; height: 80px; flex-shrink: 0; align-items: center; justify-content: center; width: 100%; background: #0f172a; border-top: 1px solid #334155;">
       <button id="cancel-crop-btn" style="padding: 12px 24px; border-radius: 8px; border: none; background: #ef4444; color: white; font-weight: bold; font-size: 1rem; cursor: pointer;">Cancel</button>
       <button id="save-crop-btn" style="padding: 12px 24px; border-radius: 8px; border: none; background: #22c55e; color: white; font-weight: bold; font-size: 1rem; cursor: pointer;">Crop & Save</button>
     </div>
