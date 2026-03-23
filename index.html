@@ -4984,7 +4984,7 @@ body.light-mode .pdf-name {
         return { success: false, error: "Network Error: " + error.toString() };
       }
     }
-    // ========== UPGRADED IMAGE UPLOAD & DELETE LOGIC ==========
+   // ========== UPGRADED IMAGE UPLOAD & DELETE LOGIC ==========
     async function handleImageUpload(file, previewId, inputId, fieldName) {
       if (!file.type.startsWith('image/')) {
         alert('Please select an image file (JPEG, PNG, GIF)');
@@ -5070,40 +5070,41 @@ body.light-mode .pdf-name {
         if (progressBar) { progressBar.style.width = '100%'; progressBar.classList.remove('active'); }
         
         if (result && result.success) {
-          if (statusEl) { statusEl.textContent = 'Upload complete!'; statusEl.style.color = '#22c55e'; }
+          // FIX: Look for result.url instead of result.fileUrl
+          const finalDriveUrl = result.url || result.fileUrl;
+            
+          if (statusEl) { 
+              // FIX: Put tick before text and keep it visible!
+              statusEl.innerHTML = '✅ Upload complete!'; 
+              statusEl.style.color = '#22c55e'; 
+              statusEl.style.display = 'block'; 
+          }
           
           // Set the actual URL in the hidden input
           const input = document.getElementById(inputId);
-          if (input && result.fileUrl) {
-            input.value = result.fileUrl;
+          if (input && finalDriveUrl) {
+            input.value = finalDriveUrl;
             if (editMode === 'new') document.getElementById('question-editor-modal').dataset.tempId = tempId;
           }
           
-          // Show Image & Hide Text
-          preview.src = result.fileUrl || base64Data;
+          // FIX: Ensure Preview Shows correctly
+          preview.src = finalDriveUrl || base64Data;
           preview.classList.add('visible');
           preview.style.display = 'block';
           if (originalText) originalText.style.display = 'none';
 
-          // ========== 1. ADD PERMANENT GREEN TICK ==========
-          let oldTick = uploadArea.querySelector('.upload-success-tick');
-          if (oldTick) oldTick.remove();
-          
-          let tick = document.createElement('div');
-          tick.className = 'upload-success-tick';
-          tick.innerHTML = `✓`;
-          tick.style.cssText = 'position: absolute; bottom: 8px; right: 8px; background: #22c55e; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.5); z-index: 10; border: 2px solid white;';
-          uploadArea.style.position = 'relative';
-          uploadArea.appendChild(tick);
-
-          // ========== 2. HIJACK REMOVE BUTTON TO DELETE FROM DRIVE ==========
+          // ========== HIJACK REMOVE BUTTON TO DELETE FROM DRIVE ==========
           let removeBtn = uploadArea.parentElement.querySelector('.remove-image-btn') || container.querySelector('.remove-image-btn');
           
           if (removeBtn) {
               removeBtn.style.display = 'block';
               
-              // Clone the button to remove old generic click listeners
+              // Clone the button
               let newRemoveBtn = removeBtn.cloneNode(true);
+              
+              // FIX: Strip the old HTML onclick attribute so it doesn't conflict
+              newRemoveBtn.removeAttribute('onclick');
+              
               removeBtn.parentNode.replaceChild(newRemoveBtn, removeBtn);
               
               newRemoveBtn.onclick = async function(e) {
@@ -5112,7 +5113,7 @@ body.light-mode .pdf-name {
                   const oldBtnText = newRemoveBtn.innerHTML;
                   
                   // Visual Loading state
-                  newRemoveBtn.innerHTML = '🗑️ Deleting...';
+                  newRemoveBtn.innerHTML = '⏳ Deleting from Drive...';
                   newRemoveBtn.style.pointerEvents = 'none';
 
                   // Send Delete Request to Apps Script
@@ -5139,8 +5140,9 @@ body.light-mode .pdf-name {
                       originalText.style.display = 'block';
                   }
                   
-                  let tickToRemove = uploadArea.querySelector('.upload-success-tick');
-                  if (tickToRemove) tickToRemove.remove();
+                  // Hide status text and progress bar since image is removed
+                  if (statusEl) statusEl.style.display = 'none';
+                  if (progressContainer) progressContainer.style.display = 'none';
                   
                   newRemoveBtn.style.display = 'none';
                   newRemoveBtn.innerHTML = oldBtnText;
@@ -5148,9 +5150,9 @@ body.light-mode .pdf-name {
               };
           }
 
+          // Hide progress bar container but KEEP status text (✅ Upload complete!) visible
           setTimeout(() => {
             if (progressContainer) progressContainer.style.display = 'none';
-            if (statusEl) statusEl.style.display = 'none';
           }, 2000);
           
         } else {
