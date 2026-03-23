@@ -4181,15 +4181,17 @@ body.light-mode .pdf-name {
           </div>
         </div>
 
-      <div class="form-group" style="margin-bottom: 10px;">
+     <div class="form-group" style="margin-bottom: 10px;">
           <input type="text" id="new-pdf-name" class="form-input" placeholder="Enter PDF Name (e.g., Math 2024 Set A)">
         </div>
 
         <div class="form-group" style="margin-bottom: 10px;">
-          <input type="text" id="new-pdf-category" class="form-input" placeholder="Category/Folder (Optional, e.g., Math, 2024)" list="existing-categories">
-          <datalist id="existing-categories"></datalist>
+          <select id="new-pdf-category-select" class="form-input" onchange="document.getElementById('new-pdf-category-new').style.display = this.value === 'NEW' ? 'block' : 'none'">
+            <option value="">-- No Category (Main Folder) --</option>
+            <option value="NEW" style="font-weight:bold; color:#3b82f6;">➕ Create New Category...</option>
+          </select>
+          <input type="text" id="new-pdf-category-new" class="form-input" style="display:none; margin-top:10px;" placeholder="Type new category name...">
         </div>
-
         <div class="image-upload-container" style="margin: 0;">
           <div class="upload-area" id="upload-pdf-area">
             <div class="upload-icon">📄</div>
@@ -7227,7 +7229,7 @@ function validateUserAccount(user) {
       }
     }
 
-   // ========== LOAD PDF LIST (UPDATED WITH FOLDERS) ==========
+  // ========== LOAD PDF LIST (UPDATED WITH DROPDOWNS) ==========
     async function loadPdfList() {
       const container = document.getElementById("pdf-list-container");
       container.innerHTML = `
@@ -7240,7 +7242,6 @@ function validateUserAccount(user) {
       try {
         const allData = await loadAllConfigAtOnce();
         const key = `${currentClass}_${currentSubject.toLowerCase()}`;
-        
         if (!allData.config[key]) throw new Error("No configuration found for this subject");
 
         const sheetId = allData.config[key].sheetId;
@@ -7253,11 +7254,8 @@ function validateUserAccount(user) {
         const jsonData = JSON.parse(dataText.substring(47).slice(0, -2));
         const rows = jsonData.table.rows;
 
-        // --- FETCH SORT PREFERENCE ---
         let sortOrder = 'asc'; 
-        if (rows[0] && rows[0].c && rows[0].c[2] && rows[0].c[2].v) {
-          sortOrder = rows[0].c[2].v.toString().trim().toLowerCase();
-        }
+        if (rows[0] && rows[0].c && rows[0].c[2] && rows[0].c[2].v) sortOrder = rows[0].c[2].v.toString().trim().toLowerCase();
         if (window.pendingSortOrder) sortOrder = window.pendingSortOrder;
 
         if (isAdmin()) {
@@ -7268,7 +7266,6 @@ function validateUserAccount(user) {
           }
         }
 
-        // --- EXTRACT PDFS & CATEGORIES ---
         let pdfArray = [];
         let categoriesList = new Set();
         
@@ -7288,20 +7285,25 @@ function validateUserAccount(user) {
           }
         }
 
-        // --- UPDATE ADMIN DATALIST ---
+        // --- UPDATE ADMIN DROPDOWNS ---
         if (isAdmin()) {
-            const datalist = document.getElementById('existing-categories');
-            if (datalist) {
-                datalist.innerHTML = '';
-                categoriesList.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c;
-                    datalist.appendChild(opt);
-                });
+            const uploadSelect = document.getElementById('new-pdf-category-select');
+            const editSelect = document.getElementById('edit-pdf-category-select');
+            
+            let optionsHTML = `<option value="">-- No Category (Main Folder) --</option>`;
+            Array.from(categoriesList).sort().forEach(c => {
+                optionsHTML += `<option value="${c}">${c}</option>`;
+            });
+            optionsHTML += `<option value="NEW" style="font-weight:bold; color:#3b82f6;">➕ Create New Category...</option>`;
+            
+            if (uploadSelect) {
+                let currentVal = uploadSelect.value;
+                uploadSelect.innerHTML = optionsHTML;
+                if(categoriesList.has(currentVal)) uploadSelect.value = currentVal;
             }
+            if (editSelect) editSelect.innerHTML = optionsHTML;
         }
 
-        // Store globally for rendering view states
         window.currentPdfArray = pdfArray;
         window.currentPdfSortOrder = sortOrder;
         window.currentPyqContext = { sheetId, gid };
@@ -7314,7 +7316,8 @@ function validateUserAccount(user) {
       }
     }
 
-    // ========== RENDER PDF VIEW (FOLDERS OR FILES) ==========
+    // ========== RENDER PDF VIEW ==========
+    // (This remains largely the same, handling folders and sorting)
     window.renderPdfView = function() {
       const container = document.getElementById("pdf-list-container");
       container.innerHTML = "";
@@ -7326,17 +7329,11 @@ function validateUserAccount(user) {
 
       let sortedPdfs = [...window.currentPdfArray];
       
-      // Sort Logic
-      if (window.currentPdfSortOrder === 'desc') {
-        sortedPdfs.reverse(); 
-      } else if (window.currentPdfSortOrder === 'name_asc') {
-        sortedPdfs.sort((a, b) => a.name.localeCompare(b.name));
-      } else if (window.currentPdfSortOrder === 'name_desc') {
-        sortedPdfs.sort((a, b) => b.name.localeCompare(a.name));
-      }
+      if (window.currentPdfSortOrder === 'desc') sortedPdfs.reverse(); 
+      else if (window.currentPdfSortOrder === 'name_asc') sortedPdfs.sort((a, b) => a.name.localeCompare(b.name));
+      else if (window.currentPdfSortOrder === 'name_desc') sortedPdfs.sort((a, b) => b.name.localeCompare(a.name));
 
       if (window.currentPdfCategory) {
-        // --- INSIDE FOLDER VIEW ---
         const backBtn = document.createElement('button');
         backBtn.className = 'back-btn';
         backBtn.innerHTML = '← Back to Folders';
@@ -7353,7 +7350,6 @@ function validateUserAccount(user) {
         categoryPdfs.forEach(pdf => renderSinglePdf(pdf, container));
         
       } else {
-        // --- MAIN DIRECTORY VIEW ---
         const categorized = {};
         const uncategorized = [];
         
@@ -7361,14 +7357,11 @@ function validateUserAccount(user) {
            if (pdf.category) {
                if (!categorized[pdf.category]) categorized[pdf.category] = [];
                categorized[pdf.category].push(pdf);
-           } else {
-               uncategorized.push(pdf);
-           }
+           } else uncategorized.push(pdf);
         });
         
-        const folderNames = Object.keys(categorized).sort(); // Sort folders A-Z
+        const folderNames = Object.keys(categorized).sort();
         
-        // Render Folders
         if (folderNames.length > 0) {
            const folderGrid = document.createElement('div');
            folderGrid.style.display = 'grid';
@@ -7404,7 +7397,6 @@ function validateUserAccount(user) {
            container.appendChild(folderGrid);
         }
         
-        // Render Direct PDFs
         if (uncategorized.length > 0) {
            if (folderNames.length > 0) {
                const separator = document.createElement('div');
@@ -7416,7 +7408,6 @@ function validateUserAccount(user) {
       }
     };
 
-    // ========== RENDER SINGLE PDF CARD ==========
     function renderSinglePdf(pdf, container) {
       let downloadUrl = pdf.url;
       let viewUrl = pdf.url;
@@ -7439,10 +7430,10 @@ function validateUserAccount(user) {
       if (isAdmin()) {
         const sheetRowIndex = pdf.index + 1; 
         const safeName = pdf.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-        const safeCategory = (pdf.category || "").replace(/'/g, "\\'").replace(/"/g, "&quot;"); // <-- NEW
+        const safeCategory = (pdf.category || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
         
         actionButtons += `
-          <button title="Edit PDF Details" onclick="event.stopPropagation(); editPdfDetails(${sheetRowIndex}, '${safeName}', '${safeCategory}')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; width:38px; height:38px;">
+          <button title="Edit PDF Details" onclick="event.stopPropagation(); window.openEditPdfModal(${sheetRowIndex}, '${safeName}', '${safeCategory}')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; width:38px; height:38px;">
             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24'%3E%3Cpath fill='%233b82f6' d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/%3E%3C/svg%3E" alt="Edit">
           </button>
           <button title="Delete PDF" onclick="event.stopPropagation(); deletePdfItem(${sheetRowIndex})" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; width:38px; height:38px;">
@@ -7450,6 +7441,7 @@ function validateUserAccount(user) {
           </button>
         `;
       }
+
       const item = document.createElement('div');
       item.className = 'pdf-item';
       item.style.cursor = 'pointer';
@@ -7465,62 +7457,71 @@ function validateUserAccount(user) {
       `;
       container.appendChild(item);
 
-      // Download Listener
       const btn = document.getElementById(`pdf-btn-${pdf.index}`);
       btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation(); 
-        
-        if (btn.classList.contains('downloaded')) {
-          window.open(viewUrl, '_blank');
-          return;
-        }
+        e.preventDefault(); e.stopPropagation(); 
+        if (btn.classList.contains('downloaded')) { window.open(viewUrl, '_blank'); return; }
 
         btn.innerHTML = `<span style="display:inline-block; width:18px; height:18px; border:2px solid rgba(96,165,250,0.3); border-top-color:#60a5fa; border-radius:50%; animation:spin 1s linear infinite;"></span>`;
         btn.style.pointerEvents = 'none';
 
         const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = `${pdf.name}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        a.href = downloadUrl; a.download = `${pdf.name}.pdf`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
 
         setTimeout(() => {
           btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
           btn.classList.add('downloaded');
-          btn.style.background = 'rgba(34, 197, 94, 0.15)'; 
+          btn.style.background = document.body.classList.contains('light-mode') ? '#dcfce7' : 'rgba(34, 197, 94, 0.15)'; 
           btn.style.borderColor = 'rgba(34, 197, 94, 0.4)';
-          btn.style.color = '#22c55e'; 
+          btn.style.color = document.body.classList.contains('light-mode') ? '#166534' : '#22c55e'; 
           btn.style.pointerEvents = 'auto';
-          
-          if (document.body.classList.contains('light-mode')) {
-            btn.style.background = '#dcfce7';
-            btn.style.color = '#166534';
-          }
         }, 2000); 
       });
 
       item.addEventListener('click', function(e) {
-        if(e.target.closest('button[title="Edit PDF Name"]') || e.target.closest('button[title="Delete PDF"]')) return;
-        e.preventDefault();
-        window.open(viewUrl, '_blank'); 
+        if(e.target.closest('button[title="Edit PDF Details"]') || e.target.closest('button[title="Delete PDF"]')) return;
+        e.preventDefault(); window.open(viewUrl, '_blank'); 
       });
     }
 
-   // ========== ADMIN PDF ACTIONS (EDIT / DELETE) ==========
-    window.editPdfDetails = async function(rowIndex, currentName, currentCategory) {
-      // Prompt 1: Get new Name
-      const newName = prompt("Enter new name for this PDF:", currentName);
-      if (newName === null) return; // User cancelled
+    // ========== NEW UI EDIT MODAL ACTIONS ==========
+    window.openEditPdfModal = function(rowIndex, currentName, currentCategory) {
+      document.getElementById('edit-pdf-row-index').value = rowIndex;
+      document.getElementById('edit-pdf-name').value = currentName;
       
-      // Prompt 2: Get new Category
-      const newCategory = prompt("Enter new category/folder for this PDF (Leave blank for no category):", currentCategory);
-      if (newCategory === null) return; // User cancelled
+      const select = document.getElementById('edit-pdf-category-select');
+      const customInput = document.getElementById('edit-pdf-category-new');
       
-      // Check if anything actually changed
-      if (newName.trim() === currentName && newCategory.trim() === currentCategory) return; 
+      // Check if category exists in dropdown
+      let hasCategory = false;
+      for(let i=0; i<select.options.length; i++) {
+          if(select.options[i].value === currentCategory) { hasCategory = true; break; }
+      }
       
+      if(currentCategory && !hasCategory) {
+          select.value = 'NEW';
+          customInput.value = currentCategory;
+          customInput.style.display = 'block';
+      } else {
+          select.value = currentCategory || "";
+          customInput.style.display = 'none';
+          customInput.value = "";
+      }
+      
+      document.getElementById('edit-pdf-modal').style.display = 'flex';
+    };
+
+    window.savePdfEditDetails = async function() {
+      const rowIndex = document.getElementById('edit-pdf-row-index').value;
+      const newName = document.getElementById('edit-pdf-name').value;
+      const selectVal = document.getElementById('edit-pdf-category-select').value;
+      const newCategory = selectVal === 'NEW' ? document.getElementById('edit-pdf-category-new').value : selectVal;
+      
+      if (!newName || newName.trim() === "") { alert("PDF Name cannot be empty."); return; }
+      if (selectVal === 'NEW' && newCategory.trim() === "") { alert("Please type a new category name."); return; }
+
+      document.getElementById('edit-pdf-modal').style.display = 'none';
       showPDFOverlay("Updating PDF details...");
       
       try {
@@ -7529,7 +7530,7 @@ function validateUserAccount(user) {
         url += '&gid=' + window.currentPyqContext.gid;
         url += '&rowIndex=' + rowIndex;
         url += '&newName=' + encodeURIComponent(newName.trim());
-        url += '&newCategory=' + encodeURIComponent(newCategory.trim()); // <-- Send category to backend
+        url += '&newCategory=' + encodeURIComponent(newCategory.trim()); 
         url += '&username=' + encodeURIComponent(currentUser.username);
         url += '&role=' + encodeURIComponent(currentUser.role);
         url += '&token=' + encodeURIComponent(currentUser.token);
@@ -7538,43 +7539,23 @@ function validateUserAccount(user) {
         const data = await jsonpRequest(url, 'updatePdfCb');
         hidePDFOverlay();
         
-        if (data && data.success) {
-          loadPdfList(); // Instantly reload to show the updated name and folder!
-        } else {
-          alert("Error updating PDF: " + (data.error || "Unknown error"));
-        }
+        if (data && data.success) loadPdfList(); 
+        else alert("Error updating PDF: " + (data.error || "Unknown error"));
       } catch(e) {
-        hidePDFOverlay();
-        alert("Network error: " + e);
+        hidePDFOverlay(); alert("Network error: " + e);
       }
     };
+
     window.deletePdfItem = async function(rowIndex) {
-      if (!confirm("⚠️ Are you sure you want to delete this PDF?\\n\\nThis will remove it from the app AND automatically move the file to the Google Drive Trash. This cannot be undone!")) return;
-      
+      if (!confirm("⚠️ Are you sure you want to delete this PDF?\\nThis cannot be undone!")) return;
       showPDFOverlay("Deleting PDF...");
-      
       try {
-        let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=deletePdf';
-        url += '&sheetId=' + window.currentPyqContext.sheetId;
-        url += '&gid=' + window.currentPyqContext.gid;
-        url += '&rowIndex=' + rowIndex;
-        url += '&username=' + encodeURIComponent(currentUser.username);
-        url += '&role=' + encodeURIComponent(currentUser.role);
-        url += '&token=' + encodeURIComponent(currentUser.token);
-        url += '&_t=' + Date.now();
-        
+        let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=deletePdf&sheetId=' + window.currentPyqContext.sheetId + '&gid=' + window.currentPyqContext.gid + '&rowIndex=' + rowIndex + '&username=' + encodeURIComponent(currentUser.username) + '&role=' + encodeURIComponent(currentUser.role) + '&token=' + encodeURIComponent(currentUser.token) + '&_t=' + Date.now();
         const data = await jsonpRequest(url, 'deletePdfCb');
         hidePDFOverlay();
-        
-        if (data && data.success) {
-          loadPdfList(); // Instantly reload to show it is gone!
-        } else {
-          alert("Error deleting PDF: " + (data.error || "Unknown error"));
-        }
-      } catch(e) {
-        hidePDFOverlay();
-        alert("Network error: " + e);
-      }
+        if (data && data.success) loadPdfList(); 
+        else alert("Error deleting PDF: " + (data.error || "Unknown error"));
+      } catch(e) { hidePDFOverlay(); alert("Network error: " + e); }
     };
 
     // ========== SETUP ADMIN UPLOAD ==========
@@ -7583,42 +7564,36 @@ function validateUserAccount(user) {
       const fileInput = document.getElementById("pdf-file-input");
       const submitBtn = document.getElementById("submit-pdf-btn");
       const nameInput = document.getElementById("new-pdf-name");
-      const categoryInput = document.getElementById("new-pdf-category"); // <-- NEW
       
       const newUploadArea = uploadArea.cloneNode(true);
       uploadArea.parentNode.replaceChild(newUploadArea, uploadArea);
       
       let selectedFile = null;
-
       newUploadArea.addEventListener("click", () => fileInput.click());
       
       fileInput.addEventListener("change", (e) => {
         if (e.target.files.length > 0) {
           selectedFile = e.target.files[0];
-          if (selectedFile.type !== "application/pdf") {
-            alert("Please select a valid PDF file.");
-            selectedFile = null;
-            return;
-          }
+          if (selectedFile.type !== "application/pdf") { alert("Please select a valid PDF."); selectedFile = null; return; }
           newUploadArea.querySelector(".upload-text").textContent = `Selected: ${selectedFile.name}`;
           submitBtn.disabled = false;
-          
-          if (!nameInput.value) {
-            nameInput.value = selectedFile.name.replace('.pdf', '');
-          }
+          if (!nameInput.value) nameInput.value = selectedFile.name.replace('.pdf', '');
         }
       });
 
       submitBtn.onclick = async () => {
-        if (!selectedFile || !nameInput.value.trim()) {
-          alert("Please provide both a PDF file and a Name.");
-          return;
+        if (!selectedFile || !nameInput.value.trim()) { alert("Provide PDF and Name."); return; }
+        
+        // Handle new dropdown combo logic
+        const selectElement = document.getElementById("new-pdf-category-select");
+        const customInput = document.getElementById("new-pdf-category-new");
+        let finalCategory = "";
+        if (selectElement) {
+           finalCategory = selectElement.value === 'NEW' ? customInput.value.trim() : selectElement.value;
         }
 
         const originalText = submitBtn.textContent;
-        submitBtn.textContent = "Uploading...";
-        submitBtn.disabled = true;
-        
+        submitBtn.textContent = "Uploading..."; submitBtn.disabled = true;
         document.getElementById("pdf-upload-progress").style.display = "block";
         document.getElementById("pdf-progress-bar").style.width = "50%";
         document.getElementById("pdf-upload-status").textContent = "Uploading to Drive...";
@@ -7639,15 +7614,11 @@ function validateUserAccount(user) {
           formData.append('fileName', selectedFile.name);
           formData.append('mimeType', 'application/pdf');
           formData.append('pdfNameText', nameInput.value.trim());
-          formData.append('category', categoryInput ? categoryInput.value.trim() : ''); // <-- NEW
+          formData.append('category', finalCategory); 
           formData.append('sheetId', window.currentPyqContext.sheetId);
           formData.append('gid', window.currentPyqContext.gid);
 
-          const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
-            method: 'POST',
-            body: formData
-          });
-
+          const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, { method: 'POST', body: formData });
           const result = await response.json();
 
           if (result.success) {
@@ -7656,7 +7627,8 @@ function validateUserAccount(user) {
             document.getElementById("pdf-upload-status").style.color = "#22c55e";
             
             nameInput.value = "";
-            if (categoryInput) categoryInput.value = ""; // <-- Reset
+            if (selectElement) selectElement.value = ""; 
+            if (customInput) { customInput.value = ""; customInput.style.display = 'none'; }
             selectedFile = null;
             newUploadArea.querySelector(".upload-text").textContent = "Click to select PDF";
             
@@ -7665,21 +7637,96 @@ function validateUserAccount(user) {
               document.getElementById("pdf-upload-status").textContent = "";
               loadPdfList();
             }, 1500);
-          } else {
-            throw new Error(result.error);
-          }
+          } else throw new Error(result.error);
        } catch (err) {
-          let errorMsg = err.message;
-          if (errorMsg === "Failed to fetch" || errorMsg.includes("NetworkError")) {
-            errorMsg = "Browser blocked the upload. If using Incognito/Private mode, please switch to a normal window.";
-          }
-          alert("Upload failed: " + errorMsg);
+          alert("Upload failed: " + err.message);
           document.getElementById("pdf-upload-progress").style.display = "none";
           document.getElementById("pdf-upload-status").textContent = "";
-        } finally {
-          submitBtn.textContent = originalText;
-        }
+        } finally { submitBtn.textContent = originalText; }
       };
+    }
+
+    // ========== MOBILE BACK BUTTON ROUTER (FIXED) ==========
+    let backButtonListenerAdded = false;
+    let allowAppExit = false;
+
+    // Helper to accurately check if a screen container is currently visible
+    function isScreenVisible(id) {
+        const el = document.getElementById(id);
+        if (!el) return false;
+        const style = window.getComputedStyle(el);
+        return style.display === 'block' || style.display === 'flex';
+    }
+
+    function setupMobileBackButton() {
+      if (backButtonListenerAdded) return;
+      backButtonListenerAdded = true;
+
+      window.history.pushState({ isAppTrap: true }, "");
+
+      window.addEventListener('popstate', function(event) {
+        if (allowAppExit) return;
+
+        // Force trap to stay alive
+        window.history.pushState({ isAppTrap: true }, "");
+
+        // Close UI Menus
+        const sideMenu = document.getElementById('sideMenu');
+        if (sideMenu && sideMenu.classList.contains('open')) { toggleMenu(); return; }
+        
+        const editModal = document.getElementById('edit-pdf-modal');
+        if (editModal && isScreenVisible('edit-pdf-modal')) { editModal.style.display = 'none'; return; }
+
+        const qModal = document.getElementById('question-editor-modal');
+        if (qModal && isScreenVisible('question-editor-modal')) { qModal.style.display = 'none'; return; }
+
+        // PDF Inner Folder View
+        if (isScreenVisible('pyq-container') && window.currentPdfCategory) {
+            window.currentPdfCategory = null;
+            if (typeof renderPdfView === 'function') renderPdfView();
+            return;
+        }
+
+        // PDF Main Folder View -> Back to Subjects
+        if (isScreenVisible('pyq-container')) {
+            if (typeof navigateToSubjects === 'function') navigateToSubjects();
+            return;
+        }
+
+        // Quiz View -> Back to Subjects
+        if (isScreenVisible('quiz-container')) {
+            if (isQuizActive) {
+                if (confirm("Quiz is in progress. Are you sure you want to leave? Your progress will be lost.")) {
+                    if (typeof navigateToSubjects === 'function') navigateToSubjects();
+                }
+            } else {
+                if (typeof navigateToSubjects === 'function') navigateToSubjects();
+            }
+            return;
+        }
+
+        // Subject Selection -> Back to Classes
+        if (isScreenVisible('subject-selection')) {
+            if (typeof navigateToClasses === 'function') navigateToClasses();
+            return;
+        }
+
+        // Main Menu -> Confirm Exit
+        if (isScreenVisible('class-selection')) {
+            if (confirm("Are you sure you want to exit the app?")) {
+                allowAppExit = true;
+                window.history.back(); 
+            }
+            return;
+        }
+        
+        // Login Screen -> Exit freely
+        if (isScreenVisible('login-container')) {
+            allowAppExit = true;
+            window.history.back();
+            return;
+        }
+      });
     }
     // ========== QUIZ FUNCTIONS ==========
     function resetQuizState() {
@@ -10151,7 +10198,32 @@ function validateUserAccount(user) {
     // Start the app and load configs
     window.addEventListener('DOMContentLoaded', initializeApp);
   </script>
-  
+  <div id="edit-pdf-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center;">
+    <div class="modal-content" style="background: var(--bg-color, #1e293b); padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; border: 1px solid #3b82f6;">
+      <h3 style="margin-bottom: 15px; color: #3b82f6;">✏️ Edit PDF Details</h3>
+      
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label style="font-size: 0.9rem; margin-bottom: 5px; display: block;">PDF Name</label>
+        <input type="text" id="edit-pdf-name" class="form-input">
+      </div>
+      
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label style="font-size: 0.9rem; margin-bottom: 5px; display: block;">Category / Folder</label>
+        <select id="edit-pdf-category-select" class="form-input" onchange="document.getElementById('edit-pdf-category-new').style.display = this.value === 'NEW' ? 'block' : 'none'">
+          <option value="">-- No Category (Main Folder) --</option>
+          <option value="NEW" style="font-weight:bold; color:#3b82f6;">➕ Create New Category...</option>
+        </select>
+        <input type="text" id="edit-pdf-category-new" class="form-input" style="display:none; margin-top:10px;" placeholder="Type new category name...">
+      </div>
+      
+      <input type="hidden" id="edit-pdf-row-index">
+      
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button onclick="document.getElementById('edit-pdf-modal').style.display='none'" style="padding: 10px 15px; border-radius: 8px; border: none; background: #64748b; color: white; cursor: pointer;">Cancel</button>
+        <button onclick="savePdfEditDetails()" style="padding: 10px 15px; border-radius: 8px; border: none; background: #3b82f6; color: white; cursor: pointer;">Save Changes</button>
+      </div>
+    </div>
+  </div>
   <!-- NO SERVICE WORKER REGISTRATION - Completely disabled -->
 </body>
 </html>
