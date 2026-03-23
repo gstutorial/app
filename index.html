@@ -4207,15 +4207,19 @@ body.light-mode .pdf-name {
       </div>
 
       <!-- PDF List -->
-      <div id="pdf-list-container" style="margin-top: 20px;">
-        <!-- Populated dynamically via JS -->
+     <div id="pdf-list-container" style="margin-top: 20px;">
+        </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; gap: 10px;">
+        <button class="back-btn" onclick="navigateToSubjects()" style="margin-top: 0;">
+          ← Back to Subjects
+        </button>
+        
+        <button class="back-btn" id="back-to-folders-btn" style="display: none; margin-top: 0;" onclick="window.currentPdfCategory = null; window.renderPdfView();">
+          ← Back to Folders
+        </button>
       </div>
-
-      <button class="back-btn" onclick="navigateToSubjects()" style="margin-top: 20px;">
-        ← Back to Subjects
-      </button>
     </div>
-
     <!-- Quiz Container -->
     <div class="quiz-container" id="quiz-container">
       <!-- Path Display - Fixed navigation -->
@@ -7318,9 +7322,16 @@ function validateUserAccount(user) {
 
     // ========== RENDER PDF VIEW ==========
     // (This remains largely the same, handling folders and sorting)
+   // ========== RENDER PDF VIEW ==========
     window.renderPdfView = function() {
       const container = document.getElementById("pdf-list-container");
       container.innerHTML = "";
+      
+      // NEW: Toggle visibility of the bottom right "Back to Folders" button
+      const bottomBackToFoldersBtn = document.getElementById('back-to-folders-btn');
+      if (bottomBackToFoldersBtn) {
+          bottomBackToFoldersBtn.style.display = window.currentPdfCategory ? 'flex' : 'none';
+      }
       
       if (!window.currentPdfArray || window.currentPdfArray.length === 0) {
           container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 20px;">No PDFs available yet.</div>';
@@ -7334,13 +7345,7 @@ function validateUserAccount(user) {
       else if (window.currentPdfSortOrder === 'name_desc') sortedPdfs.sort((a, b) => b.name.localeCompare(a.name));
 
       if (window.currentPdfCategory) {
-        const backBtn = document.createElement('button');
-        backBtn.className = 'back-btn';
-        backBtn.innerHTML = '← Back to Folders';
-        backBtn.style.marginBottom = '15px';
-        backBtn.onclick = () => { window.currentPdfCategory = null; window.renderPdfView(); };
-        container.appendChild(backBtn);
-        
+        // (Removed the top button creation from here)
         const header = document.createElement('h3');
         header.style.cssText = "color: #3b82f6; margin-bottom: 15px;";
         header.innerHTML = `📁 ${window.currentPdfCategory}`;
