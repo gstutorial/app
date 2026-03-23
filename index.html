@@ -4181,8 +4181,12 @@ body.light-mode .pdf-name {
           </div>
         </div>
 
-        <div class="form-group" style="margin-bottom: 10px;">
+       <div class="form-group" style="margin-bottom: 10px;">
           <input type="text" id="new-pdf-name" class="form-input" placeholder="Enter PDF Name (e.g., Math 2024 Set A)">
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <input type="text" id="new-pdf-category" class="form-input" placeholder="Category/Folder (Optional, e.g., Math, 2024)" list="existing-categories">
+          <datalist id="existing-categories"></datalist>
         </div>
         <div class="image-upload-container" style="margin: 0;">
           <div class="upload-area" id="upload-pdf-area">
@@ -4531,7 +4535,7 @@ body.light-mode .pdf-name {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwf3FEX0Lcpq7IUOdM01uje7T4vWfVVSjObcFy4x4pPVikU5JshK_5-aCAV_T1swZ5cJQ/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzza0xaYtDKUabseu3qn5fOmJI6emHXTQ6asRqaw-1PmrcwP7qXwGq1gkJFLlvxmFCt/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx55kL43PkAmIHVgTecHhTm2Bq_lxRhrQFjHouUtfT0IY0skd7hM75hqcWPFejeruc9/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -7221,7 +7225,7 @@ function validateUserAccount(user) {
       }
     }
 
-    // ========== LOAD PDF LIST ==========
+   // ========== LOAD PDF LIST (UPDATED WITH FOLDERS) ==========
     async function loadPdfList() {
       const container = document.getElementById("pdf-list-container");
       container.innerHTML = `
@@ -7247,165 +7251,261 @@ function validateUserAccount(user) {
         const jsonData = JSON.parse(dataText.substring(47).slice(0, -2));
         const rows = jsonData.table.rows;
 
-        // --- FETCH SORT PREFERENCE WITH CACHE BYPASS ---
+        // --- FETCH SORT PREFERENCE ---
         let sortOrder = 'asc'; 
         if (rows[0] && rows[0].c && rows[0].c[2] && rows[0].c[2].v) {
           sortOrder = rows[0].c[2].v.toString().trim().toLowerCase();
         }
-        
-        // If the admin just changed it, use their choice immediately
-        if (window.pendingSortOrder) {
-          sortOrder = window.pendingSortOrder;
-        }
+        if (window.pendingSortOrder) sortOrder = window.pendingSortOrder;
 
-        // Apply admin dropdown state and listener
         if (isAdmin()) {
           const sortDropdown = document.getElementById('admin-pdf-sort');
           if (sortDropdown) {
             sortDropdown.value = sortOrder;
-            // Link safely to our function
             sortDropdown.onchange = (e) => savePdfSortOrder(e.target.value);
           }
         }
 
-        // --- STEP 1: COLLECT ALL PDFS INTO AN ARRAY ---
+        // --- EXTRACT PDFS & CATEGORIES ---
         let pdfArray = [];
+        let categoriesList = new Set();
+        
         for (let i = 1; i < rows.length; i++) { 
           const row = rows[i];
           if (!row || !row.c) continue;
           
           const pdfName = row.c[0] ? (row.c[0].v ? row.c[0].v.toString().trim() : '') : '';
           let pdfUrl = row.c[1] ? (row.c[1].v ? row.c[1].v.toString().trim() : '') : '';
+          let category = row.c[2] ? (row.c[2].v ? row.c[2].v.toString().trim() : '') : '';
 
           if (!pdfUrl || !pdfUrl.startsWith('http')) continue;
 
           if (pdfName && pdfUrl) {
-            pdfArray.push({
-              index: i, 
-              name: pdfName,
-              url: pdfUrl
-            });
+            pdfArray.push({ index: i, name: pdfName, url: pdfUrl, category: category });
+            if (category) categoriesList.add(category);
           }
         }
 
-        // --- STEP 2: APPLY THE SORTING LOGIC ---
-        if (sortOrder === 'desc') {
-          pdfArray.reverse(); 
-        } else if (sortOrder === 'name_asc') {
-          pdfArray.sort((a, b) => a.name.localeCompare(b.name));
-        } else if (sortOrder === 'name_desc') {
-          pdfArray.sort((a, b) => b.name.localeCompare(a.name));
-        }
-
-        container.innerHTML = "";
-        
-        if (pdfArray.length === 0) {
-          container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 20px;">No PDFs available yet.</div>';
-          window.currentPyqContext = { sheetId, gid };
-          return;
-        }
-
-        // --- STEP 3: RENDER THE SORTED ARRAY ---
-        pdfArray.forEach((pdf, renderIndex) => {
-          let downloadUrl = pdf.url;
-          let viewUrl = pdf.url;
-          
-        if (pdf.url.includes('drive.google.com') || pdf.url.includes('docs.google.com')) {
-            const matchId = pdf.url.match(/[?&]id=([a-zA-Z0-9_-]+)/) || pdf.url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || pdf.url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-            if (matchId && matchId[1]) {
-              const fileId = matchId[1];
-              downloadUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=download&authuser=0`;
-              
-              // 🚨 FIX: Use the native Google Drive preview URL for perfect mobile scaling
-              viewUrl = `https://drive.google.com/file/d/${fileId}/view`;
+        // --- UPDATE ADMIN DATALIST ---
+        if (isAdmin()) {
+            const datalist = document.getElementById('existing-categories');
+            if (datalist) {
+                datalist.innerHTML = '';
+                categoriesList.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    datalist.appendChild(opt);
+                });
             }
-          }
+        }
 
-          let actionButtons = `
-            <button class="download-btn-icon" id="pdf-btn-${renderIndex}" title="Download PDF" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; color:#60a5fa; width:38px; height:38px;">
-              <svg id="svg-icon-${renderIndex}" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            </button>
-          `;
-
-          if (isAdmin()) {
-            const sheetRowIndex = pdf.index + 1; 
-            const safeName = pdf.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-            
-            actionButtons += `
-              <button title="Edit PDF Name" onclick="event.stopPropagation(); editPdfName(${sheetRowIndex}, '${safeName}')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; width:38px; height:38px;">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24'%3E%3Cpath fill='%233b82f6' d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/%3E%3C/svg%3E" alt="Edit">
-              </button>
-              <button title="Delete PDF" onclick="event.stopPropagation(); deletePdfItem(${sheetRowIndex})" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; width:38px; height:38px;">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24'%3E%3Cpath fill='%23ef4444' d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/%3E%3C/svg%3E" alt="Delete">
-              </button>
-            `;
-          }
-
-          const item = document.createElement('div');
-          item.className = 'pdf-item';
-          item.style.cursor = 'pointer';
-          
-          item.innerHTML = `
-            <div class="pdf-info" style="flex: 1; margin-right: 12px; align-items: flex-start; display: flex;">
-              <div class="pdf-icon" style="font-size: 1.5rem; margin-top: 2px; margin-right: 8px;">📄</div>
-              <div class="pdf-name" style="white-space: normal; word-break: break-word; line-height: 1.3; font-size: 0.95rem;">${pdf.name}</div>
-            </div>
-            <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
-              ${actionButtons}
-            </div>
-          `;
-          container.appendChild(item);
-
-          // BUTTON CLICK: Download File
-          const btn = document.getElementById(`pdf-btn-${renderIndex}`);
-          btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation(); 
-            
-            if (btn.classList.contains('downloaded')) {
-              window.open(viewUrl, '_blank');
-              return;
-            }
-
-            btn.innerHTML = `<span style="display:inline-block; width:18px; height:18px; border:2px solid rgba(96,165,250,0.3); border-top-color:#60a5fa; border-radius:50%; animation:spin 1s linear infinite;"></span>`;
-            btn.style.pointerEvents = 'none';
-
-            const a = document.createElement('a');
-            a.href = downloadUrl;
-            a.download = `${pdf.name}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-
-            setTimeout(() => {
-              btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-              btn.classList.add('downloaded');
-              btn.style.background = 'rgba(34, 197, 94, 0.15)'; 
-              btn.style.borderColor = 'rgba(34, 197, 94, 0.4)';
-              btn.style.color = '#22c55e'; 
-              btn.style.pointerEvents = 'auto';
-              
-              if (document.body.classList.contains('light-mode')) {
-                btn.style.background = '#dcfce7';
-                btn.style.color = '#166534';
-              }
-            }, 2000); 
-          });
-
-          // ITEM CLICK: View PDF in Browser
-          item.addEventListener('click', function(e) {
-            if(e.target.closest('button[title="Edit PDF Name"]') || e.target.closest('button[title="Delete PDF"]')) return;
-            e.preventDefault();
-            window.open(viewUrl, '_blank'); 
-          });
-        });
-
+        // Store globally for rendering view states
+        window.currentPdfArray = pdfArray;
+        window.currentPdfSortOrder = sortOrder;
         window.currentPyqContext = { sheetId, gid };
+        if (window.currentPdfCategory === undefined) window.currentPdfCategory = null;
+        
+        renderPdfView();
 
       } catch (error) {
         container.innerHTML = `<div style="color: #ef4444; text-align: center;">Error loading PDFs: ${error.message}</div>`;
       }
     }
+
+    // ========== RENDER PDF VIEW (FOLDERS OR FILES) ==========
+    window.renderPdfView = function() {
+      const container = document.getElementById("pdf-list-container");
+      container.innerHTML = "";
+      
+      if (!window.currentPdfArray || window.currentPdfArray.length === 0) {
+          container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 20px;">No PDFs available yet.</div>';
+          return;
+      }
+
+      let sortedPdfs = [...window.currentPdfArray];
+      
+      // Sort Logic
+      if (window.currentPdfSortOrder === 'desc') {
+        sortedPdfs.reverse(); 
+      } else if (window.currentPdfSortOrder === 'name_asc') {
+        sortedPdfs.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (window.currentPdfSortOrder === 'name_desc') {
+        sortedPdfs.sort((a, b) => b.name.localeCompare(a.name));
+      }
+
+      if (window.currentPdfCategory) {
+        // --- INSIDE FOLDER VIEW ---
+        const backBtn = document.createElement('button');
+        backBtn.className = 'back-btn';
+        backBtn.innerHTML = '← Back to Folders';
+        backBtn.style.marginBottom = '15px';
+        backBtn.onclick = () => { window.currentPdfCategory = null; window.renderPdfView(); };
+        container.appendChild(backBtn);
+        
+        const header = document.createElement('h3');
+        header.style.cssText = "color: #3b82f6; margin-bottom: 15px;";
+        header.innerHTML = `📁 ${window.currentPdfCategory}`;
+        container.appendChild(header);
+
+        const categoryPdfs = sortedPdfs.filter(p => p.category === window.currentPdfCategory);
+        categoryPdfs.forEach(pdf => renderSinglePdf(pdf, container));
+        
+      } else {
+        // --- MAIN DIRECTORY VIEW ---
+        const categorized = {};
+        const uncategorized = [];
+        
+        sortedPdfs.forEach(pdf => {
+           if (pdf.category) {
+               if (!categorized[pdf.category]) categorized[pdf.category] = [];
+               categorized[pdf.category].push(pdf);
+           } else {
+               uncategorized.push(pdf);
+           }
+        });
+        
+        const folderNames = Object.keys(categorized).sort(); // Sort folders A-Z
+        
+        // Render Folders
+        if (folderNames.length > 0) {
+           const folderGrid = document.createElement('div');
+           folderGrid.style.display = 'grid';
+           folderGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(130px, 1fr))';
+           folderGrid.style.gap = '12px';
+           folderGrid.style.marginBottom = '20px';
+           
+           folderNames.forEach(folderName => {
+               const folderEl = document.createElement('div');
+               folderEl.className = 'pdf-item';
+               folderEl.style.cssText = `
+                 flex-direction: column; align-items: center; justify-content: center; 
+                 padding: 20px 10px; text-align: center; cursor: pointer;
+                 background: rgba(15, 23, 42, 0.7); border-radius: 12px;
+                 border: 1px solid rgba(75, 85, 99, 0.5); transition: all 0.2s;
+               `;
+               if (document.body.classList.contains('light-mode')) {
+                 folderEl.style.background = '#f9fafb';
+                 folderEl.style.borderColor = '#e5e7eb';
+               }
+               
+               folderEl.innerHTML = `
+                  <div style="font-size: 2.5rem; margin-bottom: 8px;">📁</div>
+                  <div class="pdf-name" style="text-align:center;">${folderName}</div>
+                  <div style="font-size: 0.8rem; color: #9ca3af; margin-top: 5px;">${categorized[folderName].length} file(s)</div>
+               `;
+               folderEl.onmouseover = () => { folderEl.style.transform = 'translateY(-3px)'; folderEl.style.borderColor = '#3b82f6'; };
+               folderEl.onmouseout = () => { folderEl.style.transform = 'none'; folderEl.style.borderColor = document.body.classList.contains('light-mode') ? '#e5e7eb' : 'rgba(75, 85, 99, 0.5)'; };
+               folderEl.onclick = () => { window.currentPdfCategory = folderName; window.renderPdfView(); };
+               
+               folderGrid.appendChild(folderEl);
+           });
+           container.appendChild(folderGrid);
+        }
+        
+        // Render Direct PDFs
+        if (uncategorized.length > 0) {
+           if (folderNames.length > 0) {
+               const separator = document.createElement('div');
+               separator.innerHTML = '<h4 style="color:#93c5fd; margin-bottom:12px; border-bottom:1px solid rgba(147,197,253,0.2); padding-bottom:5px;">Other Files</h4>';
+               container.appendChild(separator);
+           }
+           uncategorized.forEach(pdf => renderSinglePdf(pdf, container));
+        }
+      }
+    };
+
+    // ========== RENDER SINGLE PDF CARD ==========
+    function renderSinglePdf(pdf, container) {
+      let downloadUrl = pdf.url;
+      let viewUrl = pdf.url;
+      
+      if (pdf.url.includes('drive.google.com') || pdf.url.includes('docs.google.com')) {
+        const matchId = pdf.url.match(/[?&]id=([a-zA-Z0-9_-]+)/) || pdf.url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || pdf.url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (matchId && matchId[1]) {
+          const fileId = matchId[1];
+          downloadUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=download&authuser=0`;
+          viewUrl = `https://drive.google.com/file/d/${fileId}/view`;
+        }
+      }
+
+      let actionButtons = `
+        <button class="download-btn-icon" id="pdf-btn-${pdf.index}" title="Download PDF" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; color:#60a5fa; width:38px; height:38px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        </button>
+      `;
+
+      if (isAdmin()) {
+        const sheetRowIndex = pdf.index + 1; 
+        const safeName = pdf.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        
+        actionButtons += `
+          <button title="Edit PDF Name" onclick="event.stopPropagation(); editPdfName(${sheetRowIndex}, '${safeName}')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; width:38px; height:38px;">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24'%3E%3Cpath fill='%233b82f6' d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/%3E%3C/svg%3E" alt="Edit">
+          </button>
+          <button title="Delete PDF" onclick="event.stopPropagation(); deletePdfItem(${sheetRowIndex})" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; width:38px; height:38px;">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24'%3E%3Cpath fill='%23ef4444' d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/%3E%3C/svg%3E" alt="Delete">
+          </button>
+        `;
+      }
+
+      const item = document.createElement('div');
+      item.className = 'pdf-item';
+      item.style.cursor = 'pointer';
+      
+      item.innerHTML = `
+        <div class="pdf-info" style="flex: 1; margin-right: 12px; align-items: flex-start; display: flex;">
+          <div class="pdf-icon" style="font-size: 1.5rem; margin-top: 2px; margin-right: 8px;">📄</div>
+          <div class="pdf-name" style="white-space: normal; word-break: break-word; line-height: 1.3; font-size: 0.95rem;">${pdf.name}</div>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
+          ${actionButtons}
+        </div>
+      `;
+      container.appendChild(item);
+
+      // Download Listener
+      const btn = document.getElementById(`pdf-btn-${pdf.index}`);
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation(); 
+        
+        if (btn.classList.contains('downloaded')) {
+          window.open(viewUrl, '_blank');
+          return;
+        }
+
+        btn.innerHTML = `<span style="display:inline-block; width:18px; height:18px; border:2px solid rgba(96,165,250,0.3); border-top-color:#60a5fa; border-radius:50%; animation:spin 1s linear infinite;"></span>`;
+        btn.style.pointerEvents = 'none';
+
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `${pdf.name}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        setTimeout(() => {
+          btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+          btn.classList.add('downloaded');
+          btn.style.background = 'rgba(34, 197, 94, 0.15)'; 
+          btn.style.borderColor = 'rgba(34, 197, 94, 0.4)';
+          btn.style.color = '#22c55e'; 
+          btn.style.pointerEvents = 'auto';
+          
+          if (document.body.classList.contains('light-mode')) {
+            btn.style.background = '#dcfce7';
+            btn.style.color = '#166534';
+          }
+        }, 2000); 
+      });
+
+      item.addEventListener('click', function(e) {
+        if(e.target.closest('button[title="Edit PDF Name"]') || e.target.closest('button[title="Delete PDF"]')) return;
+        e.preventDefault();
+        window.open(viewUrl, '_blank'); 
+      });
+    }
+
     // ========== ADMIN PDF ACTIONS (EDIT / DELETE) ==========
     window.editPdfName = async function(rowIndex, currentName) {
       const newName = prompt("Enter new name for this PDF:", currentName);
@@ -7439,7 +7539,7 @@ function validateUserAccount(user) {
     };
 
     window.deletePdfItem = async function(rowIndex) {
-      if (!confirm("⚠️ Are you sure you want to delete this PDF?\n\nThis will remove it from the app AND automatically move the file to the Google Drive Trash. This cannot be undone!")) return;
+      if (!confirm("⚠️ Are you sure you want to delete this PDF?\\n\\nThis will remove it from the app AND automatically move the file to the Google Drive Trash. This cannot be undone!")) return;
       
       showPDFOverlay("Deleting PDF...");
       
@@ -7466,13 +7566,15 @@ function validateUserAccount(user) {
         alert("Network error: " + e);
       }
     };
+
+    // ========== SETUP ADMIN UPLOAD ==========
     function setupPdfUpload() {
       const uploadArea = document.getElementById("upload-pdf-area");
       const fileInput = document.getElementById("pdf-file-input");
       const submitBtn = document.getElementById("submit-pdf-btn");
       const nameInput = document.getElementById("new-pdf-name");
+      const categoryInput = document.getElementById("new-pdf-category"); // <-- NEW
       
-      // Prevent duplicate listeners
       const newUploadArea = uploadArea.cloneNode(true);
       uploadArea.parentNode.replaceChild(newUploadArea, uploadArea);
       
@@ -7491,7 +7593,6 @@ function validateUserAccount(user) {
           newUploadArea.querySelector(".upload-text").textContent = `Selected: ${selectedFile.name}`;
           submitBtn.disabled = false;
           
-          // Auto-fill name if empty
           if (!nameInput.value) {
             nameInput.value = selectedFile.name.replace('.pdf', '');
           }
@@ -7528,6 +7629,7 @@ function validateUserAccount(user) {
           formData.append('fileName', selectedFile.name);
           formData.append('mimeType', 'application/pdf');
           formData.append('pdfNameText', nameInput.value.trim());
+          formData.append('category', categoryInput ? categoryInput.value.trim() : ''); // <-- NEW
           formData.append('sheetId', window.currentPyqContext.sheetId);
           formData.append('gid', window.currentPyqContext.gid);
 
@@ -7543,8 +7645,8 @@ function validateUserAccount(user) {
             document.getElementById("pdf-upload-status").textContent = "Success!";
             document.getElementById("pdf-upload-status").style.color = "#22c55e";
             
-            // Reset form and reload
             nameInput.value = "";
+            if (categoryInput) categoryInput.value = ""; // <-- Reset
             selectedFile = null;
             newUploadArea.querySelector(".upload-text").textContent = "Click to select PDF";
             
@@ -7558,11 +7660,9 @@ function validateUserAccount(user) {
           }
        } catch (err) {
           let errorMsg = err.message;
-          // Detect if the browser killed the connection (like in Incognito mode)
           if (errorMsg === "Failed to fetch" || errorMsg.includes("NetworkError")) {
-            errorMsg = "The browser blocked the upload. If you are using Incognito/Private mode, please switch to a normal window, as strict tracking protection blocks Google Drive uploads.";
+            errorMsg = "Browser blocked the upload. If using Incognito/Private mode, please switch to a normal window.";
           }
-          
           alert("Upload failed: " + errorMsg);
           document.getElementById("pdf-upload-progress").style.display = "none";
           document.getElementById("pdf-upload-status").textContent = "";
