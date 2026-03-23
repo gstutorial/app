@@ -4984,7 +4984,7 @@ body.light-mode .pdf-name {
         return { success: false, error: "Network Error: " + error.toString() };
       }
     }
-    // ========== HANDLE IMAGE UPLOAD ==========
+    // ========== UPGRADED IMAGE UPLOAD & DELETE LOGIC ==========
     async function handleImageUpload(file, previewId, inputId, fieldName) {
       if (!file.type.startsWith('image/')) {
         alert('Please select an image file (JPEG, PNG, GIF)');
@@ -4998,74 +4998,47 @@ body.light-mode .pdf-name {
 
       // Show preview
       const preview = document.getElementById(previewId);
-      if (!preview) {
-        console.error('Preview element not found:', previewId);
-        return;
-      }
+      if (!preview) return;
       
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        preview.src = e.target.result;
-        preview.classList.add('visible');
-      };
-      reader.readAsDataURL(file);
+      const uploadArea = preview.closest('.image-upload-area') || preview.parentElement;
+      const originalText = uploadArea.querySelector('.upload-text');
+      
+      // Temporary uploading state text
+      if (originalText) {
+          originalText.style.display = 'block';
+          originalText.innerHTML = `<span style="color:#3b82f6; font-weight:bold;">Uploading to Drive... ⏳</span>`;
+      }
 
       // Show progress
       const container = preview.closest('.image-upload-container');
-      if (!container) {
-        console.error('Container not found for preview:', previewId);
-        return;
-      }
-      
-      const progressContainer = container.querySelector('.upload-progress');
-      const progressBar = container.querySelector('.upload-progress-bar');
-      const statusEl = container.querySelector('.upload-status');
+      const progressContainer = container ? container.querySelector('.upload-progress') : null;
+      const progressBar = container ? container.querySelector('.upload-progress-bar') : null;
+      const statusEl = container ? container.querySelector('.upload-status') : null;
       
       if (progressContainer) progressContainer.style.display = 'block';
-      if (progressBar) {
-        progressBar.style.width = '30%';
-        progressBar.classList.add('active');
-      }
-      if (statusEl) {
-        statusEl.style.display = 'block';
-        statusEl.textContent = 'Uploading to Google Drive...';
-        statusEl.style.color = '#93c5fd';
-      }
+      if (progressBar) { progressBar.style.width = '30%'; progressBar.classList.add('active'); }
+      if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = 'Uploading to Google Drive...'; statusEl.style.color = '#93c5fd'; }
 
       try {
-       // Compress image using Canvas API before uploading
+        // Compress image using Canvas API before uploading
         const base64Data = await new Promise((resolve) => {
           const reader = new FileReader();
           reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
               const canvas = document.createElement('canvas');
-              let width = img.width;
-              let height = img.height;
+              let width = img.width, height = img.height;
+              const MAX_WIDTH = 800, MAX_HEIGHT = 800;
               
-              // Set maximum dimensions (800px is great for mobile/web quizzes)
-              const MAX_WIDTH = 800;
-              const MAX_HEIGHT = 800;
-
-              // Calculate new dimensions while maintaining aspect ratio
               if (width > height) {
-                if (width > MAX_WIDTH) {
-                  height = Math.round((height * MAX_WIDTH) / width);
-                  width = MAX_WIDTH;
-                }
+                if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
               } else {
-                if (height > MAX_HEIGHT) {
-                  width = Math.round((width * MAX_HEIGHT) / height);
-                  height = MAX_HEIGHT;
-                }
+                if (height > MAX_HEIGHT) { width = Math.round((width * MAX_HEIGHT) / height); height = MAX_HEIGHT; }
               }
-
-              canvas.width = width;
-              canvas.height = height;
+              
+              canvas.width = width; canvas.height = height;
               const ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0, width, height);
-
-              // Export as JPEG with 70% quality (drastically reduces file size)
               resolve(canvas.toDataURL('image/jpeg', 0.7));
             };
             img.src = e.target.result;
@@ -5073,9 +5046,7 @@ body.light-mode .pdf-name {
           reader.readAsDataURL(file);
         });
 
-        console.log('📤 Uploading to Google Drive...', { fileName: file.name, previewId, inputId, fieldName });
-
-       // Get the row index for the current question
+        // Get the row index for the current question
         let rowIndex = '';
         let tempId = '';
         const modalDataset = document.getElementById('question-editor-modal').dataset;
@@ -5084,14 +5055,10 @@ body.light-mode .pdf-name {
         if (editMode === 'edit') {
           rowIndex = modalDataset.originalIndex;
         } else {
-          // For new questions, set rowIndex to 'new'
           rowIndex = 'new';
-          
-          // FIX: Check if we already created a tempId for this new question session
           if (modalDataset.tempId && modalDataset.tempId !== '') {
             tempId = modalDataset.tempId;
           } else {
-            // If not, create one and immediately save it to the dataset so it gets reused!
             tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             modalDataset.tempId = tempId;
           }
@@ -5100,57 +5067,106 @@ body.light-mode .pdf-name {
         // Upload to Google Drive via Apps Script
         const result = await uploadImageToDrive(file.name, base64Data, file.type, fieldName, rowIndex, tempId);
         
-        console.log('📥 Upload response:', result);
-        
-        if (progressBar) {
-          progressBar.style.width = '100%';
-          progressBar.classList.remove('active');
-        }
+        if (progressBar) { progressBar.style.width = '100%'; progressBar.classList.remove('active'); }
         
         if (result && result.success) {
-          if (statusEl) {
-            statusEl.textContent = 'Upload complete!';
-            statusEl.style.color = '#22c55e';
-          }
+          if (statusEl) { statusEl.textContent = 'Upload complete!'; statusEl.style.color = '#22c55e'; }
           
           // Set the actual URL in the hidden input
           const input = document.getElementById(inputId);
           if (input && result.fileUrl) {
             input.value = result.fileUrl;
-            console.log(`✅ URL set in ${inputId}:`, result.fileUrl);
-            
-            // Store tempId for new questions
-            if (editMode === 'new') {
-              document.getElementById('question-editor-modal').dataset.tempId = tempId;
-            }
+            if (editMode === 'new') document.getElementById('question-editor-modal').dataset.tempId = tempId;
           }
           
-          // Hide progress after delay
+          // Show Image & Hide Text
+          preview.src = result.fileUrl || base64Data;
+          preview.classList.add('visible');
+          preview.style.display = 'block';
+          if (originalText) originalText.style.display = 'none';
+
+          // ========== 1. ADD PERMANENT GREEN TICK ==========
+          let oldTick = uploadArea.querySelector('.upload-success-tick');
+          if (oldTick) oldTick.remove();
+          
+          let tick = document.createElement('div');
+          tick.className = 'upload-success-tick';
+          tick.innerHTML = `✓`;
+          tick.style.cssText = 'position: absolute; bottom: 8px; right: 8px; background: #22c55e; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.5); z-index: 10; border: 2px solid white;';
+          uploadArea.style.position = 'relative';
+          uploadArea.appendChild(tick);
+
+          // ========== 2. HIJACK REMOVE BUTTON TO DELETE FROM DRIVE ==========
+          let removeBtn = uploadArea.parentElement.querySelector('.remove-image-btn') || container.querySelector('.remove-image-btn');
+          
+          if (removeBtn) {
+              removeBtn.style.display = 'block';
+              
+              // Clone the button to remove old generic click listeners
+              let newRemoveBtn = removeBtn.cloneNode(true);
+              removeBtn.parentNode.replaceChild(newRemoveBtn, removeBtn);
+              
+              newRemoveBtn.onclick = async function(e) {
+                  e.preventDefault();
+                  const urlToDelete = document.getElementById(inputId).value;
+                  const oldBtnText = newRemoveBtn.innerHTML;
+                  
+                  // Visual Loading state
+                  newRemoveBtn.innerHTML = '🗑️ Deleting...';
+                  newRemoveBtn.style.pointerEvents = 'none';
+
+                  // Send Delete Request to Apps Script
+                  if (urlToDelete && urlToDelete.includes('drive.google')) {
+                      try {
+                          let deleteUrl = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=deleteUploadedImage' +
+                                          '&fileUrl=' + encodeURIComponent(urlToDelete) +
+                                          '&username=' + encodeURIComponent(currentUser.username) +
+                                          '&role=' + encodeURIComponent(currentUser.role) +
+                                          '&token=' + encodeURIComponent(currentUser.token) +
+                                          '&_t=' + Date.now();
+                          await jsonpRequest(deleteUrl, 'delImgCb');
+                      } catch(err) { console.log("Delete command sent."); }
+                  }
+
+                  // Clear the UI completely
+                  preview.src = '';
+                  preview.classList.remove('visible');
+                  preview.style.display = 'none';
+                  document.getElementById(inputId).value = '';
+                  
+                  if (originalText) {
+                      originalText.innerHTML = 'Click to Select Image';
+                      originalText.style.display = 'block';
+                  }
+                  
+                  let tickToRemove = uploadArea.querySelector('.upload-success-tick');
+                  if (tickToRemove) tickToRemove.remove();
+                  
+                  newRemoveBtn.style.display = 'none';
+                  newRemoveBtn.innerHTML = oldBtnText;
+                  newRemoveBtn.style.pointerEvents = 'auto';
+              };
+          }
+
           setTimeout(() => {
             if (progressContainer) progressContainer.style.display = 'none';
             if (statusEl) statusEl.style.display = 'none';
           }, 2000);
+          
         } else {
           throw new Error(result?.error || 'Upload failed');
         }
       } catch (error) {
         console.error('❌ Upload failed:', error);
-        if (statusEl) {
-          statusEl.textContent = 'Upload failed: ' + error.message;
-          statusEl.style.color = '#ef4444';
-        }
-        if (progressBar) {
-          progressBar.style.width = '0%';
-          progressBar.classList.remove('active');
-        }
-        
+        if (statusEl) { statusEl.textContent = 'Upload failed: ' + error.message; statusEl.style.color = '#ef4444'; }
+        if (progressBar) { progressBar.style.width = '0%'; progressBar.classList.remove('active'); }
+        if (originalText) { originalText.innerHTML = 'Upload Failed. Try Again.'; originalText.style.display = 'block'; }
         setTimeout(() => {
           if (progressContainer) progressContainer.style.display = 'none';
           if (statusEl) statusEl.style.display = 'none';
         }, 3000);
       }
     }
-
     function clearImageUpload(previewId, inputId) {
       const preview = document.getElementById(previewId);
       const input = document.getElementById(inputId);
