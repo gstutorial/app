@@ -7308,10 +7308,10 @@ function validateUserAccount(user) {
             if (editSelect) editSelect.innerHTML = optionsHTML;
         }
 
-        window.currentPdfArray = pdfArray;
+       window.currentPdfArray = pdfArray;
         window.currentPdfSortOrder = sortOrder;
         window.currentPyqContext = { sheetId, gid };
-        if (window.currentPdfCategory === undefined) window.currentPdfCategory = null;
+        window.currentPdfCategory = null; // <-- FIX: ALWAYS reset to main folder on load
         
         renderPdfView();
 
