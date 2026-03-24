@@ -6490,30 +6490,48 @@ body.light-mode .pdf-name {
       if (failedAttempts >= MAX_ATTEMPTS) startCooldown();
     }
 
-   // ========== SINGLE DEVICE LOGIN MONITOR ==========
+   // ========== SINGLE DEVICE LOGIN MONITOR (FASTER & RESPONSIVE) ==========
+    let sessionMonitorInterval = null;
+    let isCheckingSession = false; // Prevents overlapping network requests
+
+    // 1. The core check function
+    async function checkCurrentSessionNow() {
+      // Don't check if they aren't fully logged in or if a check is already running
+      if (!currentUser || !currentUser.username || !currentUser.token || isCheckingSession) return;
+      
+      isCheckingSession = true;
+      try {
+        const url = `${AUTH_APPS_SCRIPT_URL}?action=check_session&username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&_t=${Date.now()}`;
+        const response = await jsonpRequest(url, 'sessionCheckCb');
+        
+        if (response && response.valid === false && response.reason === 'multi_login') {
+          // Token mismatch! Someone else logged in.
+          if (sessionMonitorInterval) clearInterval(sessionMonitorInterval);
+          document.getElementById('multi-login-modal').style.display = 'flex';
+        }
+      } catch (e) {
+        console.log("Session monitor check skipped due to network fluctuation.");
+      } finally {
+        isCheckingSession = false;
+      }
+    }
+
+    // 2. Start the monitor
     function startSessionMonitor() {
       if (sessionMonitorInterval) clearInterval(sessionMonitorInterval);
       
-      // Check every 30 seconds
-      sessionMonitorInterval = setInterval(async () => {
-        // Stop checking if the user isn't logged in properly
-        if (!currentUser || !currentUser.username || !currentUser.token) return;
-        
-        try {
-          const url = `${AUTH_APPS_SCRIPT_URL}?action=check_session&username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&_t=${Date.now()}`;
-          const response = await jsonpRequest(url, 'sessionCheckCb');
-          
-          if (response && response.valid === false && response.reason === 'multi_login') {
-            // Token mismatch! Someone else logged in.
-            clearInterval(sessionMonitorInterval);
-            document.getElementById('multi-login-modal').style.display = 'flex';
-          }
-        } catch (e) {
-          console.log("Session monitor check skipped due to network fluctuation.");
-        }
-      }, 30000); 
+      // Check every 8 seconds (8000 ms) instead of 30 seconds
+      sessionMonitorInterval = setInterval(checkCurrentSessionNow, 8000); 
     }
 
+    // 3. BONUS: Instant check when they switch back to the app tab or wake their phone
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === 'visible') {
+        checkCurrentSessionNow();
+      }
+    });
+
+    // 4. Button action for the popup
     window.executeForceLogout = function() {
       document.getElementById('multi-login-modal').style.display = 'none';
       logout();
