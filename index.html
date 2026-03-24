@@ -4258,21 +4258,19 @@ body.light-mode .pdf-name {
         </div>
       </div>
 
-      <!-- QUESTION NAVIGATION SECTION -->
-      <div id="question-navigation" class="question-navigation collapsed">
-        <div class="navigation-header">
-          <div class="navigation-title">
+     <div id="question-navigation" class="question-navigation collapsed" style="padding: 12px;">
+        <div id="nav-header-toggle" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+          <h4 style="margin:0; color:#93c5fd; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 600;">
+            <span id="nav-toggle-icon" style="transition: transform 0.3s ease; display: inline-block;">▶</span> 
             Question Navigation
-          </div>
-          <button id="navigation-toggle-btn" class="navigation-toggle-btn collapsed">
-            <i>▶</i> Show Navigation
-          </button>
+          </h4>
         </div>
-        <div id="question-grid" class="question-grid">
-          <!-- Question buttons will be loaded dynamically -->
-        </div>
-        <div id="navigation-stats" class="navigation-stats">
-          <!-- Stats will be loaded dynamically -->
+        
+        <div id="nav-collapsible-content" style="display: none; margin-top: 12px; border-top: 1px solid rgba(75, 85, 99, 0.4); padding-top: 12px;">
+          <div id="question-grid" class="question-grid">
+            </div>
+          <div id="navigation-stats" class="navigation-stats">
+            </div>
         </div>
       </div>
 
@@ -7212,19 +7210,22 @@ function validateUserAccount(user) {
     }
 
     // ========== QUESTION NAVIGATION FUNCTIONS ==========
-    function toggleQuestionNavigation() {
-      const isCollapsed = questionNavigationEl.classList.contains('collapsed');
-      if (isCollapsed) {
-        questionNavigationEl.classList.remove('collapsed');
-        questionNavigationEl.classList.add('expanded');
-        navigationToggleBtn.innerHTML = '<i>▼</i> Hide Navigation';
-        navigationToggleBtn.classList.remove('collapsed');
+   function toggleQuestionNavigation() {
+      const content = document.getElementById('nav-collapsible-content');
+      const icon = document.getElementById('nav-toggle-icon');
+      const navEl = document.getElementById('question-navigation');
+      
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.style.transform = 'rotate(90deg)'; // Arrow points down
+        navEl.classList.remove('collapsed');
+        navEl.classList.add('expanded');
         updateQuestionNavigation();
       } else {
-        questionNavigationEl.classList.remove('expanded');
-        questionNavigationEl.classList.add('collapsed');
-        navigationToggleBtn.innerHTML = '<i>▶</i> Show Navigation';
-        navigationToggleBtn.classList.add('collapsed');
+        content.style.display = 'none';
+        icon.style.transform = 'rotate(0deg)'; // Arrow points right
+        navEl.classList.remove('expanded');
+        navEl.classList.add('collapsed');
       }
       resetInactivityTimer();
     }
@@ -7341,9 +7342,14 @@ function validateUserAccount(user) {
 
     function showQuestionNavigation() {
       questionNavigationEl.style.display = 'block';
+      const content = document.getElementById('nav-collapsible-content');
+      const icon = document.getElementById('nav-toggle-icon');
+      
+      if(content) content.style.display = 'none';
+      if(icon) icon.style.transform = 'rotate(0deg)';
+      
+      questionNavigationEl.classList.remove('expanded');
       questionNavigationEl.classList.add('collapsed');
-      navigationToggleBtn.innerHTML = '<i>▶</i> Show Navigation';
-      navigationToggleBtn.classList.add('collapsed');
     }
 
     // ========== NAVIGATION FUNCTIONS ==========
@@ -7969,15 +7975,19 @@ function setupMobileBackButton() {
         // Quiz View -> Back to Subjects
         if (isScreenVisible('quiz-container')) {
             if (isQuizActive) {
-                if (confirm("Quiz is in progress. Are you sure you want to leave? Your progress will be lost.")) {
-                    if (typeof navigateToSubjects === 'function') navigateToSubjects();
-                }
+                window.showCustomConfirm(
+                    "Warning",
+                    "Quiz is in progress. Are you sure you want to leave? Your progress will be lost.",
+                    "Leave",
+                    () => {
+                        if (typeof navigateToSubjects === 'function') navigateToSubjects();
+                    }
+                );
             } else {
                 if (typeof navigateToSubjects === 'function') navigateToSubjects();
             }
             return;
         }
-
         // Subject Selection -> Back to Classes
         if (isScreenVisible('subject-selection')) {
             if (typeof navigateToClasses === 'function') navigateToClasses();
@@ -8132,10 +8142,13 @@ function setupMobileBackButton() {
       currentIndex = 0;
       renderIncorrectReviewQuestion();
 
-      questionNavigationEl.classList.remove('collapsed');
-      questionNavigationEl.classList.add('expanded');
-      navigationToggleBtn.innerHTML = '<i>▼</i> Hide Navigation';
-      navigationToggleBtn.classList.remove('collapsed');
+      // Keep navigation collapsed by default to save space
+      const content = document.getElementById('nav-collapsible-content');
+      const icon = document.getElementById('nav-toggle-icon');
+      if(content) content.style.display = 'none';
+      if(icon) icon.style.transform = 'rotate(0deg)';
+      questionNavigationEl.classList.remove('expanded');
+      questionNavigationEl.classList.add('collapsed');
       updateQuestionNavigation();
 
       const headerDiv = document.createElement('div');
@@ -8192,10 +8205,13 @@ function setupMobileBackButton() {
       currentIndex = 0;
       renderReattemptQuestion();
 
-      questionNavigationEl.classList.remove('collapsed');
-      questionNavigationEl.classList.add('expanded');
-      navigationToggleBtn.innerHTML = '<i>▼</i> Hide Navigation';
-      navigationToggleBtn.classList.remove('collapsed');
+      // Keep navigation collapsed by default to save space
+      const content = document.getElementById('nav-collapsible-content');
+      const icon = document.getElementById('nav-toggle-icon');
+      if(content) content.style.display = 'none';
+      if(icon) icon.style.transform = 'rotate(0deg)';
+      questionNavigationEl.classList.remove('expanded');
+      questionNavigationEl.classList.add('collapsed');
       updateQuestionNavigation();
 
       if (reattemptStatusBanner) {
@@ -9466,10 +9482,13 @@ function setupMobileBackButton() {
       currentIndex = 0;
       renderQuestion();
 
-      questionNavigationEl.classList.remove('collapsed');
-      questionNavigationEl.classList.add('expanded');
-      navigationToggleBtn.innerHTML = '<i>▼</i> Hide Navigation';
-      navigationToggleBtn.classList.remove('collapsed');
+     // Keep navigation collapsed by default to save space
+      const content = document.getElementById('nav-collapsible-content');
+      const icon = document.getElementById('nav-toggle-icon');
+      if(content) content.style.display = 'none';
+      if(icon) icon.style.transform = 'rotate(0deg)';
+      questionNavigationEl.classList.remove('expanded');
+      questionNavigationEl.classList.add('collapsed');
       updateQuestionNavigation();
     }
 
@@ -10219,10 +10238,13 @@ function setupMobileBackButton() {
       goToPreviousQuestion();
     });
     
-    navigationToggleBtn.addEventListener("click", function(e) {
-      e.preventDefault();
-      toggleQuestionNavigation();
-    });
+    const navHeaderToggle = document.getElementById("nav-header-toggle");
+    if (navHeaderToggle) {
+      navHeaderToggle.addEventListener("click", function(e) {
+        e.preventDefault();
+        toggleQuestionNavigation();
+      });
+    }
     
     randomToggleEl.addEventListener("change", function() {
       resetInactivityTimer();
