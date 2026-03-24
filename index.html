@@ -4227,7 +4227,7 @@ body.light-mode .pdf-name {
           ← Back to Subjects
         </button>
         
-        <button class="back-btn" id="back-to-folders-btn" style="display: none; margin-top: 0; flex: 1; justify-content: center; min-width: 0; padding: 8px 4px; font-size: clamp(0.7rem, 3.5vw, 0.9rem); white-space: nowrap;" onclick="window.currentPdfCategory = null; window.renderPdfView();">
+        <button class="back-btn" id="back-to-folders-btn" style="display: none; margin-top: 0; flex: 1; justify-content: center; min-width: 0; padding: 8px 4px; font-size: clamp(0.7rem, 3.5vw, 0.9rem); white-space: nowrap;" onclick="window.currentPdfCategory = null; const categorySelect = document.getElementById('new-pdf-category-select'); if (categorySelect) categorySelect.value = ''; window.renderPdfView();">
           ← Back to Folders
         </button>
       </div>
@@ -4772,7 +4772,7 @@ body.light-mode .pdf-name {
       setTimeout(() => {
         toast.style.opacity = '0';
         setTimeout(() => toast.style.display = 'none', 300);
-      }, 5000);
+      }, 3000);
     };
 
    // window.showCustomConfirm = function(title, message, confirmText, onConfirm) {
@@ -7618,7 +7618,12 @@ function validateUserAccount(user) {
                `;
                folderEl.onmouseover = () => { folderEl.style.transform = 'translateY(-3px)'; folderEl.style.borderColor = '#3b82f6'; };
                folderEl.onmouseout = () => { folderEl.style.transform = 'none'; folderEl.style.borderColor = document.body.classList.contains('light-mode') ? '#e5e7eb' : 'rgba(75, 85, 99, 0.5)'; };
-               folderEl.onclick = () => { window.currentPdfCategory = folderName; window.renderPdfView(); };
+              folderEl.onclick = () => { 
+    window.currentPdfCategory = folderName; 
+    const categorySelect = document.getElementById('new-pdf-category-select');
+    if (categorySelect) categorySelect.value = folderName;
+    window.renderPdfView(); 
+};
                
                folderGrid.appendChild(folderEl);
            });
@@ -10515,7 +10520,7 @@ function setupMobileBackButton() {
     </div>
   </div>
 
-  <div id="toast-notification" style="display:none; position:fixed; bottom:40px; left:50%; transform:translateX(-50%); background: linear-gradient(to right, #10b981, #059669); color:white; padding:14px 28px; border-radius:999px; box-shadow:0 8px 20px rgba(0,0,0,0.4); z-index:999999; font-weight:600; text-align:center; transition: opacity 0.3s ease; font-size: 1rem; border: 1px solid #34d399;">
+  <div id="toast-notification" style="display:none; position:fixed; bottom:40px; left:50%; transform:translateX(-50%); background:#1e293b; color:#e5e7eb; padding:16px 32px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.6); z-index:999999; font-weight:600; text-align:center; transition: opacity 0.3s ease; font-size: 1.05rem; border-left: 6px solid #3b82f6; border-right: 1px solid #334155; border-top: 1px solid #334155; border-bottom: 1px solid #334155; min-width: 300px;">
     <span id="toast-message">Message</span>
   </div>
   <!-- NO SERVICE WORKER REGISTRATION - Completely disabled -->
