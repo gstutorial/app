@@ -8078,8 +8078,10 @@ function setupMobileBackButton() {
 
       questionNavigationEl.classList.remove('expanded');
       questionNavigationEl.classList.add('collapsed');
-      navigationToggleBtn.innerHTML = '<i>▶</i> Show Navigation';
-      navigationToggleBtn.classList.add('collapsed');
+      const content = document.getElementById('nav-collapsible-content');
+      const icon = document.getElementById('nav-toggle-icon');
+      if(content) content.style.display = 'none';
+      if(icon) icon.style.transform = 'rotate(0deg)';
 
       quizTopicNameEl.style.cssText = "";
       removeTimerNotification();
@@ -9604,8 +9606,10 @@ function setupMobileBackButton() {
       questionNavigationEl.style.display = 'block';
       questionNavigationEl.classList.remove('expanded');
       questionNavigationEl.classList.add('collapsed');
-      navigationToggleBtn.innerHTML = '<i>▶</i> Show Navigation';
-      navigationToggleBtn.classList.add('collapsed');
+      const content = document.getElementById('nav-collapsible-content');
+      const icon = document.getElementById('nav-toggle-icon');
+      if(content) content.style.display = 'none';
+      if(icon) icon.style.transform = 'rotate(0deg)';
 
       timerContainerEl.classList.remove('hidden');
       controlsEl.classList.remove('hidden');
