@@ -4556,7 +4556,7 @@ body.light-mode .pdf-name {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwTgZ_M-oCBYGTKpxOLXKE9em7tESjtCz9kudPW82GpPeTkJVPx-G4E9V3rDs-dmuQuEg/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzvscnH8PvWM21jcjbjUe0f2xA2LLXej5lbpoXhLs6UlS9diPR4nnWL5pVH57E9QN5J/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxF57uLzhbwX6CLD7EhB0QsvgJiC6AV734D_GH9K-s8kVhl_3XSZdT6lTy-Fxze7yr5/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -8011,8 +8011,15 @@ function setupMobileBackButton() {
       finishBtn.textContent = "Submit";
       finishBtn.onclick = () => {
         if (!questionsLoaded || !isQuizActive) return;
-        if (confirm("Are you sure you want to finish the quiz?")) showFinalResult();
-        resetInactivityTimer();
+        window.showCustomConfirm(
+          "Finish Quiz", 
+          "Are you sure you want to finish the quiz and submit your answers?", 
+          "Submit", 
+          () => { 
+            showFinalResult(); 
+            resetInactivityTimer();
+          }
+        );
       };
       finalScoreEl.style.display = "none";
       progressBarFillEl.style.width = "0%";
@@ -8142,10 +8149,13 @@ function setupMobileBackButton() {
 
       finishBtn.style.display = "inline-block";
       finishBtn.textContent = "Finish Reattempt";
-      finishBtn.onclick = () => {
-        if (confirm("Are you sure you want to finish the reattempt?")) {
-          showReattemptResult();
-        }
+     finishBtn.onclick = () => {
+        window.showCustomConfirm(
+          "Finish Reattempt", 
+          "Are you sure you want to finish the reattempt and submit your answers?", 
+          "Submit", 
+          () => { showReattemptResult(); }
+        );
       };
 
       currentIndex = 0;
@@ -8538,10 +8548,17 @@ function setupMobileBackButton() {
         finishBtn.disabled = true;
         finishBtn.textContent = "Submit";
         finishBtn.onclick = () => {
-          if (!questionsLoaded || !isQuizActive) return;
-          if (confirm("Are you sure you want to finish the quiz?")) showFinalResult();
-          resetInactivityTimer();
-        };
+        if (!questionsLoaded || !isQuizActive) return;
+        window.showCustomConfirm(
+          "Finish Quiz", 
+          "Are you sure you want to finish the quiz and submit your answers?", 
+          "Submit", 
+          () => { 
+            showFinalResult(); 
+            resetInactivityTimer();
+          }
+        );
+      };
         finalScoreEl.style.display = "none";
         progressBarFillEl.style.width = "0%";
         questionCounterEl.textContent = "Loading…";
@@ -9514,10 +9531,16 @@ function setupMobileBackButton() {
       finishBtn.textContent = "Submit";
       finishBtn.onclick = () => {
         if (!questionsLoaded || !isQuizActive) return;
-        if (confirm("Are you sure you want to finish the quiz?")) showFinalResult();
-        resetInactivityTimer();
+        window.showCustomConfirm(
+          "Finish Quiz", 
+          "Are you sure you want to finish the quiz and submit your answers?", 
+          "Submit", 
+          () => { 
+            showFinalResult(); 
+            resetInactivityTimer();
+          }
+        );
       };
-
       finalScoreEl.style.display = "none";
       document.getElementById('review-header')?.remove();
       document.getElementById('reattempt-header')?.remove();
