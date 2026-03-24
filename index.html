@@ -4755,6 +4755,28 @@ body.light-mode .pdf-name {
     const greetingMessageEl = document.getElementById('greetingMessage');
 
     // ========== CUSTOM MODAL HELPERS ==========
+// ========== CUSTOM MODAL HELPERS ==========
+    window.showToast = function(message, color = 'linear-gradient(to right, #10b981, #059669)') {
+      const toast = document.getElementById('toast-notification');
+      const msgEl = document.getElementById('toast-message');
+      if (!toast || !msgEl) return;
+      
+      msgEl.innerHTML = message;
+      toast.style.background = color;
+      toast.style.display = 'block';
+      
+      // Small delay to allow display:block to apply before fading in
+      setTimeout(() => { toast.style.opacity = '1'; }, 10);
+      
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.style.display = 'none', 300);
+      }, 5000);
+    };
+
+   // window.showCustomConfirm = function(title, message, confirmText, onConfirm) {
+    
     window.showCustomConfirm = function(title, message, confirmText, onConfirm) {
       document.getElementById('confirm-title').textContent = title;
       document.getElementById('confirm-message').innerHTML = message;
@@ -5669,7 +5691,7 @@ body.light-mode .pdf-name {
         
         if (result && result.success) {
           hidePDFOverlay();
-          alert('Question deleted successfully!');
+          window.showToast('✅ Question deleted successfully!');
           
           // --- FIX: Update local arrays and shift originalIndex down by 1 ---
           questions.splice(currentIndex, 1);
@@ -6091,7 +6113,7 @@ body.light-mode .pdf-name {
           
           updateQuestionNavigation();
           renderQuestion();
-          alert('Question saved successfully!');
+          window.showToast('✅ Question saved successfully!');
         } else {
           throw new Error(result?.error || 'Failed to save question');
         }
@@ -7459,7 +7481,7 @@ function validateUserAccount(user) {
         if (rows[0] && rows[0].c && rows[0].c[2] && rows[0].c[2].v) sortOrder = rows[0].c[2].v.toString().trim().toLowerCase();
         if (window.pendingSortOrder) sortOrder = window.pendingSortOrder;
 
-        if (isAdmin()) {
+       if (isAdmin() || isEditor()) {
           const sortDropdown = document.getElementById('admin-pdf-sort');
           if (sortDropdown) {
             sortDropdown.value = sortOrder;
@@ -7486,8 +7508,8 @@ function validateUserAccount(user) {
           }
         }
 
-        // --- UPDATE ADMIN DROPDOWNS ---
-        if (isAdmin()) {
+      // --- UPDATE ADMIN DROPDOWNS ---
+        if (isAdmin() || isEditor()) {
             const uploadSelect = document.getElementById('new-pdf-category-select');
             const editSelect = document.getElementById('edit-pdf-category-select');
             
@@ -7562,7 +7584,11 @@ function validateUserAccount(user) {
            } else uncategorized.push(pdf);
         });
         
-        const folderNames = Object.keys(categorized).sort();
+       let folderNames = Object.keys(categorized).sort();
+        // If sorting preference is newest/Z-to-A, reverse the folders so they sort correctly too!
+        if (window.currentPdfSortOrder === 'desc' || window.currentPdfSortOrder === 'name_desc') {
+            folderNames.reverse();
+        }
         
         if (folderNames.length > 0) {
            const folderGrid = document.createElement('div');
@@ -10487,6 +10513,10 @@ function setupMobileBackButton() {
       <p id="alert-message" style="color:#e5e7eb; font-size: 1rem; margin-bottom: 25px;">Message goes here</p>
       <button id="alert-ok-btn" style="background:#3b82f6; color:white; border:none; padding:10px 24px; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1rem;">OK</button>
     </div>
+  </div>
+
+  <div id="toast-notification" style="display:none; position:fixed; bottom:40px; left:50%; transform:translateX(-50%); background: linear-gradient(to right, #10b981, #059669); color:white; padding:14px 28px; border-radius:999px; box-shadow:0 8px 20px rgba(0,0,0,0.4); z-index:999999; font-weight:600; text-align:center; transition: opacity 0.3s ease; font-size: 1rem; border: 1px solid #34d399;">
+    <span id="toast-message">Message</span>
   </div>
   <!-- NO SERVICE WORKER REGISTRATION - Completely disabled -->
 </body>
