@@ -5292,9 +5292,8 @@ body.light-mode .pdf-name {
 
     // ========== CHECK IF USER IS ADMIN ==========
    // ========== CHECK PERMISSIONS ==========
-    function isAdmin() {
-      return currentUser && currentUser.role === 'Admin';
-    }
+    function isAdmin() { return currentUser && currentUser.role === 'Admin'; }
+    function isEditor() { return currentUser && currentUser.role === 'Editor'; }
 
     function hasPermission(action) {
       if (!currentUser) return false;
@@ -5313,45 +5312,48 @@ body.light-mode .pdf-name {
       document.getElementById('trial-popup-modal').style.display = 'flex';
     };
 
-    // ========== UPDATE ADMIN CONTROLS AND WHATSAPP VISIBILITY ==========
+    window.showEditorPopup = function(actionRequired) {
+      document.getElementById('missing-permission-name').textContent = actionRequired.toUpperCase();
+      const msg = encodeURIComponent(`Hello Admin, I need ${actionRequired.toUpperCase()} permission for my Editor account in the G.S. Tutorial App. Username: ${currentUser.username}`);
+      document.getElementById('editor-whatsapp-btn').href = `https://wa.me/919706195457?text=${msg}`;
+      document.getElementById('editor-popup-modal').style.display = 'flex';
+    };
+
+   
+   // ========== UPDATE ADMIN CONTROLS AND WHATSAPP VISIBILITY ==========
     function updateAdminControls() {
-      // WhatsApp icon: visible to non-admin users, hidden for admin
       if (questionWhatsappIconEl) {
         if (questionsLoaded && questions.length > 0) {
-          questionWhatsappIconEl.style.display = isAdmin() ? 'none' : 'block';
+          questionWhatsappIconEl.style.display = (isAdmin() || isEditor()) ? 'none' : 'block';
         } else {
           questionWhatsappIconEl.style.display = 'none';
         }
       }
       
-      // Edit icon: only visible to admin
       if (questionEditIconEl) {
-        if (isAdmin() && questionsLoaded && questions.length > 0) {
+        if ((isAdmin() || isEditor()) && questionsLoaded && questions.length > 0) {
           questionEditIconEl.style.display = 'block';
         } else {
           questionEditIconEl.style.display = 'none';
         }
       }
       
-      // Delete icon: only visible to admin
       if (questionDeleteIconEl) {
-        if (isAdmin() && questionsLoaded && questions.length > 0) {
+        if ((isAdmin() || isEditor()) && questionsLoaded && questions.length > 0) {
           questionDeleteIconEl.style.display = 'block';
         } else {
           questionDeleteIconEl.style.display = 'none';
         }
       }
       
-      // Add question button: visible to admin when chapter is selected (even if no questions)
-      if (addQuestionBtn) {
-        if (isAdmin() && currentSubjectConfig && currentTopicName) {
+      if (adminAddQuestionDiv) {
+        if ((isAdmin() || isEditor()) && currentSubjectConfig && currentTopicName) {
           adminAddQuestionDiv.style.display = 'block';
         } else {
           adminAddQuestionDiv.style.display = 'none';
         }
       }
     }
-
     // ========== NAVIGATION FUNCTIONS ==========
     function navigateToClasses() {
       if (timerInterval) {
@@ -5574,11 +5576,12 @@ body.light-mode .pdf-name {
     }
 
     // ========== SETUP EDIT ICON ==========
-    function setupEditIcon() {
+   function setupEditIcon() {
       if (!questionEditIconEl) return;
-      
       questionEditIconEl.addEventListener("click", function() {
-        if (!isAdmin()) return;
+        if (isEditor() && !canEdit()) { window.showEditorPopup('Edit'); return; } // NEW
+        if (!isAdmin() && !isEditor()) return;
+       
         if (!questionsLoaded || questions.length === 0 || currentIndex >= questions.length) {
           alert("No question to edit.");
           return;
@@ -5588,11 +5591,12 @@ body.light-mode .pdf-name {
     }
 
     // ========== SETUP DELETE ICON ==========
-    function setupDeleteIcon() {
+   function setupDeleteIcon() {
       if (!questionDeleteIconEl) return;
-      
       questionDeleteIconEl.addEventListener("click", function() {
-        if (!isAdmin()) return;
+        if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; } // NEW
+        if (!isAdmin() && !isEditor()) return;
+      
         if (!questionsLoaded || questions.length === 0 || currentIndex >= questions.length) {
           alert("No question to delete.");
           return;
@@ -6314,12 +6318,12 @@ body.light-mode .pdf-name {
         `;
 
        card.addEventListener("click", () => {
-          // NEW: Trial Restriction for Subjects
-          if (currentUser.role === 'Trial' && subject.name.toLowerCase() !== 'mathematics') {
+          // --- FIX: Trial Restriction ---
+          if (currentUser.role === 'Trial' && !subject.name.toLowerCase().includes('math')) {
             window.showTrialPopup();
-            return;
+            return; // Stops them from opening it
           }
-          
+          // ------------------------------
           currentSubject = subject.name;
           // ... rest of the existing code ...
           
@@ -7348,8 +7352,9 @@ function validateUserAccount(user) {
       document.getElementById("pyq-title").textContent = subjectName;
 
       // Check admin rights to show upload area
+    // Check admin/editor rights to show upload area
       const adminUploadDiv = document.getElementById("admin-pdf-upload");
-      if (isAdmin()) {
+      if (isAdmin() || isEditor()) {
         adminUploadDiv.style.display = "block";
         setupPdfUpload();
       } else {
@@ -7586,7 +7591,7 @@ function validateUserAccount(user) {
         </button>
       `;
 
-      if (isAdmin()) {
+     if (isAdmin() || isEditor()) {
         const sheetRowIndex = pdf.index + 1; 
         const safeName = pdf.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
         const safeCategory = (pdf.category || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
@@ -7645,7 +7650,9 @@ function validateUserAccount(user) {
     }
 
     // ========== NEW UI EDIT MODAL ACTIONS ==========
-    window.openEditPdfModal = function(rowIndex, currentName, currentCategory) {
+   window.openEditPdfModal = function(rowIndex, currentName, currentCategory) {
+      if (isEditor() && !canEdit()) { window.showEditorPopup('Edit'); return; } // NEW
+    
       document.getElementById('edit-pdf-row-index').value = rowIndex;
       document.getElementById('edit-pdf-name').value = currentName;
       
@@ -7706,7 +7713,9 @@ function validateUserAccount(user) {
     };
 
     window.deletePdfItem = async function(rowIndex) {
+      if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; } // NEW
       if (!confirm("⚠️ Are you sure you want to delete this PDF?\\nThis cannot be undone!")) return;
+     
       showPDFOverlay("Deleting PDF...");
       try {
         let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=deletePdf&sheetId=' + window.currentPyqContext.sheetId + '&gid=' + window.currentPyqContext.gid + '&rowIndex=' + rowIndex + '&username=' + encodeURIComponent(currentUser.username) + '&role=' + encodeURIComponent(currentUser.role) + '&token=' + encodeURIComponent(currentUser.token) + '&_t=' + Date.now();
@@ -7761,7 +7770,8 @@ function validateUserAccount(user) {
         }
       });
 
-      submitBtn.onclick = async () => {
+     submitBtn.onclick = async () => {
+        if (isEditor() && !canAdd()) { window.showEditorPopup('Add'); return; } // NEW
         if (!selectedFile || !nameInput.value.trim()) { alert("Provide PDF and Name."); return; }
         
         // Handle new dropdown combo logic
@@ -10122,12 +10132,10 @@ function setupMobileBackButton() {
     });
 
     // Intercept chapter dropdown changes
-    topicSelectEl.addEventListener('change', function() {
-      // If role is Trial, index 0 is "-- Select Chapter --", index 1 is Chapter 1.
-      // Anything > 1 is blocked!
+   topicSelectEl.addEventListener('change', function() {
       if (currentUser && currentUser.role === 'Trial' && this.selectedIndex > 1) {
         window.showTrialPopup();
-        this.selectedIndex = 0; // Reset back to default
+        this.selectedIndex = 0; 
         startBtnEl.disabled = true;
       }
     });
@@ -10142,10 +10150,12 @@ function setupMobileBackButton() {
 
     if (addQuestionBtn) {
       addQuestionBtn.addEventListener("click", function() {
-        if (!isAdmin()) {
-          alert("Admin access required");
+        if (isEditor() && !canAdd()) { window.showEditorPopup('Add'); return; } // NEW
+        if (!isAdmin() && !isEditor()) {
+          alert("Admin/Editor access required");
           return;
         }
+      
         if (!currentSubjectConfig || !currentTopicName) {
           alert("Please select a chapter first.");
           return;
@@ -10374,6 +10384,18 @@ function setupMobileBackButton() {
         <img src="whatsapp.png" style="width:24px;height:24px;"> Contact Admin
       </a>
       <button onclick="document.getElementById('trial-popup-modal').style.display='none'" style="background:transparent; color:#9ca3af; border:1px solid #4b5563; padding:10px 24px; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1rem;">Close</button>
+    </div>
+  </div>
+  <!-- Editor Popopup -->
+  <div id="editor-popup-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center;">
+    <div style="background:#1e293b; padding:30px; border-radius:12px; text-align:center; max-width:90%; width:400px; border:1px solid #ef4444; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <div style="font-size: 40px; margin-bottom: 10px;">⛔</div>
+      <h2 style="color:#ef4444; margin-top:0; font-family: 'Noto Sans', sans-serif;">Permission Denied</h2>
+      <p style="color:#e5e7eb; font-size: 1rem; margin-bottom: 25px;">You do not have <strong><span id="missing-permission-name"></span></strong> permission for this action.</p>
+      <a id="editor-whatsapp-btn" href="#" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:10px; background: linear-gradient(to right, #25d366, #128c7e); color:white; border:none; padding:12px 24px; border-radius:8px; cursor:pointer; font-weight:bold; text-decoration:none; width: 100%; box-sizing: border-box; font-size: 1.1rem; margin-bottom: 10px;">
+        <img src="whatsapp.png" style="width:24px;height:24px;"> Request Permission
+      </a>
+      <button onclick="document.getElementById('editor-popup-modal').style.display='none'" style="background:transparent; color:#9ca3af; border:1px solid #4b5563; padding:10px 24px; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1rem;">Close</button>
     </div>
   </div>
   <!-- NO SERVICE WORKER REGISTRATION - Completely disabled -->
