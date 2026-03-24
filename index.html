@@ -4550,16 +4550,7 @@ body.light-mode .pdf-name {
   </div>
 
   <script>
-    // Intercept chapter dropdown changes
-    topicSelectEl.addEventListener('change', function() {
-      // If role is Trial, index 0 is "-- Select Chapter --", index 1 is Chapter 1.
-      // Anything > 1 is blocked!
-      if (currentUser && currentUser.role === 'Trial' && this.selectedIndex > 1) {
-        window.showTrialPopup();
-        this.selectedIndex = 0; // Reset back to default
-        startBtnEl.disabled = true;
-      }
-    });
+    
     // ========== FORCE CACHE BUSTING ==========
     const version = Date.now();
     
@@ -10130,6 +10121,16 @@ function setupMobileBackButton() {
       resetInactivityTimer();
     });
 
+    // Intercept chapter dropdown changes
+    topicSelectEl.addEventListener('change', function() {
+      // If role is Trial, index 0 is "-- Select Chapter --", index 1 is Chapter 1.
+      // Anything > 1 is blocked!
+      if (currentUser && currentUser.role === 'Trial' && this.selectedIndex > 1) {
+        window.showTrialPopup();
+        this.selectedIndex = 0; // Reset back to default
+        startBtnEl.disabled = true;
+      }
+    });
     // Setup image URL toggle
     if (showImageUrlsCheckbox) {
       showImageUrlsCheckbox.addEventListener('change', toggleImageUrlFields);
