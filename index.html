@@ -4167,45 +4167,55 @@ body.light-mode .pdf-name {
       </div>
 
       <!-- Admin Upload & Sort Section -->
-      <div id="admin-pdf-upload" class="admin-add-question" style="display: none; text-align: left;">
+    <div id="admin-pdf-upload" class="admin-add-question" style="display: none; text-align: left; padding: 12px;">
         
-        <!-- NEW: Sort Dropdown for Admin -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-          <h4 style="margin:0; color:#10b981;">+ Upload New PDF</h4>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <label style="color:#9ca3af; font-size:0.85rem; font-weight:600;">Sort (For All Users):</label>
-            <select id="admin-pdf-sort" style="padding:6px; border-radius:6px; background:rgba(15, 23, 42, 0.9); color:#e5e7eb; border:1px solid rgba(75, 85, 99, 0.8); outline:none; font-size:0.85rem; cursor:pointer;">
-              <option value="asc">Oldest First</option>
-              <option value="desc">Newest First</option>
-              <option value="name_asc">Name (A to Z)</option>
-              <option value="name_desc">Name (Z to A)</option>
+        <div id="admin-pdf-upload-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+          <h4 style="margin:0; color:#10b981; display: flex; align-items: center; gap: 8px;">
+            <span id="admin-pdf-toggle-icon" style="transition: transform 0.3s ease; display: inline-block;">▼</span> 
+            Admin Panel (Upload & Sort)
+          </h4>
+        </div>
+
+        <div id="admin-pdf-upload-content" style="display: none; margin-top: 15px; border-top: 1px solid rgba(75, 85, 99, 0.4); padding-top: 15px;">
+          
+          <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label style="color:#9ca3af; font-size:0.85rem; font-weight:600;">Sort (For All Users):</label>
+              <select id="admin-pdf-sort" style="padding:6px; border-radius:6px; background:rgba(15, 23, 42, 0.9); color:#e5e7eb; border:1px solid rgba(75, 85, 99, 0.8); outline:none; font-size:0.85rem; cursor:pointer;">
+                <option value="asc">Oldest First</option>
+                <option value="desc">Newest First</option>
+                <option value="name_asc">Name (A to Z)</option>
+                <option value="name_desc">Name (Z to A)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 10px;">
+            <input type="text" id="new-pdf-name" class="form-input" placeholder="Enter PDF Name (e.g., Math 2024 Set A)">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 10px;">
+            <select id="new-pdf-category-select" class="form-input" onchange="document.getElementById('new-pdf-category-new').style.display = this.value === 'NEW' ? 'block' : 'none'">
+              <option value="">-- No Category (Main Folder) --</option>
+              <option value="NEW" style="font-weight:bold; color:#3b82f6;">➕ Create New Category...</option>
             </select>
+            <input type="text" id="new-pdf-category-new" class="form-input" style="display:none; margin-top:10px;" placeholder="Type new category name...">
           </div>
-        </div>
 
-     <div class="form-group" style="margin-bottom: 10px;">
-          <input type="text" id="new-pdf-name" class="form-input" placeholder="Enter PDF Name (e.g., Math 2024 Set A)">
-        </div>
-
-        <div class="form-group" style="margin-bottom: 10px;">
-          <select id="new-pdf-category-select" class="form-input" onchange="document.getElementById('new-pdf-category-new').style.display = this.value === 'NEW' ? 'block' : 'none'">
-            <option value="">-- No Category (Main Folder) --</option>
-            <option value="NEW" style="font-weight:bold; color:#3b82f6;">➕ Create New Category...</option>
-          </select>
-          <input type="text" id="new-pdf-category-new" class="form-input" style="display:none; margin-top:10px;" placeholder="Type new category name...">
-        </div>
-        <div class="image-upload-container" style="margin: 0;">
-          <div class="upload-area" id="upload-pdf-area">
-            <div class="upload-icon">📄</div>
-            <div class="upload-text">Click to select PDF</div>
+          <div class="image-upload-container" style="margin: 0;">
+            <div class="upload-area" id="upload-pdf-area">
+              <div class="upload-icon">📄</div>
+              <div class="upload-text">Click to select PDF</div>
+            </div>
+            <input type="file" id="pdf-file-input" accept="application/pdf" style="display: none;">
+            <div class="upload-progress" id="pdf-upload-progress">
+              <div class="upload-progress-bar" id="pdf-progress-bar"></div>
+            </div>
+            <div class="upload-status" id="pdf-upload-status"></div>
           </div>
-          <input type="file" id="pdf-file-input" accept="application/pdf" style="display: none;">
-          <div class="upload-progress" id="pdf-upload-progress">
-            <div class="upload-progress-bar" id="pdf-progress-bar"></div>
-          </div>
-          <div class="upload-status" id="pdf-upload-status"></div>
+          
+          <button id="submit-pdf-btn" class="btn-success" style="margin-top: 10px;" disabled>Upload & Save</button>
         </div>
-        <button id="submit-pdf-btn" class="btn-success" style="margin-top: 10px;" disabled>Upload & Save</button>
       </div>
 
       <!-- PDF List -->
@@ -7634,10 +7644,31 @@ function validateUserAccount(user) {
 
     // ========== SETUP ADMIN UPLOAD ==========
     function setupPdfUpload() {
+      // --- NEW: Setup Collapsible Panel Logic ---
+      const pdfHeader = document.getElementById("admin-pdf-upload-header");
+      const pdfContent = document.getElementById("admin-pdf-upload-content");
+      const pdfToggleIcon = document.getElementById("admin-pdf-toggle-icon");
+      
+      if (pdfHeader && pdfContent && pdfToggleIcon) {
+        // Remove previous onclick to avoid duplicates if called multiple times
+        pdfHeader.onclick = function() {
+          if (pdfContent.style.display === "none") {
+            pdfContent.style.display = "block";
+            pdfToggleIcon.style.transform = "rotate(180deg)"; // Arrow points up
+          } else {
+            pdfContent.style.display = "none";
+            pdfToggleIcon.style.transform = "rotate(0deg)"; // Arrow points down
+          }
+        };
+      }
+      // --- END NEW ---
+
       const uploadArea = document.getElementById("upload-pdf-area");
       const fileInput = document.getElementById("pdf-file-input");
       const submitBtn = document.getElementById("submit-pdf-btn");
       const nameInput = document.getElementById("new-pdf-name");
+      
+     
       
       const newUploadArea = uploadArea.cloneNode(true);
       uploadArea.parentNode.replaceChild(newUploadArea, uploadArea);
