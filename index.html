@@ -4754,6 +4754,33 @@ body.light-mode .pdf-name {
     const metaThemeColor = document.getElementById('meta-theme-color');
     const greetingMessageEl = document.getElementById('greetingMessage');
 
+    // ========== CUSTOM MODAL HELPERS ==========
+    window.showCustomConfirm = function(title, message, confirmText, onConfirm) {
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-message').innerHTML = message;
+      document.getElementById('confirm-ok-btn').textContent = confirmText;
+      document.getElementById('custom-confirm-modal').style.display = 'flex';
+      
+      document.getElementById('confirm-ok-btn').onclick = function() {
+        document.getElementById('custom-confirm-modal').style.display = 'none';
+        onConfirm();
+      };
+      document.getElementById('confirm-cancel-btn').onclick = function() {
+        document.getElementById('custom-confirm-modal').style.display = 'none';
+      };
+    };
+
+    window.showCustomAlert = function(title, message, onOk) {
+      document.getElementById('alert-title').textContent = title;
+      document.getElementById('alert-message').innerHTML = message;
+      document.getElementById('custom-alert-modal').style.display = 'flex';
+      
+      document.getElementById('alert-ok-btn').onclick = function() {
+        document.getElementById('custom-alert-modal').style.display = 'none';
+        if(onOk) onOk();
+      };
+    };
+
     // ========== PDF OVERLAY FUNCTIONS ==========
     function showPDFOverlay(message = "Processing...") {
       console.log('Showing PDF overlay with message:', message);
@@ -5589,30 +5616,33 @@ body.light-mode .pdf-name {
         openQuestionEditor(currentIndex);
       });
     }
-
-    // ========== SETUP DELETE ICON ==========
-   function setupDeleteIcon() {
+// ========== SETUP DELETE ICON ==========
+    function setupDeleteIcon() {
       if (!questionDeleteIconEl) return;
       questionDeleteIconEl.addEventListener("click", function() {
-        if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; } // NEW
+        if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; } 
         if (!isAdmin() && !isEditor()) return;
       
         if (!questionsLoaded || questions.length === 0 || currentIndex >= questions.length) {
-          alert("No question to delete.");
+          window.showCustomAlert("Notice", "No question to delete.");
           return;
         }
         
-        if (confirm("⚠️ Are you sure you want to delete this question?\n\nThis action cannot be undone!")) {
-          deleteCurrentQuestion();
-        }
+        window.showCustomConfirm(
+          "Delete Question", 
+          "⚠️ Are you sure you want to delete this question?<br><br>This action cannot be undone!", 
+          "Delete", 
+          () => { deleteCurrentQuestion(); }
+        );
       });
     }
 
-    // ========== DELETE CURRENT QUESTION ==========
-    // ========== DELETE CURRENT QUESTION ==========
+    
+  // ========== DELETE CURRENT QUESTION ==========
     async function deleteCurrentQuestion() {
-      if (!isAdmin()) {
-        alert("Unauthorized access");
+      // FIX: Allow Editors through
+      if (!isAdmin() && !isEditor()) {
+        window.showCustomAlert("Error", "Unauthorized access");
         return;
       }
 
@@ -5777,7 +5807,7 @@ body.light-mode .pdf-name {
       });
       
       // --- SECURITY FIX: Target specific Upload Area IDs ---
-      const isAdminUser = currentUser && currentUser.role && currentUser.role.toString().toLowerCase() === 'admin';
+      const isAdminUser = currentUser && currentUser.role && (currentUser.role.toString().toLowerCase() === 'admin' || currentUser.role.toString().toLowerCase() === 'editor');
       
       const uploadAreaIds = [
         'upload-question-image', 
@@ -5897,8 +5927,9 @@ body.light-mode .pdf-name {
     // ========== SAVE QUESTION CHANGES - WITH CIRCULAR ANIMATION AND TEXT ==========
     // ========== SAVE QUESTION CHANGES ==========
     async function saveQuestionChanges() {
-      if (!isAdmin()) {
-        alert("Unauthorized access");
+      // FIX: Allow Editors through
+      if (!isAdmin() && !isEditor()) {
+        window.showCustomAlert("Error", "Unauthorized access");
         return;
       }
 
@@ -6308,7 +6339,7 @@ body.light-mode .pdf-name {
         return;
       }
 
-      subjects.forEach(subject => {
+     subjects.forEach((subject, index) => {
         const card = document.createElement("div");
         card.className = "subject-card";
         card.innerHTML = `
@@ -6318,11 +6349,12 @@ body.light-mode .pdf-name {
         `;
 
        card.addEventListener("click", () => {
-          // --- FIX: Trial Restriction ---
-          if (currentUser.role === 'Trial' && !subject.name.toLowerCase().includes('math')) {
+          // --- FIX: Trial Restriction (First Subject Only) ---
+          if (currentUser.role === 'Trial' && index > 0) {
             window.showTrialPopup();
             return; // Stops them from opening it
           }
+         
           // ------------------------------
           currentSubject = subject.name;
           // ... rest of the existing code ...
@@ -6735,10 +6767,11 @@ function validateUserAccount(user) {
       menuOverlay.classList.remove('open');
     }
 
-    function autoLogout() {
+   function autoLogout() {
       if (currentUser) {
-        alert("You have been automatically logged out due to inactivity (10 minutes).");
-        logout();
+        window.showCustomAlert("Session Expired", "You have been automatically logged out due to 10 minutes of inactivity.", () => {
+          logout();
+        });
       }
     }
 
@@ -7717,20 +7750,25 @@ function validateUserAccount(user) {
       }
     };
 
-    window.deletePdfItem = async function(rowIndex) {
-      if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; } // NEW
-      if (!confirm("⚠️ Are you sure you want to delete this PDF?\\nThis cannot be undone!")) return;
-     
-      showPDFOverlay("Deleting PDF...");
-      try {
-        let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=deletePdf&sheetId=' + window.currentPyqContext.sheetId + '&gid=' + window.currentPyqContext.gid + '&rowIndex=' + rowIndex + '&username=' + encodeURIComponent(currentUser.username) + '&role=' + encodeURIComponent(currentUser.role) + '&token=' + encodeURIComponent(currentUser.token) + '&_t=' + Date.now();
-        const data = await jsonpRequest(url, 'deletePdfCb');
-        hidePDFOverlay();
-        if (data && data.success) loadPdfList(); 
-        else alert("Error deleting PDF: " + (data.error || "Unknown error"));
-      } catch(e) { hidePDFOverlay(); alert("Network error: " + e); }
+   window.deletePdfItem = async function(rowIndex) {
+      if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; }
+      
+      window.showCustomConfirm(
+        "Delete PDF", 
+        "⚠️ Are you sure you want to delete this PDF?<br><br>This cannot be undone!", 
+        "Delete", 
+        async () => {
+          showPDFOverlay("Deleting PDF...");
+          try {
+            let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=deletePdf&sheetId=' + window.currentPyqContext.sheetId + '&gid=' + window.currentPyqContext.gid + '&rowIndex=' + rowIndex + '&username=' + encodeURIComponent(currentUser.username) + '&role=' + encodeURIComponent(currentUser.role) + '&token=' + encodeURIComponent(currentUser.token) + '&_t=' + Date.now();
+            const data = await jsonpRequest(url, 'deletePdfCb');
+            hidePDFOverlay();
+            if (data && data.success) loadPdfList(); 
+            else window.showCustomAlert("Error", "Error deleting PDF: " + (data.error || "Unknown error"));
+          } catch(e) { hidePDFOverlay(); window.showCustomAlert("Error", "Network error: " + e); }
+        }
+      );
     };
-
     // ========== SETUP ADMIN UPLOAD ==========
     function setupPdfUpload() {
       // --- NEW: Setup Collapsible Panel Logic ---
@@ -10136,12 +10174,15 @@ function setupMobileBackButton() {
       resetInactivityTimer();
     });
 
-    // Intercept chapter dropdown changes
-   topicSelectEl.addEventListener('change', function() {
+   // Intercept chapter dropdown changes
+    topicSelectEl.addEventListener('change', function() {
       if (currentUser && currentUser.role === 'Trial' && this.selectedIndex > 1) {
         window.showTrialPopup();
         this.selectedIndex = 0; 
         startBtnEl.disabled = true;
+      } else {
+        // Enable if valid chapter is selected, disable if they went back to "Select Chapter"
+        startBtnEl.disabled = (this.selectedIndex === 0);
       }
     });
     // Setup image URL toggle
@@ -10384,7 +10425,7 @@ function setupMobileBackButton() {
     <div style="background:#1e293b; padding:30px; border-radius:12px; text-align:center; max-width:90%; width:400px; border:1px solid #f59e0b; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
       <div style="font-size: 40px; margin-bottom: 10px;">🔒</div>
       <h2 style="color:#f59e0b; margin-top:0; font-family: 'Noto Sans', sans-serif;">Premium Content</h2>
-      <p style="color:#e5e7eb; font-size: 1rem; margin-bottom: 25px;">As a <strong>Trial</strong> user, you only have access to the first chapter of Mathematics. Upgrade to a full subscription to unlock all subjects and chapters!</p>
+     <p style="color:#e5e7eb; font-size: 1rem; margin-bottom: 25px;">As a <strong>Trial</strong> user, you only have access to the first subject and its first chapter. Upgrade to a full subscription to unlock all subjects and chapters!</p>
       <a href="https://wa.me/919706195457?text=Hello%20Admin,%20I%20want%20to%20upgrade%20my%20Trial%20account%20to%20a%20Premium%20Subscription." target="_blank" style="display:flex; align-items:center; justify-content:center; gap:10px; background: linear-gradient(to right, #25d366, #128c7e); color:white; border:none; padding:12px 24px; border-radius:8px; cursor:pointer; font-weight:bold; text-decoration:none; width: 100%; box-sizing: border-box; font-size: 1.1rem; margin-bottom: 10px;">
         <img src="whatsapp.png" style="width:24px;height:24px;"> Contact Admin
       </a>
@@ -10401,6 +10442,27 @@ function setupMobileBackButton() {
         <img src="whatsapp.png" style="width:24px;height:24px;"> Request Permission
       </a>
       <button onclick="document.getElementById('editor-popup-modal').style.display='none'" style="background:transparent; color:#9ca3af; border:1px solid #4b5563; padding:10px 24px; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1rem;">Close</button>
+    </div>
+  </div>
+
+  <div id="custom-confirm-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center;">
+    <div style="background:#1e293b; padding:30px; border-radius:12px; text-align:center; max-width:90%; width:400px; border:1px solid #f59e0b; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <div style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
+      <h2 id="confirm-title" style="color:#f59e0b; margin-top:0; font-family: 'Noto Sans', sans-serif;">Confirm Action</h2>
+      <p id="confirm-message" style="color:#e5e7eb; font-size: 1rem; margin-bottom: 25px;">Are you sure?</p>
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button id="confirm-cancel-btn" style="background:transparent; color:#9ca3af; border:1px solid #4b5563; padding:10px 24px; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1rem;">Cancel</button>
+        <button id="confirm-ok-btn" style="background:#ef4444; color:white; border:none; padding:10px 24px; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1rem;">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="custom-alert-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center;">
+    <div style="background:#1e293b; padding:30px; border-radius:12px; text-align:center; max-width:90%; width:400px; border:1px solid #3b82f6; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <div style="font-size: 40px; margin-bottom: 10px;">ℹ️</div>
+      <h2 id="alert-title" style="color:#3b82f6; margin-top:0; font-family: 'Noto Sans', sans-serif;">Notice</h2>
+      <p id="alert-message" style="color:#e5e7eb; font-size: 1rem; margin-bottom: 25px;">Message goes here</p>
+      <button id="alert-ok-btn" style="background:#3b82f6; color:white; border:none; padding:10px 24px; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1rem;">OK</button>
     </div>
   </div>
   <!-- NO SERVICE WORKER REGISTRATION - Completely disabled -->
