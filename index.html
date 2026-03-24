@@ -6568,7 +6568,8 @@ body.light-mode .pdf-name {
       location.reload(); // Hard reload ensures a clean slate
     };
  
-   // ========== VALIDATION FUNCTIONS ==========
+ 
+// ========== VALIDATION FUNCTIONS ==========
 function validateUserAccount(user) {
   // SECURITY UPGRADE: Reject anyone trying to login without a server-generated token
   if (!user.token) {
@@ -6576,7 +6577,7 @@ function validateUserAccount(user) {
     return { valid: false, error: 'unknown' };
   }
 
-  // --- NEW: SUBSCRIPTION EXPIRY CHECK ---
+  // --- SUBSCRIPTION EXPIRY CHECK ---
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -6585,19 +6586,17 @@ function validateUserAccount(user) {
       let lastDateValue = user.lastDate;
       let lastDate = null;
       
-      // Parse AppSheet / Google Sheets Date formats
       if (typeof lastDateValue === "string" && lastDateValue.startsWith("Date(")) {
         const parts = lastDateValue.replace("Date(", "").replace(")", "").split(",").map(Number);
         lastDate = new Date(parts[0], parts[1], parts[2]);
       } else if (typeof lastDateValue === "string") {
         lastDate = new Date(lastDateValue);
       } else if (typeof lastDateValue === "number") {
-        // Convert serial date to JS Date
         lastDate = new Date(Math.round((lastDateValue - 25569) * 86400 * 1000));
       }
 
       if (lastDate && !isNaN(lastDate.getTime())) {
-        lastDate.setHours(23, 59, 59, 999); // Allow access until the very end of their last day
+        lastDate.setHours(23, 59, 59, 999);
         if (lastDate < today) {
           return { valid: false, error: 'expired' };
         }
@@ -6607,7 +6606,11 @@ function validateUserAccount(user) {
     }
   }
 
-  // --- EXISTING: ROLE & CLASS CHECKS ---
+  // --- FIX 1: NORMALIZE ROLE CASE SENSITIVITY ---
+  const normalizedRole = user.role ? user.role.trim().charAt(0).toUpperCase() + user.role.trim().slice(1).toLowerCase() : '';
+  user.role = normalizedRole;
+
+  // --- EXISTING: ROLE CHECKS ---
   const validRoles = ['Admin', 'Teacher', 'User', 'Student', 'Editor', 'Trial'];
   if (!validRoles.includes(user.role)) {
     return { valid: false, error: 'invalid_role' };
@@ -6623,14 +6626,16 @@ function validateUserAccount(user) {
     return { valid: true, assignedClasses: [] };
   }
 
-  if (user.role === 'Teacher' || user.role === 'User') {
+  // --- FIX 2: ADD EDITOR (Treat like Teacher) ---
+  if (user.role === 'Teacher' || user.role === 'User' || user.role === 'Editor') {
     if (assignedClasses.length === 0) {
       return { valid: false, error: 'no_class_assigned', assignedClasses: [] };
     }
     return { valid: true, assignedClasses: assignedClasses };
   }
 
-  if (user.role === 'Student') {
+  // --- FIX 3: ADD TRIAL (Treat like Student) ---
+  if (user.role === 'Student' || user.role === 'Trial') {
     if (assignedClasses.length === 0) {
       return { valid: false, error: 'no_class_assigned', assignedClasses: [] };
     }
