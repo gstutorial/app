@@ -4550,12 +4550,22 @@ body.light-mode .pdf-name {
   </div>
 
   <script>
+    // Intercept chapter dropdown changes
+    topicSelectEl.addEventListener('change', function() {
+      // If role is Trial, index 0 is "-- Select Chapter --", index 1 is Chapter 1.
+      // Anything > 1 is blocked!
+      if (currentUser && currentUser.role === 'Trial' && this.selectedIndex > 1) {
+        window.showTrialPopup();
+        this.selectedIndex = 0; // Reset back to default
+        startBtnEl.disabled = true;
+      }
+    });
     // ========== FORCE CACHE BUSTING ==========
     const version = Date.now();
     
     // ========== APPS SCRIPT CONFIGURATION ==========
-    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbySSDI0um1N7gT3Asb9ailU5ghOTqlOCPg1nnAhF9Y0abAGVXr1jTtTfjzdQh7f4GT18w/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywZxxYPrmRPhNkIaQNFdWx71z8QXnRJlTHcJ56fWCh6PG2pHDolR8VWqrO0-0HNJrv/exec';
+    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwTgZ_M-oCBYGTKpxOLXKE9em7tESjtCz9kudPW82GpPeTkJVPx-G4E9V3rDs-dmuQuEg/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzvscnH8PvWM21jcjbjUe0f2xA2LLXej5lbpoXhLs6UlS9diPR4nnWL5pVH57E9QN5J/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -5290,9 +5300,27 @@ body.light-mode .pdf-name {
     }
 
     // ========== CHECK IF USER IS ADMIN ==========
+   // ========== CHECK PERMISSIONS ==========
     function isAdmin() {
       return currentUser && currentUser.role === 'Admin';
     }
+
+    function hasPermission(action) {
+      if (!currentUser) return false;
+      if (currentUser.role === 'Admin') return true;
+      if (currentUser.role === 'Editor' && currentUser.permission) {
+        return currentUser.permission.toLowerCase().includes(action.toLowerCase());
+      }
+      return false;
+    }
+
+    function canAdd() { return hasPermission('add'); }
+    function canEdit() { return hasPermission('edit'); }
+    function canDelete() { return hasPermission('delete'); }
+    
+    window.showTrialPopup = function() {
+      document.getElementById('trial-popup-modal').style.display = 'flex';
+    };
 
     // ========== UPDATE ADMIN CONTROLS AND WHATSAPP VISIBILITY ==========
     function updateAdminControls() {
@@ -6294,8 +6322,15 @@ body.light-mode .pdf-name {
           <div class="subject-desc">${subject.desc}</div>
         `;
 
-        card.addEventListener("click", () => {
+       card.addEventListener("click", () => {
+          // NEW: Trial Restriction for Subjects
+          if (currentUser.role === 'Trial' && subject.name.toLowerCase() !== 'mathematics') {
+            window.showTrialPopup();
+            return;
+          }
+          
           currentSubject = subject.name;
+          // ... rest of the existing code ...
           
           // Cleaner approach: store it in a variable first
           const lowerName = subject.name.toLowerCase();
@@ -6578,7 +6613,7 @@ function validateUserAccount(user) {
   }
 
   // --- EXISTING: ROLE & CLASS CHECKS ---
-  const validRoles = ['Admin', 'Teacher', 'User', 'Student'];
+  const validRoles = ['Admin', 'Teacher', 'User', 'Student', 'Editor', 'Trial'];
   if (!validRoles.includes(user.role)) {
     return { valid: false, error: 'invalid_role' };
   }
@@ -10325,6 +10360,19 @@ function setupMobileBackButton() {
       <h2 style="color:#ef4444; margin-top:0; font-family: 'Noto Sans', sans-serif;">Session Terminated</h2>
       <p style="color:#e5e7eb; font-size: 1rem; margin-bottom: 25px;">Your account was logged in from another device. You have been forcibly logged out of this session to secure your account.</p>
       <button onclick="executeForceLogout()" style="background:#ef4444; color:white; border:none; padding:12px 24px; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1.1rem;">Log In Again</button>
+    </div>
+  </div>
+
+  <!-- Trial Popopup -->
+  <div id="trial-popup-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center;">
+    <div style="background:#1e293b; padding:30px; border-radius:12px; text-align:center; max-width:90%; width:400px; border:1px solid #f59e0b; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <div style="font-size: 40px; margin-bottom: 10px;">🔒</div>
+      <h2 style="color:#f59e0b; margin-top:0; font-family: 'Noto Sans', sans-serif;">Premium Content</h2>
+      <p style="color:#e5e7eb; font-size: 1rem; margin-bottom: 25px;">As a <strong>Trial</strong> user, you only have access to the first chapter of Mathematics. Upgrade to a full subscription to unlock all subjects and chapters!</p>
+      <a href="https://wa.me/919706195457?text=Hello%20Admin,%20I%20want%20to%20upgrade%20my%20Trial%20account%20to%20a%20Premium%20Subscription." target="_blank" style="display:flex; align-items:center; justify-content:center; gap:10px; background: linear-gradient(to right, #25d366, #128c7e); color:white; border:none; padding:12px 24px; border-radius:8px; cursor:pointer; font-weight:bold; text-decoration:none; width: 100%; box-sizing: border-box; font-size: 1.1rem; margin-bottom: 10px;">
+        <img src="whatsapp.png" style="width:24px;height:24px;"> Contact Admin
+      </a>
+      <button onclick="document.getElementById('trial-popup-modal').style.display='none'" style="background:transparent; color:#9ca3af; border:1px solid #4b5563; padding:10px 24px; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1rem;">Close</button>
     </div>
   </div>
   <!-- NO SERVICE WORKER REGISTRATION - Completely disabled -->
