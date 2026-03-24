@@ -4554,7 +4554,7 @@ body.light-mode .pdf-name {
     const version = Date.now();
     
     // ========== APPS SCRIPT CONFIGURATION ==========
-    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwf3FEX0Lcpq7IUOdM01uje7T4vWfVVSjObcFy4x4pPVikU5JshK_5-aCAV_T1swZ5cJQ/exec';
+    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbySSDI0um1N7gT3Asb9ailU5ghOTqlOCPg1nnAhF9Y0abAGVXr1jTtTfjzdQh7f4GT18w/exec';
     const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywZxxYPrmRPhNkIaQNFdWx71z8QXnRJlTHcJ56fWCh6PG2pHDolR8VWqrO0-0HNJrv/exec';
 
     // ========== CACHE CONFIGURATION ==========
@@ -4563,6 +4563,7 @@ body.light-mode .pdf-name {
     const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
     // ========== GLOBAL VARIABLES ==========
+    let sessionMonitorInterval = null;
     let questions = [];
     let originalQuestions = [];
     let currentIndex = 0;
@@ -6489,8 +6490,36 @@ body.light-mode .pdf-name {
       if (failedAttempts >= MAX_ATTEMPTS) startCooldown();
     }
 
-   
-   // ========== VALIDATION FUNCTIONS ==========
+   // ========== SINGLE DEVICE LOGIN MONITOR ==========
+    function startSessionMonitor() {
+      if (sessionMonitorInterval) clearInterval(sessionMonitorInterval);
+      
+      // Check every 30 seconds
+      sessionMonitorInterval = setInterval(async () => {
+        // Stop checking if the user isn't logged in properly
+        if (!currentUser || !currentUser.username || !currentUser.token) return;
+        
+        try {
+          const url = `${AUTH_APPS_SCRIPT_URL}?action=check_session&username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&_t=${Date.now()}`;
+          const response = await jsonpRequest(url, 'sessionCheckCb');
+          
+          if (response && response.valid === false && response.reason === 'multi_login') {
+            // Token mismatch! Someone else logged in.
+            clearInterval(sessionMonitorInterval);
+            document.getElementById('multi-login-modal').style.display = 'flex';
+          }
+        } catch (e) {
+          console.log("Session monitor check skipped due to network fluctuation.");
+        }
+      }, 30000); 
+    }
+
+    window.executeForceLogout = function() {
+      document.getElementById('multi-login-modal').style.display = 'none';
+      logout();
+      location.reload(); // Hard reload ensures a clean slate
+    };
+ 
    // ========== VALIDATION FUNCTIONS ==========
 function validateUserAccount(user) {
   // SECURITY UPGRADE: Reject anyone trying to login without a server-generated token
@@ -6602,6 +6631,7 @@ function validateUserAccount(user) {
       await loadTelegramConfig();
 
       updateAdminControls();
+      startSessionMonitor();
 
       if (!isRestore) sendLoginNotification(user);
     }
@@ -6610,6 +6640,7 @@ function validateUserAccount(user) {
       if (timerInterval) clearInterval(timerInterval);
       if (inactivityTimer) clearTimeout(inactivityTimer);
       if (cooldownTimer) clearInterval(cooldownTimer);
+      if (sessionMonitorInterval) clearInterval(sessionMonitorInterval);
 
       imageCache.clear();
       clearSession();
@@ -10267,6 +10298,15 @@ function setupMobileBackButton() {
     <div style="display: flex; gap: 15px; height: 80px; flex-shrink: 0; align-items: center; justify-content: center; width: 100%; background: #0f172a; border-top: 1px solid #334155;">
       <button id="cancel-crop-btn" style="padding: 12px 24px; border-radius: 8px; border: none; background: #ef4444; color: white; font-weight: bold; font-size: 1rem; cursor: pointer;">Cancel</button>
       <button id="save-crop-btn" style="padding: 12px 24px; border-radius: 8px; border: none; background: #22c55e; color: white; font-weight: bold; font-size: 1rem; cursor: pointer;">Crop & Save</button>
+    </div>
+  </div>
+<!-- force logout popup -->
+  <div id="multi-login-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center;">
+    <div style="background:#1e293b; padding:30px; border-radius:12px; text-align:center; max-width:90%; width:400px; border:1px solid #ef4444; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <div style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
+      <h2 style="color:#ef4444; margin-top:0; font-family: 'Noto Sans', sans-serif;">Session Terminated</h2>
+      <p style="color:#e5e7eb; font-size: 1rem; margin-bottom: 25px;">Your account was logged in from another device. You have been forcibly logged out of this session to secure your account.</p>
+      <button onclick="executeForceLogout()" style="background:#ef4444; color:white; border:none; padding:12px 24px; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1.1rem;">Log In Again</button>
     </div>
   </div>
   <!-- NO SERVICE WORKER REGISTRATION - Completely disabled -->
