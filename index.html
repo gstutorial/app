@@ -4400,11 +4400,14 @@ body.light-mode .pdf-name {
           <span class="toggle-hint">(Image upload areas)</span>
         </div>
 
-        <!-- Question Image Upload Section -->
-        <div id="question-image-upload-section" class="image-url-section hidden">
-          <div class="editor-row">
-            <label>Question Image:</label>
-            <div class="image-upload-container">
+       <div class="editor-row">
+          <div onclick="toggleQEditorPanel('q-img-panel', 'q-img-icon')" style="cursor:pointer; background:#1e293b; padding:12px 15px; border-radius:8px; border:1px solid #3b82f6; display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <span style="font-weight:bold; color:#e5e7eb;">🖼️ Add Question Image (Optional)</span>
+            <span id="q-img-icon" style="transition:transform 0.3s;">▼</span>
+          </div>
+          
+          <div id="q-img-panel" style="display:none; background:#0f172a; padding:15px; border-radius:8px; border:1px solid #334155; margin-bottom:15px;">
+            <div class="image-upload-container" style="margin:0;">
               <div class="upload-area" id="upload-question-image">
                 <div class="upload-icon">📷</div>
                 <div class="upload-text">Click to upload or drag & drop</div>
@@ -4418,103 +4421,117 @@ body.light-mode .pdf-name {
               <div class="upload-buttons">
                 <button class="upload-clear-btn" onclick="clearImageUpload('preview-question-image', 'editor-image-url')">Clear</button>
               </div>
-              <!-- Hidden input field for image URL -->
               <input type="hidden" id="editor-image-url">
-              <p style="color: #9ca3af; font-size: 0.8rem; margin-top: 5px;">Image will be uploaded and saved automatically</p>
             </div>
           </div>
         </div>
 
-        <!-- Options Section -->
         <div id="mcq-options-section">
           <label style="margin-bottom: 12px; display: block;">Options:</label>
           <div style="display: flex; flex-direction: column; gap: 12px;">
-            <!-- Option A -->
-            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden;">
-              <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">A.</div>
-              <div style="flex: 1; padding: 8px 12px;">
-                <input type="text" id="editor-option-a" placeholder="Option A" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem; margin-bottom: 8px;">
-                <div id="option-a-image-section" class="image-url-section hidden">
-                  <div class="image-upload-container" style="margin: 5px 0;">
-                    <div class="upload-area" id="upload-option-a-image" style="padding: 10px;">
-                      <div class="upload-text">Upload option A image</div>
-                    </div>
-                    <img id="preview-option-a-image" class="upload-preview" src="" alt="Preview">
-                    <div class="upload-progress">
-                      <div class="upload-progress-bar"></div>
-                    </div>
-                    <!-- Hidden input field for option image URL -->
-                    <input type="hidden" id="editor-option-a-img">
-                  </div>
-                </div>
-              </div>
-            </div>
             
-            <!-- Option B -->
-            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden;">
-              <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">B.</div>
-              <div style="flex: 1; padding: 8px 12px;">
-                <input type="text" id="editor-option-b" placeholder="Option B" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem; margin-bottom: 8px;">
-                <div id="option-b-image-section" class="image-url-section hidden">
-                  <div class="image-upload-container" style="margin: 5px 0;">
-                    <div class="upload-area" id="upload-option-b-image" style="padding: 10px;">
-                      <div class="upload-text">Upload option B image</div>
-                    </div>
-                    <img id="preview-option-b-image" class="upload-preview" src="" alt="Preview">
-                    <div class="upload-progress">
-                      <div class="upload-progress-bar"></div>
-                    </div>
-                    <!-- Hidden input field for option image URL -->
-                    <input type="hidden" id="editor-option-b-img">
+            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden; flex-direction: column;">
+              <div style="display: flex; width: 100%;">
+                <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">A.</div>
+                <div style="flex: 1; padding: 8px 12px; display: flex; gap: 8px;">
+                  <input type="text" id="editor-option-a" placeholder="Option A text" style="flex:1; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem;">
+                  <button type="button" id="btn-opt-a-img" onclick="toggleQEditorPanel('opt-a-img-panel')" style="background:#334155; border:none; border-radius:8px; padding:0 12px; cursor:pointer;" title="Add Image to Option A">🖼️</button>
+                </div>
+              </div>
+              <div id="opt-a-img-panel" style="display:none; padding: 0 12px 12px 12px;">
+                <div class="image-upload-container" style="margin: 0;">
+                  <div class="upload-area" id="upload-option-a-image" style="padding: 10px;">
+                    <div class="upload-text">Upload option A image</div>
+                  </div>
+                  <img id="preview-option-a-image" class="upload-preview" src="" alt="Preview">
+                  <div class="upload-progress">
+                    <div class="upload-progress-bar"></div>
+                  </div>
+                  <input type="hidden" id="editor-option-a-img">
+                  <div class="upload-buttons" style="justify-content: flex-end;">
+                    <button class="upload-clear-btn" style="padding:4px 8px; font-size:0.8rem;" onclick="clearImageUpload('preview-option-a-image', 'editor-option-a-img')">Clear</button>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <!-- Option C -->
-            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden;">
-              <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">C.</div>
-              <div style="flex: 1; padding: 8px 12px;">
-                <input type="text" id="editor-option-c" placeholder="Option C" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem; margin-bottom: 8px;">
-                <div id="option-c-image-section" class="image-url-section hidden">
-                  <div class="image-upload-container" style="margin: 5px 0;">
-                    <div class="upload-area" id="upload-option-c-image" style="padding: 10px;">
-                      <div class="upload-text">Upload option C image</div>
-                    </div>
-                    <img id="preview-option-c-image" class="upload-preview" src="" alt="Preview">
-                    <div class="upload-progress">
-                      <div class="upload-progress-bar"></div>
-                    </div>
-                    <!-- Hidden input field for option image URL -->
-                    <input type="hidden" id="editor-option-c-img">
+
+            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden; flex-direction: column;">
+              <div style="display: flex; width: 100%;">
+                <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">B.</div>
+                <div style="flex: 1; padding: 8px 12px; display: flex; gap: 8px;">
+                  <input type="text" id="editor-option-b" placeholder="Option B text" style="flex:1; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem;">
+                  <button type="button" id="btn-opt-b-img" onclick="toggleQEditorPanel('opt-b-img-panel')" style="background:#334155; border:none; border-radius:8px; padding:0 12px; cursor:pointer;" title="Add Image to Option B">🖼️</button>
+                </div>
+              </div>
+              <div id="opt-b-img-panel" style="display:none; padding: 0 12px 12px 12px;">
+                <div class="image-upload-container" style="margin: 0;">
+                  <div class="upload-area" id="upload-option-b-image" style="padding: 10px;">
+                    <div class="upload-text">Upload option B image</div>
+                  </div>
+                  <img id="preview-option-b-image" class="upload-preview" src="" alt="Preview">
+                  <div class="upload-progress">
+                    <div class="upload-progress-bar"></div>
+                  </div>
+                  <input type="hidden" id="editor-option-b-img">
+                  <div class="upload-buttons" style="justify-content: flex-end;">
+                    <button class="upload-clear-btn" style="padding:4px 8px; font-size:0.8rem;" onclick="clearImageUpload('preview-option-b-image', 'editor-option-b-img')">Clear</button>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <!-- Option D -->
-            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden;">
-              <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">D.</div>
-              <div style="flex: 1; padding: 8px 12px;">
-                <input type="text" id="editor-option-d" placeholder="Option D" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem; margin-bottom: 8px;">
-                <div id="option-d-image-section" class="image-url-section hidden">
-                  <div class="image-upload-container" style="margin: 5px 0;">
-                    <div class="upload-area" id="upload-option-d-image" style="padding: 10px;">
-                      <div class="upload-text">Upload option D image</div>
-                    </div>
-                    <img id="preview-option-d-image" class="upload-preview" src="" alt="Preview">
-                    <div class="upload-progress">
-                      <div class="upload-progress-bar"></div>
-                    </div>
-                    <!-- Hidden input field for option image URL -->
-                    <input type="hidden" id="editor-option-d-img">
+
+            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden; flex-direction: column;">
+              <div style="display: flex; width: 100%;">
+                <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">C.</div>
+                <div style="flex: 1; padding: 8px 12px; display: flex; gap: 8px;">
+                  <input type="text" id="editor-option-c" placeholder="Option C text" style="flex:1; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem;">
+                  <button type="button" id="btn-opt-c-img" onclick="toggleQEditorPanel('opt-c-img-panel')" style="background:#334155; border:none; border-radius:8px; padding:0 12px; cursor:pointer;" title="Add Image to Option C">🖼️</button>
+                </div>
+              </div>
+              <div id="opt-c-img-panel" style="display:none; padding: 0 12px 12px 12px;">
+                <div class="image-upload-container" style="margin: 0;">
+                  <div class="upload-area" id="upload-option-c-image" style="padding: 10px;">
+                    <div class="upload-text">Upload option C image</div>
+                  </div>
+                  <img id="preview-option-c-image" class="upload-preview" src="" alt="Preview">
+                  <div class="upload-progress">
+                    <div class="upload-progress-bar"></div>
+                  </div>
+                  <input type="hidden" id="editor-option-c-img">
+                  <div class="upload-buttons" style="justify-content: flex-end;">
+                    <button class="upload-clear-btn" style="padding:4px 8px; font-size:0.8rem;" onclick="clearImageUpload('preview-option-c-image', 'editor-option-c-img')">Clear</button>
                   </div>
                 </div>
               </div>
             </div>
+
+            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden; flex-direction: column;">
+              <div style="display: flex; width: 100%;">
+                <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">D.</div>
+                <div style="flex: 1; padding: 8px 12px; display: flex; gap: 8px;">
+                  <input type="text" id="editor-option-d" placeholder="Option D text" style="flex:1; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem;">
+                  <button type="button" id="btn-opt-d-img" onclick="toggleQEditorPanel('opt-d-img-panel')" style="background:#334155; border:none; border-radius:8px; padding:0 12px; cursor:pointer;" title="Add Image to Option D">🖼️</button>
+                </div>
+              </div>
+              <div id="opt-d-img-panel" style="display:none; padding: 0 12px 12px 12px;">
+                <div class="image-upload-container" style="margin: 0;">
+                  <div class="upload-area" id="upload-option-d-image" style="padding: 10px;">
+                    <div class="upload-text">Upload option D image</div>
+                  </div>
+                  <img id="preview-option-d-image" class="upload-preview" src="" alt="Preview">
+                  <div class="upload-progress">
+                    <div class="upload-progress-bar"></div>
+                  </div>
+                  <input type="hidden" id="editor-option-d-img">
+                  <div class="upload-buttons" style="justify-content: flex-end;">
+                    <button class="upload-clear-btn" style="padding:4px 8px; font-size:0.8rem;" onclick="clearImageUpload('preview-option-d-image', 'editor-option-d-img')">Clear</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
-
         <!-- Answer -->
         <div class="editor-row" id="answer-section">
           <label>Correct Answer:</label>
@@ -5794,8 +5811,30 @@ body.light-mode .pdf-name {
       });
     }
 
+    // Handles opening/closing the new Editor UI panels
+    function toggleQEditorPanel(panelId, iconId) {
+      const panel = document.getElementById(panelId);
+      if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        if(iconId) document.getElementById(iconId).style.transform = 'rotate(180deg)';
+        
+        // Highlight option button blue when panel is open
+        const btnId = panelId.replace('-img-panel', '-img');
+        const btn = document.getElementById('btn-' + btnId);
+        if(btn) btn.style.background = '#3b82f6';
+      } else {
+        panel.style.display = 'none';
+        if(iconId) document.getElementById(iconId).style.transform = 'rotate(0deg)';
+        
+        // Revert option button color when panel is closed
+        const btnId = panelId.replace('-img-panel', '-img');
+        const btn = document.getElementById('btn-' + btnId);
+        if(btn) btn.style.background = '#334155';
+      }
+    }
+
     // ========== OPEN QUESTION EDITOR ==========
-  function openQuestionEditor(index) {
+ function openQuestionEditor(index) {
       if (!questions[index]) return;
       
       const q = questions[index];
@@ -5804,12 +5843,6 @@ body.light-mode .pdf-name {
       document.getElementById('editor-title').textContent = 'Edit Question';
       document.getElementById('editor-question-type').value = q.isSubjective ? 'subjective' : 'mcq';
       document.getElementById('editor-question').value = q.question;
-      
-      // Reset image URL toggle and hide fields by default
-      if (showImageUrlsCheckbox) {
-        showImageUrlsCheckbox.checked = false;
-        toggleImageUrlFields();
-      }
       
       document.getElementById('editor-image-url').value = q.imageUrl || '';
       document.getElementById('editor-marks').value = q.marks || 1;
@@ -5825,6 +5858,136 @@ body.light-mode .pdf-name {
           preview.classList.remove('visible');
         }
       });
+      
+      if (q.isSubjective) {
+        document.getElementById('editor-subjective-answer').value = q.options && q.options[0] ? q.options[0] : '';
+      } else {
+        document.getElementById('editor-option-a').value = q.options && q.options[0] ? q.options[0] : '';
+        document.getElementById('editor-option-b').value = q.options && q.options[1] ? q.options[1] : '';
+        document.getElementById('editor-option-c').value = q.options && q.options[2] ? q.options[2] : '';
+        document.getElementById('editor-option-d').value = q.options && q.options[3] ? q.options[3] : '';
+        
+        // Load option images
+        document.getElementById('editor-option-a-img').value = q.optionImages && q.optionImages[0] ? q.optionImages[0] : '';
+        document.getElementById('editor-option-b-img').value = q.optionImages && q.optionImages[1] ? q.optionImages[1] : '';
+        document.getElementById('editor-option-c-img').value = q.optionImages && q.optionImages[2] ? q.optionImages[2] : '';
+        document.getElementById('editor-option-d-img').value = q.optionImages && q.optionImages[3] ? q.optionImages[3] : '';
+        
+        // Restore image previews if URLs exist
+        if (q.imageUrl) {
+          const preview = document.getElementById('preview-question-image');
+          if (preview) { preview.src = q.imageUrl; preview.classList.add('visible'); }
+        }
+        
+        ['a', 'b', 'c', 'd'].forEach((opt, idx) => {
+          if (q.optionImages && q.optionImages[idx]) {
+            const preview = document.getElementById(`preview-option-${opt}-image`);
+            if (preview) { preview.src = q.optionImages[idx]; preview.classList.add('visible'); }
+          }
+        });
+        
+        document.getElementById('editor-answer').value = q.answer || '';
+      }
+      
+      // Populate hidden fields
+      document.getElementById('editor-original-index').value = q.originalIndex;
+      document.getElementById('editor-sheet-id').value = window.currentSheetId;
+      document.getElementById('editor-gid').value = window.currentGid;
+      
+      modal.style.display = 'flex';
+
+      // NEW: Smart Auto-Expander for the panels
+      setTimeout(() => {
+          const qPanel = document.getElementById('q-img-panel');
+          const qUrl = document.getElementById('editor-image-url');
+          if(qPanel && qUrl && qUrl.value) {
+              qPanel.style.display = 'block';
+              document.getElementById('q-img-icon').style.transform = 'rotate(180deg)';
+          } else if (qPanel) {
+              qPanel.style.display = 'none';
+              document.getElementById('q-img-icon').style.transform = 'rotate(0deg)';
+          }
+          
+          ['a', 'b', 'c', 'd'].forEach(opt => {
+              const input = document.getElementById('editor-option-' + opt + '-img');
+              const panel = document.getElementById('opt-' + opt + '-img-panel');
+              const btn = document.getElementById('btn-opt-' + opt + '-img');
+              if(input && panel && btn) {
+                  if(input.value) {
+                      panel.style.display = 'block';
+                      btn.style.background = '#3b82f6';
+                  } else {
+                      panel.style.display = 'none';
+                      btn.style.background = '#334155';
+                  }
+              }
+          });
+      }, 50);
+    }
+
+    function openNewQuestionEditor() {
+      const modal = document.getElementById('question-editor-modal');
+      
+      document.getElementById('editor-title').textContent = 'Add New Question';
+      document.getElementById('editor-question-type').value = 'mcq';
+      document.getElementById('editor-question').value = '';
+      // Hide all panels
+      document.getElementById('q-img-panel').style.display = 'none';
+      document.getElementById('q-img-icon').style.transform = 'rotate(0deg)';
+      ['a', 'b', 'c', 'd'].forEach(opt => {
+          document.getElementById('opt-' + opt + '-img-panel').style.display = 'none';
+          document.getElementById('btn-opt-' + opt + '-img').style.background = '#334155';
+      });
+      
+      document.getElementById('editor-image-url').value = '';
+      document.getElementById('editor-marks').value = 1;
+      document.getElementById('editor-explanation').value = '';
+      
+      toggleQuestionTypeSections('mcq');
+      
+      // Clear option fields
+      ['a', 'b', 'c', 'd'].forEach(opt => {
+        const input = document.getElementById(`editor-option-${opt}`);
+        if (input) input.value = '';
+        
+        const imgInput = document.getElementById(`editor-option-${opt}-img`);
+        if (imgInput) imgInput.value = '';
+      });
+      
+      // Clear and Reset Previews
+      ['question', 'option-a', 'option-b', 'option-c', 'option-d'].forEach(prefix => {
+        const preview = document.getElementById(`preview-${prefix}-image`);
+        if (preview) {
+          preview.src = '';
+          preview.classList.remove('visible');
+        }
+      });
+      
+      document.getElementById('editor-answer').value = 'A';
+      document.getElementById('editor-subjective-answer').value = '';
+      
+      // Set metadata
+      document.getElementById('editor-original-index').value = 'new';
+      document.getElementById('editor-sheet-id').value = window.currentSheetId;
+      document.getElementById('editor-gid').value = window.currentGid;
+
+      // Close all image panels by default for a clean UI
+      const qPanel = document.getElementById('q-img-panel');
+      if (qPanel) {
+          qPanel.style.display = 'none';
+          document.getElementById('q-img-icon').style.transform = 'rotate(0deg)';
+      }
+      ['a', 'b', 'c', 'd'].forEach(opt => {
+          const panel = document.getElementById('opt-' + opt + '-img-panel');
+          const btn = document.getElementById('btn-opt-' + opt + '-img');
+          if (panel && btn) {
+              panel.style.display = 'none';
+              btn.style.background = '#334155';
+          }
+      });
+      
+      modal.style.display = 'flex';
+    }
       
       // --- SECURITY FIX: Target specific Upload Area IDs ---
       const isAdminUser = currentUser && currentUser.role && (currentUser.role.toString().toLowerCase() === 'admin' || currentUser.role.toString().toLowerCase() === 'editor');
