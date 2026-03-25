@@ -985,6 +985,10 @@ body.light-mode .pdf-name {
       background: rgba(255, 255, 255, 0.7);
       border: 2px dashed rgba(59, 130, 246, 0.3);
     }
+    /* Automatically hide the upload box when an image is successfully loaded */
+    .image-upload-container:has(img.visible) .upload-area {
+      display: none !important;
+    }
 
     .upload-area {
       border: 2px dashed rgba(59, 130, 246, 0.7);
@@ -6101,15 +6105,22 @@ body.light-mode .pdf-name {
           document.getElementById('editor-option-d').value.trim()
         ];
         
-        const filledOptions = options.filter(opt => opt !== '');
-        if (filledOptions.length < 2) {
-          alert("Please provide at least 2 options for MCQ questions.");
+        const optionImages = [optionAImg, optionBImg, optionCImg, optionDImg];
+        
+        // Count how many options have EITHER text OR an image
+        let validOptionsCount = 0;
+        for (let i = 0; i < 4; i++) {
+          if (options[i] !== '' || optionImages[i] !== '') {
+            validOptionsCount++;
+          }
+        }
+        
+        if (validOptionsCount < 2) {
+          alert("Please provide at least 2 options for MCQ questions (can be text, image, or both).");
           return;
         }
         
-        const optionImages = [optionAImg, optionBImg, optionCImg, optionDImg];
-        const answer = document.getElementById('editor-answer-mcq').value;
-        
+        const answer = document.getElementById('editor-answer-mcq').value;        
         rowData = {
           question: question,
           option1: options[0],
