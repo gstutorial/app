@@ -7957,17 +7957,6 @@ function validateUserAccount(user) {
       };
     }
 
-    // ========== MOBILE BACK BUTTON ROUTER (FIXED) ==========
-    let backButtonListenerAdded = false;
-    let allowAppExit = false;
-
-    // Helper to accurately check if a screen container is currently visible
-    function isScreenVisible(id) {
-        const el = document.getElementById(id);
-        if (!el) return false;
-        const style = window.getComputedStyle(el);
-        return style.display === 'block' || style.display === 'flex';
-    }
 
 // ========== MOBILE BACK BUTTON ROUTER (FIXED) ==========
     let backButtonListenerAdded = false;
