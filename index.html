@@ -6699,7 +6699,6 @@ function validateUserAccount(user) {
    
    // ========== LOGIN FUNCTION ==========
     // 🚨 ADDED "async" HERE
-    // ========== LOGIN FUNCTION ==========
     async function login(user, isRestore = false) {
       const validation = validateUserAccount(user);
 
@@ -6733,17 +6732,13 @@ function validateUserAccount(user) {
       loadClasses();
       saveSession();
       
+      // 🚨 ADDED "await" HERE to pause the code until the keys arrive!
       await loadTelegramConfig();
 
       updateAdminControls();
       startSessionMonitor();
 
       if (!isRestore) sendLoginNotification(user);
-      
-      // Activate the back-button trap for the main menu
-     // Activate the safe hash trap for the main menu
-      const trapUrl = window.location.pathname + window.location.search + '#app';
-      history.pushState({ safe: true }, document.title, trapUrl);
     }
     // ========== LOGOUT FUNCTION ==========
     function logout() {
@@ -6791,35 +6786,7 @@ function validateUserAccount(user) {
       sideMenu.classList.remove('open');
       menuOverlay.classList.remove('open');
     }
-// ========== EXACT INACTIVITY TRACKER (FOR MINIMIZED APP) ==========
-    function handleVisibilityChange() {
-      if (document.visibilityState === 'visible' && currentUser) {
-        const savedSession = localStorage.getItem('gs_tutorial_session');
-        if (savedSession) {
-          try {
-            const sessionData = JSON.parse(savedSession);
-            const INACTIVITY_LIMIT = 10 * 60 * 1000; // 10 minutes in milliseconds
-            
-            // Check the absolute real-world time passed since they last touched the screen
-            const timeSinceLastActivity = Date.now() - (sessionData.lastActivity || sessionData.timestamp);
-            
-            if (timeSinceLastActivity >= INACTIVITY_LIMIT) {
-              // 10+ minutes passed while minimized! Force logout.
-              window.showCustomAlert("Session Expired", "You have been logged out due to 10 minutes of inactivity.", () => {
-                logout();
-              });
-            } else {
-              // Less than 10 minutes passed. They stay exactly where they left off!
-              resetInactivityTimer();
-            }
-          } catch(e) {
-            console.error("Session parse error on wake", e);
-          }
-        }
-      }
-    }
 
-    
    function autoLogout() {
       if (currentUser) {
         window.showCustomAlert("Session Expired", "You have been automatically logged out due to 10 minutes of inactivity.", () => {
@@ -6828,21 +6795,11 @@ function validateUserAccount(user) {
       }
     }
 
-   function handleUserActivity() {
+    function handleUserActivity() {
+      updateLastActivity();
       resetInactivityTimer();
-      
-      // Save the exact real-world time of this touch to localStorage
-      if (currentUser) {
-        const savedSession = localStorage.getItem('gs_tutorial_session');
-        if (savedSession) {
-          try {
-            let sessionData = JSON.parse(savedSession);
-            sessionData.lastActivity = Date.now();
-            localStorage.setItem('gs_tutorial_session', JSON.stringify(sessionData));
-          } catch(e) {}
-        }
-      }
     }
+
     function resetInactivityTimer() {
       if (inactivityTimer) clearTimeout(inactivityTimer);
       if (currentUser) inactivityTimer = setTimeout(autoLogout, INACTIVITY_TIMEOUT);
@@ -7959,11 +7916,11 @@ function validateUserAccount(user) {
       };
     }
 
-
-// ========== MOBILE BACK BUTTON ROUTER (HASH SECURED) ==========
+    // ========== MOBILE BACK BUTTON ROUTER (FIXED) ==========
     let backButtonListenerAdded = false;
     let allowAppExit = false;
 
+    // Helper to accurately check if a screen container is currently visible
     function isScreenVisible(id) {
         const el = document.getElementById(id);
         if (!el) return false;
@@ -7971,20 +7928,19 @@ function validateUserAccount(user) {
         return style.display === 'block' || style.display === 'flex';
     }
 
-    function setupMobileBackButton() {
+function setupMobileBackButton() {
       if (backButtonListenerAdded) return;
       backButtonListenerAdded = true;
 
-      // THE FIX: Appending '#app' mathematically prevents the browser from reloading the page on back swipes
-      const trapUrl = window.location.pathname + window.location.search + '#app';
-      history.pushState({ safe: true }, document.title, trapUrl);
+      window.history.pushState({ isAppTrap: true }, "");
 
       window.addEventListener('popstate', function(event) {
         if (allowAppExit) return;
 
-        // Keep them trapped safely using the Hash URL
-        history.pushState({ safe: true }, document.title, trapUrl);
+        // Force trap to stay alive
+        window.history.pushState({ isAppTrap: true }, "");
         
+        // 1. Trap Back Button for the Cropper Modal (Perfectly placed!)
         const cropperModalEl = document.getElementById('cropper-modal');
         if (cropperModalEl && isScreenVisible('cropper-modal')) { 
             const cancelBtn = document.getElementById('cancel-crop-btn');
@@ -7992,28 +7948,33 @@ function validateUserAccount(user) {
             return; 
         }
 
+        // Close UI Menus
         const sideMenu = document.getElementById('sideMenu');
         if (sideMenu && sideMenu.classList.contains('open')) { toggleMenu(); return; }
         
         const editModal = document.getElementById('edit-pdf-modal');
         if (editModal && isScreenVisible('edit-pdf-modal')) { editModal.style.display = 'none'; return; }
 
+
         const qModal = document.getElementById('question-editor-modal');
         if (qModal && isScreenVisible('question-editor-modal')) { qModal.style.display = 'none'; return; }
 
+        // PDF Inner Folder View
         if (isScreenVisible('pyq-container') && window.currentPdfCategory) {
             window.currentPdfCategory = null;
             if (typeof renderPdfView === 'function') renderPdfView();
             return;
         }
 
+        // PDF Main Folder View -> Back to Subjects
         if (isScreenVisible('pyq-container')) {
             if (typeof navigateToSubjects === 'function') navigateToSubjects();
             return;
         }
 
+        // Quiz View -> Back to Subjects
         if (isScreenVisible('quiz-container')) {
-            if (typeof isQuizActive !== 'undefined' && isQuizActive) {
+            if (isQuizActive) {
                 window.showCustomConfirm(
                     "Warning",
                     "Quiz is in progress. Are you sure you want to leave? Your progress will be lost.",
@@ -8027,25 +7988,22 @@ function validateUserAccount(user) {
             }
             return;
         }
-        
+        // Subject Selection -> Back to Classes
         if (isScreenVisible('subject-selection')) {
             if (typeof navigateToClasses === 'function') navigateToClasses();
             return;
         }
 
-        // Main Menu -> Custom Logout Confirmation
+        // Main Menu -> Confirm Exit
         if (isScreenVisible('class-selection')) {
-            window.showCustomConfirm(
-                "Logout",
-                "Are you sure you want to logout?",
-                "Logout",
-                () => {
-                    logout(); 
-                }
-            );
+            if (confirm("Are you sure you want to exit the app?")) {
+                allowAppExit = true;
+                window.history.back(); 
+            }
             return;
         }
         
+        // Login Screen -> Exit freely
         if (isScreenVisible('login-container')) {
             allowAppExit = true;
             window.history.back();
@@ -10420,11 +10378,15 @@ function validateUserAccount(user) {
     setTheme(localStorage.getItem('theme') || 'dark');
 
     
- // ========== INITIALIZATION (STRICT SECURITY VERSION) ==========
-    async function initializeApp() {
+  // ========== INITIALIZATION (SECURE VERSION) ==========
+   async function initializeApp() {
+      // Activate the back button router
       setupMobileBackButton();
+
+      // 1. Get initial configurations
+      await loadTelegramConfig();
+      await getUserIP();
       setupImageUploadHandlers();
-      getUserIP();
 
       const savedSession = localStorage.getItem('gs_tutorial_session');
       
@@ -10433,70 +10395,62 @@ function validateUserAccount(user) {
           const sessionData = JSON.parse(savedSession);
           const user = sessionData.user;
 
-         
-         // 1. Check local inactivity timer first (10 minutes)
-          const timeSinceLastActivity = Date.now() - (sessionData.lastActivity || sessionData.timestamp);
-          if (timeSinceLastActivity > (10 * 60 * 1000)) {
-            window.showCustomAlert("Session Expired", "You have been logged out due to 10 minutes of inactivity.", () => {
-              logout();
-            });
-            return;
-          }
-
-          // 2. Show a secure loading screen
-          document.body.insertAdjacentHTML('beforeend', '<div id="secure-loading" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f172a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;"><div class="loading-spinner"></div><h3 style="color:#3b82f6;margin-top:20px;">Verifying Security Token...</h3><p style="color:#9ca3af;font-size:0.9rem;">Connecting to secure server.</p></div>');
-
-          // 3. THE SECURITY HANDSHAKE
-          const verifyUrl = `${MASTER_CONFIG_APPS_SCRIPT_URL}?action=verifyToken&username=${encodeURIComponent(user.username)}&token=${encodeURIComponent(user.token)}&callback=handleTokenVerification`;
+          // 2. THE SECURITY HANDSHAKE
+          // Ask the server to verify the token before letting the user in
           
-          const tokenStatus = await new Promise((resolve) => {
+          const verifyUrl = `${MASTER_CONFIG_APPS_SCRIPT_URL}?action=verifyToken&username=${encodeURIComponent(user.username)}&token=${encodeURIComponent(user.token)}&callback=handleTokenVerification`;
+          const isTokenValid = await new Promise((resolve) => {
             window.handleTokenVerification = function(response) {
-              resolve(response && response.success === true ? 'valid' : 'invalid');
+              // Only let them in if Google explicitly says TRUE
+              resolve(response && response.success === true);
             };
 
             const script = document.createElement('script');
             script.src = verifyUrl;
             
-            setTimeout(() => { resolve('timeout'); }, 20000); 
-            script.onerror = () => { resolve('error'); };
+            // STRICT SECURITY: If Google doesn't answer in 15 seconds, lock them out.
+            setTimeout(() => {
+              console.error("Server timeout. Enforcing security lockout.");
+              resolve(false); 
+            }, 15000); 
+
+            // STRICT SECURITY: If their internet drops completely, lock them out.
+            script.onerror = () => {
+              console.error("Network error. Enforcing security lockout.");
+              resolve(false);
+            };
             
             document.head.appendChild(script);
           });
 
-          const loadingEl = document.getElementById('secure-loading');
-          if (loadingEl) loadingEl.remove();
-
-        if (tokenStatus === 'valid') {
+          if (isTokenValid) {
+            // Token is real! Log the user in normally
             currentUser = user;
             login(currentUser, true);
-          } else if (tokenStatus === 'invalid') {
-            console.error("Security Alert: Invalid session detected.");
-            window.showCustomAlert("Security Alert", "Your session has expired or you logged in from another device. Please log in again.", () => {
-              logout();
-            });
           } else {
-            alert("Network Error: Could not verify secure session. Please check your internet connection and refresh the page.");
-            usernameEl.focus();
+            // TOKEN IS FAKE OR EXPIRED - CLEAR EVERYTHING
+            console.error("Security Alert: Invalid session detected. Clearing storage.");
+            logout(); // This clears the fake localStorage data
           }
         } catch (e) {
           console.error("Session Corrupted:", e);
-          window.showCustomAlert("System Error", "Your session data was corrupted. Please log in again.", () => {
-             logout();
-          });
+          logout();
         }
       } else {
+        // No session found, show the login screen
         usernameEl.focus();
       }
 
+      // 3. Set up activity listeners
       document.addEventListener('mousemove', handleUserActivity);
       document.addEventListener('keypress', handleUserActivity);
       document.addEventListener('click', handleUserActivity);
       document.addEventListener('scroll', handleUserActivity);
       document.addEventListener('touchstart', handleUserActivity);
-      document.addEventListener('visibilitychange', handleVisibilityChange);
 
       resetFailedAttempts();
     }
+    
     // Start the app and load configs
     window.addEventListener('DOMContentLoaded', initializeApp);
   </script>
