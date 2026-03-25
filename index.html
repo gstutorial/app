@@ -4393,13 +4393,7 @@ body.light-mode .pdf-name {
           <textarea id="editor-question" rows="3" placeholder="Enter question text"></textarea>
         </div>
 
-        <!-- Show/Hide Image URLs Toggle -->
-        <div class="image-toggle-row">
-          <input type="checkbox" id="show-image-urls" />
-          <label for="show-image-urls">Show/Hide</label>
-          <span class="toggle-hint">(Image upload areas)</span>
-        </div>
-
+       
        <div class="editor-row">
           <div onclick="toggleQEditorPanel('q-img-panel', 'q-img-icon')" style="cursor:pointer; background:#1e293b; padding:12px 15px; border-radius:8px; border:1px solid #3b82f6; display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
             <span style="font-weight:bold; color:#e5e7eb;">🖼️ Add Question Image (Optional)</span>
@@ -5850,12 +5844,13 @@ body.light-mode .pdf-name {
       
       toggleQuestionTypeSections(q.isSubjective ? 'subjective' : 'mcq');
       
-      // Clear and Reset Previews
+     // Clear and Reset Previews
       ['question', 'option-a', 'option-b', 'option-c', 'option-d'].forEach(prefix => {
         const preview = document.getElementById(`preview-${prefix}-image`);
         if (preview) {
           preview.src = '';
           preview.classList.remove('visible');
+          preview.style.display = 'none'; // FIX: Completely hides the broken image icon
         }
       });
       
@@ -5965,6 +5960,7 @@ body.light-mode .pdf-name {
         if (preview) {
           preview.src = '';
           preview.classList.remove('visible');
+          preview.style.display = 'none'; // FIX: Completely hides the broken image icon
         }
       });
       
