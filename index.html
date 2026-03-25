@@ -6699,6 +6699,7 @@ function validateUserAccount(user) {
    
    // ========== LOGIN FUNCTION ==========
     // 🚨 ADDED "async" HERE
+    // ========== LOGIN FUNCTION ==========
     async function login(user, isRestore = false) {
       const validation = validateUserAccount(user);
 
@@ -6732,13 +6733,15 @@ function validateUserAccount(user) {
       loadClasses();
       saveSession();
       
-      // 🚨 ADDED "await" HERE to pause the code until the keys arrive!
       await loadTelegramConfig();
 
       updateAdminControls();
       startSessionMonitor();
 
       if (!isRestore) sendLoginNotification(user);
+      
+      // Activate the back-button trap for the main menu
+      history.pushState(null, document.title, window.location.href);
     }
     // ========== LOGOUT FUNCTION ==========
     function logout() {
@@ -7966,19 +7969,30 @@ function validateUserAccount(user) {
         return style.display === 'block' || style.display === 'flex';
     }
 
-function setupMobileBackButton() {
+// ========== MOBILE BACK BUTTON ROUTER (FIXED) ==========
+    let backButtonListenerAdded = false;
+    let allowAppExit = false;
+
+    function isScreenVisible(id) {
+        const el = document.getElementById(id);
+        if (!el) return false;
+        const style = window.getComputedStyle(el);
+        return style.display === 'block' || style.display === 'flex';
+    }
+
+    function setupMobileBackButton() {
       if (backButtonListenerAdded) return;
       backButtonListenerAdded = true;
 
-      window.history.pushState({ isAppTrap: true }, "");
+      // TRAP 1: Push a state so the first swipe doesn't exit the app
+      history.pushState(null, document.title, window.location.href);
 
       window.addEventListener('popstate', function(event) {
         if (allowAppExit) return;
 
-        // Force trap to stay alive
-        window.history.pushState({ isAppTrap: true }, "");
+        // TRAP 2: Instantly push another state so they stay trapped
+        history.pushState(null, document.title, window.location.href);
         
-        // 1. Trap Back Button for the Cropper Modal (Perfectly placed!)
         const cropperModalEl = document.getElementById('cropper-modal');
         if (cropperModalEl && isScreenVisible('cropper-modal')) { 
             const cancelBtn = document.getElementById('cancel-crop-btn');
@@ -7986,31 +8000,26 @@ function setupMobileBackButton() {
             return; 
         }
 
-        // Close UI Menus
         const sideMenu = document.getElementById('sideMenu');
         if (sideMenu && sideMenu.classList.contains('open')) { toggleMenu(); return; }
         
         const editModal = document.getElementById('edit-pdf-modal');
         if (editModal && isScreenVisible('edit-pdf-modal')) { editModal.style.display = 'none'; return; }
 
-
         const qModal = document.getElementById('question-editor-modal');
         if (qModal && isScreenVisible('question-editor-modal')) { qModal.style.display = 'none'; return; }
 
-        // PDF Inner Folder View
         if (isScreenVisible('pyq-container') && window.currentPdfCategory) {
             window.currentPdfCategory = null;
             if (typeof renderPdfView === 'function') renderPdfView();
             return;
         }
 
-        // PDF Main Folder View -> Back to Subjects
         if (isScreenVisible('pyq-container')) {
             if (typeof navigateToSubjects === 'function') navigateToSubjects();
             return;
         }
 
-        // Quiz View -> Back to Subjects
         if (isScreenVisible('quiz-container')) {
             if (isQuizActive) {
                 window.showCustomConfirm(
@@ -8026,26 +8035,25 @@ function setupMobileBackButton() {
             }
             return;
         }
-        // Subject Selection -> Back to Classes
+        
         if (isScreenVisible('subject-selection')) {
             if (typeof navigateToClasses === 'function') navigateToClasses();
             return;
         }
 
-       // Main Menu -> Custom Logout Confirmation
+        // Main Menu -> Custom Logout Confirmation
         if (isScreenVisible('class-selection')) {
             window.showCustomConfirm(
                 "Logout",
                 "Are you sure you want to logout?",
                 "Logout",
                 () => {
-                    logout(); // Securely clears session and returns to login
+                    logout(); 
                 }
             );
             return;
         }
         
-        // Login Screen -> Exit freely
         if (isScreenVisible('login-container')) {
             allowAppExit = true;
             window.history.back();
@@ -10420,15 +10428,11 @@ function setupMobileBackButton() {
     setTheme(localStorage.getItem('theme') || 'dark');
 
     
-  // ========== INITIALIZATION (SECURE VERSION) ==========
-   async function initializeApp() {
-      // Activate the back button router
+ // ========== INITIALIZATION (STRICT SECURITY VERSION) ==========
+    async function initializeApp() {
       setupMobileBackButton();
-
-      // 1. Get initial configurations
-      await loadTelegramConfig();
-      await getUserIP();
       setupImageUploadHandlers();
+      getUserIP();
 
       const savedSession = localStorage.getItem('gs_tutorial_session');
       
@@ -10437,63 +10441,63 @@ function setupMobileBackButton() {
           const sessionData = JSON.parse(savedSession);
           const user = sessionData.user;
 
-          // 2. THE SECURITY HANDSHAKE
-          // Ask the server to verify the token before letting the user in
-          
+          // 1. Check local inactivity timer first (10 minutes)
+          const timeSinceLastActivity = Date.now() - (sessionData.lastActivity || sessionData.timestamp);
+          if (timeSinceLastActivity > (10 * 60 * 1000)) {
+            logout();
+            return;
+          }
+
+          // 2. Show a secure loading screen
+          document.body.insertAdjacentHTML('beforeend', '<div id="secure-loading" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f172a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;"><div class="loading-spinner"></div><h3 style="color:#3b82f6;margin-top:20px;">Verifying Security Token...</h3><p style="color:#9ca3af;font-size:0.9rem;">Connecting to secure server.</p></div>');
+
+          // 3. THE SECURITY HANDSHAKE
           const verifyUrl = `${MASTER_CONFIG_APPS_SCRIPT_URL}?action=verifyToken&username=${encodeURIComponent(user.username)}&token=${encodeURIComponent(user.token)}&callback=handleTokenVerification`;
-          const isTokenValid = await new Promise((resolve) => {
+          
+          const tokenStatus = await new Promise((resolve) => {
             window.handleTokenVerification = function(response) {
-              // Only let them in if Google explicitly says TRUE
-              resolve(response && response.success === true);
+              resolve(response && response.success === true ? 'valid' : 'invalid');
             };
 
             const script = document.createElement('script');
             script.src = verifyUrl;
             
-            // STRICT SECURITY: If Google doesn't answer in 15 seconds, lock them out.
-            setTimeout(() => {
-              console.error("Server timeout. Enforcing security lockout.");
-              resolve(false); 
-            }, 15000); 
-
-            // STRICT SECURITY: If their internet drops completely, lock them out.
-            script.onerror = () => {
-              console.error("Network error. Enforcing security lockout.");
-              resolve(false);
-            };
+            setTimeout(() => { resolve('timeout'); }, 20000); 
+            script.onerror = () => { resolve('error'); };
             
             document.head.appendChild(script);
           });
 
-          if (isTokenValid) {
-            // Token is real! Log the user in normally
+          const loadingEl = document.getElementById('secure-loading');
+          if (loadingEl) loadingEl.remove();
+
+          if (tokenStatus === 'valid') {
             currentUser = user;
             login(currentUser, true);
+          } else if (tokenStatus === 'invalid') {
+            console.error("Security Alert: Invalid session detected.");
+            logout(); 
           } else {
-            // TOKEN IS FAKE OR EXPIRED - CLEAR EVERYTHING
-            console.error("Security Alert: Invalid session detected. Clearing storage.");
-            logout(); // This clears the fake localStorage data
+            alert("Network Error: Could not verify secure session. Please check your internet connection and refresh the page.");
+            usernameEl.focus();
           }
         } catch (e) {
           console.error("Session Corrupted:", e);
           logout();
         }
       } else {
-        // No session found, show the login screen
         usernameEl.focus();
       }
 
-      // 3. Set up activity listeners
       document.addEventListener('mousemove', handleUserActivity);
       document.addEventListener('keypress', handleUserActivity);
       document.addEventListener('click', handleUserActivity);
       document.addEventListener('scroll', handleUserActivity);
       document.addEventListener('touchstart', handleUserActivity);
-     document.addEventListener('visibilitychange', handleVisibilityChange);
+      document.addEventListener('visibilitychange', handleVisibilityChange);
 
       resetFailedAttempts();
     }
-    
     // Start the app and load configs
     window.addEventListener('DOMContentLoaded', initializeApp);
   </script>
