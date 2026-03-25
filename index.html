@@ -4429,13 +4429,14 @@ body.light-mode .pdf-name {
                 <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">A.</div>
                 <div style="flex: 1; padding: 8px 12px; display: flex; gap: 8px;">
                   <input type="text" id="editor-option-a" placeholder="Option A text" style="flex:1; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem;">
-                  <button type="button" id="btn-opt-a-img" onclick="toggleQEditorPanel('opt-a-img-panel')" style="background:#334155; border:none; border-radius:8px; padding:0 12px; cursor:pointer;" title="Add Image to Option A">🖼️</button>
+                  <button type="button" onclick="document.getElementById('upload-option-a-image').click(); if(document.getElementById('opt-a-img-panel').style.display==='none') toggleQEditorPanel('opt-a-img-panel');" style="background:#334155; border:none; border-radius:8px; padding:0 10px; cursor:pointer; font-size:1.1rem;" title="1-Click Upload Image">📷</button>
+                  <button type="button" id="btn-opt-a-img" onclick="toggleQEditorPanel('opt-a-img-panel')" style="background:#334155; border:none; border-radius:8px; padding:0 10px; cursor:pointer;" title="Toggle Image Panel">🖼️</button>
                 </div>
               </div>
               <div id="opt-a-img-panel" style="display:none; padding: 0 12px 12px 12px;">
                 <div class="image-upload-container" style="margin: 0;">
                   <div class="upload-area" id="upload-option-a-image" style="padding: 10px;">
-                    <div class="upload-text">📷 Upload option A image</div>
+                    <div class="upload-text">Upload option A image</div>
                   </div>
                   <img id="preview-option-a-image" class="upload-preview" src="" alt="Preview">
                   <div class="upload-progress">
@@ -4454,13 +4455,14 @@ body.light-mode .pdf-name {
                 <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">B.</div>
                 <div style="flex: 1; padding: 8px 12px; display: flex; gap: 8px;">
                   <input type="text" id="editor-option-b" placeholder="Option B text" style="flex:1; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem;">
-                  <button type="button" id="btn-opt-b-img" onclick="toggleQEditorPanel('opt-b-img-panel')" style="background:#334155; border:none; border-radius:8px; padding:0 12px; cursor:pointer;" title="Add Image to Option B">🖼️</button>
+                  <button type="button" onclick="document.getElementById('upload-option-b-image').click(); if(document.getElementById('opt-b-img-panel').style.display==='none') toggleQEditorPanel('opt-b-img-panel');" style="background:#334155; border:none; border-radius:8px; padding:0 10px; cursor:pointer; font-size:1.1rem;" title="1-Click Upload Image">📷</button>
+                  <button type="button" id="btn-opt-b-img" onclick="toggleQEditorPanel('opt-b-img-panel')" style="background:#334155; border:none; border-radius:8px; padding:0 10px; cursor:pointer;" title="Toggle Image Panel">🖼️</button>
                 </div>
               </div>
               <div id="opt-b-img-panel" style="display:none; padding: 0 12px 12px 12px;">
                 <div class="image-upload-container" style="margin: 0;">
                   <div class="upload-area" id="upload-option-b-image" style="padding: 10px;">
-                    <div class="upload-text">📷 Upload option B image</div>
+                    <div class="upload-text">Upload option B image</div>
                   </div>
                   <img id="preview-option-b-image" class="upload-preview" src="" alt="Preview">
                   <div class="upload-progress">
@@ -4479,13 +4481,14 @@ body.light-mode .pdf-name {
                 <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">C.</div>
                 <div style="flex: 1; padding: 8px 12px; display: flex; gap: 8px;">
                   <input type="text" id="editor-option-c" placeholder="Option C text" style="flex:1; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem;">
-                  <button type="button" id="btn-opt-c-img" onclick="toggleQEditorPanel('opt-c-img-panel')" style="background:#334155; border:none; border-radius:8px; padding:0 12px; cursor:pointer;" title="Add Image to Option C">🖼️</button>
+                  <button type="button" onclick="document.getElementById('upload-option-c-image').click(); if(document.getElementById('opt-c-img-panel').style.display==='none') toggleQEditorPanel('opt-c-img-panel');" style="background:#334155; border:none; border-radius:8px; padding:0 10px; cursor:pointer; font-size:1.1rem;" title="1-Click Upload Image">📷</button>
+                  <button type="button" id="btn-opt-c-img" onclick="toggleQEditorPanel('opt-c-img-panel')" style="background:#334155; border:none; border-radius:8px; padding:0 10px; cursor:pointer;" title="Toggle Image Panel">🖼️</button>
                 </div>
               </div>
               <div id="opt-c-img-panel" style="display:none; padding: 0 12px 12px 12px;">
                 <div class="image-upload-container" style="margin: 0;">
                   <div class="upload-area" id="upload-option-c-image" style="padding: 10px;">
-                    <div class="upload-text">📷 Upload option C image</div>
+                    <div class="upload-text">Upload option C image</div>
                   </div>
                   <img id="preview-option-c-image" class="upload-preview" src="" alt="Preview">
                   <div class="upload-progress">
@@ -4504,13 +4507,14 @@ body.light-mode .pdf-name {
                 <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">D.</div>
                 <div style="flex: 1; padding: 8px 12px; display: flex; gap: 8px;">
                   <input type="text" id="editor-option-d" placeholder="Option D text" style="flex:1; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem;">
-                  <button type="button" id="btn-opt-d-img" onclick="toggleQEditorPanel('opt-d-img-panel')" style="background:#334155; border:none; border-radius:8px; padding:0 12px; cursor:pointer;" title="Add Image to Option D">🖼️</button>
+                  <button type="button" onclick="document.getElementById('upload-option-d-image').click(); if(document.getElementById('opt-d-img-panel').style.display==='none') toggleQEditorPanel('opt-d-img-panel');" style="background:#334155; border:none; border-radius:8px; padding:0 10px; cursor:pointer; font-size:1.1rem;" title="1-Click Upload Image">📷</button>
+                  <button type="button" id="btn-opt-d-img" onclick="toggleQEditorPanel('opt-d-img-panel')" style="background:#334155; border:none; border-radius:8px; padding:0 10px; cursor:pointer;" title="Toggle Image Panel">🖼️</button>
                 </div>
               </div>
               <div id="opt-d-img-panel" style="display:none; padding: 0 12px 12px 12px;">
                 <div class="image-upload-container" style="margin: 0;">
                   <div class="upload-area" id="upload-option-d-image" style="padding: 10px;">
-                    <div class="upload-text">📷 Upload option D image</div>
+                    <div class="upload-text">Upload option D image</div>
                   </div>
                   <img id="preview-option-d-image" class="upload-preview" src="" alt="Preview">
                   <div class="upload-progress">
