@@ -5941,10 +5941,14 @@ body.light-mode .pdf-name {
           if (preview) { preview.src = q.imageUrl; preview.classList.add('visible'); }
         }
         
-        ['a', 'b', 'c', 'd'].forEach((opt, idx) => {
+       ['a', 'b', 'c', 'd'].forEach((opt, idx) => {
           if (q.optionImages && q.optionImages[idx]) {
             const preview = document.getElementById(`preview-option-${opt}-image`);
-            if (preview) { preview.src = q.optionImages[idx]; preview.classList.add('visible'); }
+            if (preview) { 
+              preview.src = q.optionImages[idx]; 
+              preview.classList.add('visible'); 
+              preview.style.display = 'block'; // FIX: Forces the image to unhide!
+            }
           }
         });
         
@@ -8439,7 +8443,7 @@ function setupMobileBackButton() {
             if (optionImageUrl) {
               const wrapper = document.createElement("div");
               wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
-              wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
+              wrapper.innerHTML = (opt ? `<span style="margin-bottom:8px">${opt}</span>` : '') + `<img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
               contentDiv.appendChild(wrapper);
             } else {
               contentDiv.textContent = opt;
@@ -8556,7 +8560,7 @@ function setupMobileBackButton() {
             if (optionImageUrl) {
               const wrapper = document.createElement("div");
               wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
-              wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
+              wrapper.innerHTML = (opt ? `<span style="margin-bottom:8px">${opt}</span>` : '') + `<img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
               contentDiv.appendChild(wrapper);
             } else {
               contentDiv.textContent = opt;
@@ -9170,7 +9174,7 @@ function setupMobileBackButton() {
             if (optionImageUrl) {
               const wrapper = document.createElement("div");
               wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
-              wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
+              wrapper.innerHTML = (opt ? `<span style="margin-bottom:8px">${opt}</span>` : '') + `<img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
               contentDiv.appendChild(wrapper);
             } else {
               contentDiv.textContent = opt;
