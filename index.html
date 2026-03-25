@@ -10441,10 +10441,13 @@ function validateUserAccount(user) {
           const sessionData = JSON.parse(savedSession);
           const user = sessionData.user;
 
-          // 1. Check local inactivity timer first (10 minutes)
+         
+         // 1. Check local inactivity timer first (10 minutes)
           const timeSinceLastActivity = Date.now() - (sessionData.lastActivity || sessionData.timestamp);
           if (timeSinceLastActivity > (10 * 60 * 1000)) {
-            logout();
+            window.showCustomAlert("Session Expired", "You have been logged out due to 10 minutes of inactivity.", () => {
+              logout();
+            });
             return;
           }
 
