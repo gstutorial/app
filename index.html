@@ -4420,12 +4420,13 @@ body.light-mode .pdf-name {
           </div>
         </div>
 
-        <style>
+       <style>
           .option-text-input {
-              flex: 1 !important;
-              min-width: 0 !important;
+              display: block !important;
+              width: 100% !important;
               height: 42px !important;
-              padding: 0 12px !important;
+              /* 46px right padding guarantees typing never goes underneath the floating icon */
+              padding: 0 46px 0 12px !important; 
               border-radius: 6px !important;
               border: 1px solid rgba(75, 85, 99, 0.9) !important;
               background: #111827 !important;
@@ -4441,28 +4442,25 @@ body.light-mode .pdf-name {
               border-color: #d1d5db !important;
           }
           .icon-upload-btn {
-              flex: 0 0 42px !important;
-              width: 42px !important;
-              height: 42px !important;
-              min-width: 42px !important;
-              max-width: 42px !important;
-              padding: 0 !important;
-              margin: 0 !important;
+              position: absolute !important;
+              right: 13px !important; /* mathematically pins it inside the right edge of the text box */
+              top: 50% !important;
+              transform: translateY(-50%) !important; /* perfectly centers it vertically */
+              width: 32px !important;
+              height: 32px !important;
               background: #334155 !important;
               color: #93c5fd !important;
-              border: none !important;
-              border-radius: 6px !important;
+              border-radius: 4px !important;
               display: flex !important;
               align-items: center !important;
               justify-content: center !important;
               cursor: pointer !important;
               box-sizing: border-box !important;
-              -webkit-appearance: none !important;
+              z-index: 10 !important;
               transition: all 0.2s ease !important;
           }
           .icon-upload-btn:hover {
               background: #475569 !important;
-              color: #bfdbfe !important;
           }
           body.light-mode .icon-upload-btn {
               background: #e5e7eb !important;
@@ -4480,11 +4478,11 @@ body.light-mode .pdf-name {
             <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden; flex-direction: column;">
               <div style="display: flex; width: 100%;">
                 <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">A.</div>
-                <div style="flex: 1; padding: 8px; display: flex; gap: 8px; align-items: center;">
-                  <input type="text" id="editor-option-a" placeholder="Option A text" style="flex: 1; min-width: 0; padding: 0 12px; height: 42px; border-radius: 6px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 16px; margin: 0; box-sizing: border-box; -webkit-appearance: none; appearance: none;">
+                <div style="flex: 1; padding: 8px; position: relative; box-sizing: border-box;">
+                  <input type="text" id="editor-option-a" placeholder="Option A text" class="option-text-input">
                   
-                  <div id="btn-opt-a-img" onclick="toggleQEditorPanel('opt-a-img-panel')" style="flex: 0 0 42px; width: 42px; height: 42px; background: #334155; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 0; padding: 0; box-sizing: border-box; transition: background 0.2s;" title="Add Image">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  <div id="btn-opt-a-img" onclick="toggleQEditorPanel('opt-a-img-panel')" class="icon-upload-btn" title="Add Image">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
                   </div>
                   
                 </div>
@@ -4509,11 +4507,11 @@ body.light-mode .pdf-name {
             <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden; flex-direction: column;">
               <div style="display: flex; width: 100%;">
                 <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">B.</div>
-                <div style="flex: 1; padding: 8px; display: flex; gap: 8px; align-items: center;">
-                  <input type="text" id="editor-option-b" placeholder="Option B text" style="flex: 1; min-width: 0; padding: 0 12px; height: 42px; border-radius: 6px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 16px; margin: 0; box-sizing: border-box; -webkit-appearance: none; appearance: none;">
+                <div style="flex: 1; padding: 8px; position: relative; box-sizing: border-box;">
+                  <input type="text" id="editor-option-b" placeholder="Option B text" class="option-text-input">
                   
-                  <div id="btn-opt-b-img" onclick="toggleQEditorPanel('opt-b-img-panel')" style="flex: 0 0 42px; width: 42px; height: 42px; background: #334155; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 0; padding: 0; box-sizing: border-box; transition: background 0.2s;" title="Add Image">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  <div id="btn-opt-b-img" onclick="toggleQEditorPanel('opt-b-img-panel')" class="icon-upload-btn" title="Add Image">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
                   </div>
                   
                 </div>
@@ -4538,11 +4536,11 @@ body.light-mode .pdf-name {
             <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden; flex-direction: column;">
               <div style="display: flex; width: 100%;">
                 <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">C.</div>
-                <div style="flex: 1; padding: 8px; display: flex; gap: 8px; align-items: center;">
-                  <input type="text" id="editor-option-c" placeholder="Option C text" style="flex: 1; min-width: 0; padding: 0 12px; height: 42px; border-radius: 6px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 16px; margin: 0; box-sizing: border-box; -webkit-appearance: none; appearance: none;">
+                <div style="flex: 1; padding: 8px; position: relative; box-sizing: border-box;">
+                  <input type="text" id="editor-option-c" placeholder="Option C text" class="option-text-input">
                   
-                  <div id="btn-opt-c-img" onclick="toggleQEditorPanel('opt-c-img-panel')" style="flex: 0 0 42px; width: 42px; height: 42px; background: #334155; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 0; padding: 0; box-sizing: border-box; transition: background 0.2s;" title="Add Image">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  <div id="btn-opt-c-img" onclick="toggleQEditorPanel('opt-c-img-panel')" class="icon-upload-btn" title="Add Image">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
                   </div>
                   
                 </div>
@@ -4567,11 +4565,11 @@ body.light-mode .pdf-name {
             <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden; flex-direction: column;">
               <div style="display: flex; width: 100%;">
                 <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">D.</div>
-                <div style="flex: 1; padding: 8px; display: flex; gap: 8px; align-items: center;">
-                  <input type="text" id="editor-option-d" placeholder="Option D text" style="flex: 1; min-width: 0; padding: 0 12px; height: 42px; border-radius: 6px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 16px; margin: 0; box-sizing: border-box; -webkit-appearance: none; appearance: none;">
+                <div style="flex: 1; padding: 8px; position: relative; box-sizing: border-box;">
+                  <input type="text" id="editor-option-d" placeholder="Option D text" class="option-text-input">
                   
-                  <div id="btn-opt-d-img" onclick="toggleQEditorPanel('opt-d-img-panel')" style="flex: 0 0 42px; width: 42px; height: 42px; background: #334155; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 0; padding: 0; box-sizing: border-box; transition: background 0.2s;" title="Add Image">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  <div id="btn-opt-d-img" onclick="toggleQEditorPanel('opt-d-img-panel')" class="icon-upload-btn" title="Add Image">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
                   </div>
                   
                 </div>
