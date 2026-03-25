@@ -5959,9 +5959,12 @@ body.light-mode .pdf-name {
       const questionType = document.getElementById('editor-question-type').value;
       const tempId = document.getElementById('question-editor-modal').dataset.tempId || '';
       
+      // MODIFICATION: Allow saving from the Admin panel if there is an image but no text
+      const questionImageUrl = document.getElementById('editor-image-url').value.trim();
       const question = document.getElementById('editor-question').value.trim();
-      if (!question) {
-        alert("Please enter a question.");
+      
+      if (!question && !questionImageUrl) {
+        alert("Please enter a question or upload a question image.");
         return;
       }
 
@@ -5971,7 +5974,7 @@ body.light-mode .pdf-name {
         return;
       }
       
-      const questionImageUrl = document.getElementById('editor-image-url').value.trim();
+    
       const optionAImg = document.getElementById('editor-option-a-img').value.trim();
       const optionBImg = document.getElementById('editor-option-b-img').value.trim();
       const optionCImg = document.getElementById('editor-option-c-img').value.trim();
@@ -8237,11 +8240,18 @@ function setupMobileBackButton() {
       questionCounterEl.textContent = `Incorrect Q${currentIndex + 1}/${incorrectQuestionIndices.length}`;
       progressBarFillEl.style.width = `${((currentIndex + 1) / incorrectQuestionIndices.length) * 100}%`;
 
+      // MODIFICATION: Collapse the text space if there is no question text, allowing the image to slide up
       const marksHtml = `<span class="question-marks-badge">${q.marks || 1} mark${(q.marks || 1) > 1 ? 's' : ''}</span>`;
-      questionTextEl.innerHTML = q.question
-        .replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>')
-        .replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>')
-        .replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim() + ' ' + marksHtml;
+      const rawQ = q.question || '';
+      const cleanedQ = rawQ.replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>').replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>').replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim();
+      
+      if (cleanedQ === '') {
+        questionTextEl.innerHTML = marksHtml;
+        questionTextEl.style.marginBottom = '0'; // Remove space below the invisible text
+      } else {
+        questionTextEl.innerHTML = cleanedQ + ' ' + marksHtml;
+        questionTextEl.style.marginBottom = '8px'; // Restore normal spacing
+      }
 
       questionWhatsappIconEl.style.display = "block";
 
@@ -8346,11 +8356,18 @@ function setupMobileBackButton() {
       questionCounterEl.textContent = `Q${currentIndex + 1}/${reattemptQuestions.length}`;
       progressBarFillEl.style.width = `${((currentIndex + 1) / reattemptQuestions.length) * 100}%`;
 
+      // MODIFICATION: Collapse the text space if there is no question text, allowing the image to slide up
       const marksHtml = `<span class="question-marks-badge">${q.marks || 1} mark${(q.marks || 1) > 1 ? 's' : ''}</span>`;
-      questionTextEl.innerHTML = q.question
-        .replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>')
-        .replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>')
-        .replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim() + ' ' + marksHtml;
+      const rawQ = q.question || '';
+      const cleanedQ = rawQ.replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>').replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>').replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim();
+      
+      if (cleanedQ === '') {
+        questionTextEl.innerHTML = marksHtml;
+        questionTextEl.style.marginBottom = '0'; // Remove space below the invisible text
+      } else {
+        questionTextEl.innerHTML = cleanedQ + ' ' + marksHtml;
+        questionTextEl.style.marginBottom = '8px'; // Restore normal spacing
+      }
 
       questionWhatsappIconEl.style.display = "block";
 
@@ -8711,7 +8728,8 @@ function setupMobileBackButton() {
             }
           }
 
-          if (question) {
+          // MODIFICATION: Allow questions that have NO text as long as they have an image
+          if (question || imageUrl) {
             rawQuestions.push({
               question,
               options,
@@ -8933,11 +8951,18 @@ function setupMobileBackButton() {
       questionCounterEl.textContent = `Q${currentIndex + 1}/${questions.length}`;
       progressBarFillEl.style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
 
+      // MODIFICATION: Collapse the text space if there is no question text, allowing the image to slide up
       const marksHtml = `<span class="question-marks-badge">${q.marks || 1} mark${(q.marks || 1) > 1 ? 's' : ''}</span>`;
-      questionTextEl.innerHTML = q.question
-        .replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>')
-        .replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>')
-        .replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim() + ' ' + marksHtml;
+      const rawQ = q.question || '';
+      const cleanedQ = rawQ.replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>').replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>').replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim();
+      
+      if (cleanedQ === '') {
+        questionTextEl.innerHTML = marksHtml;
+        questionTextEl.style.marginBottom = '0'; // Remove space below the invisible text
+      } else {
+        questionTextEl.innerHTML = cleanedQ + ' ' + marksHtml;
+        questionTextEl.style.marginBottom = '8px'; // Restore normal spacing
+      }
 
       // Update icons visibility
       updateAdminControls();
