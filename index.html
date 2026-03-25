@@ -6741,7 +6741,9 @@ function validateUserAccount(user) {
       if (!isRestore) sendLoginNotification(user);
       
       // Activate the back-button trap for the main menu
-      history.pushState(null, document.title, window.location.href);
+     // Activate the safe hash trap for the main menu
+      const trapUrl = window.location.pathname + window.location.search + '#app';
+      history.pushState({ safe: true }, document.title, trapUrl);
     }
     // ========== LOGOUT FUNCTION ==========
     function logout() {
@@ -7958,7 +7960,7 @@ function validateUserAccount(user) {
     }
 
 
-// ========== MOBILE BACK BUTTON ROUTER (FIXED) ==========
+// ========== MOBILE BACK BUTTON ROUTER (HASH SECURED) ==========
     let backButtonListenerAdded = false;
     let allowAppExit = false;
 
@@ -7973,14 +7975,15 @@ function validateUserAccount(user) {
       if (backButtonListenerAdded) return;
       backButtonListenerAdded = true;
 
-      // TRAP 1: Push a state so the first swipe doesn't exit the app
-      history.pushState(null, document.title, window.location.href);
+      // THE FIX: Appending '#app' mathematically prevents the browser from reloading the page on back swipes
+      const trapUrl = window.location.pathname + window.location.search + '#app';
+      history.pushState({ safe: true }, document.title, trapUrl);
 
       window.addEventListener('popstate', function(event) {
         if (allowAppExit) return;
 
-        // TRAP 2: Instantly push another state so they stay trapped
-        history.pushState(null, document.title, window.location.href);
+        // Keep them trapped safely using the Hash URL
+        history.pushState({ safe: true }, document.title, trapUrl);
         
         const cropperModalEl = document.getElementById('cropper-modal');
         if (cropperModalEl && isScreenVisible('cropper-modal')) { 
@@ -8010,7 +8013,7 @@ function validateUserAccount(user) {
         }
 
         if (isScreenVisible('quiz-container')) {
-            if (isQuizActive) {
+            if (typeof isQuizActive !== 'undefined' && isQuizActive) {
                 window.showCustomConfirm(
                     "Warning",
                     "Quiz is in progress. Are you sure you want to leave? Your progress will be lost.",
@@ -10463,19 +10466,23 @@ function validateUserAccount(user) {
           const loadingEl = document.getElementById('secure-loading');
           if (loadingEl) loadingEl.remove();
 
-          if (tokenStatus === 'valid') {
+        if (tokenStatus === 'valid') {
             currentUser = user;
             login(currentUser, true);
           } else if (tokenStatus === 'invalid') {
             console.error("Security Alert: Invalid session detected.");
-            logout(); 
+            window.showCustomAlert("Security Alert", "Your session has expired or you logged in from another device. Please log in again.", () => {
+              logout();
+            });
           } else {
             alert("Network Error: Could not verify secure session. Please check your internet connection and refresh the page.");
             usernameEl.focus();
           }
         } catch (e) {
           console.error("Session Corrupted:", e);
-          logout();
+          window.showCustomAlert("System Error", "Your session data was corrupted. Please log in again.", () => {
+             logout();
+          });
         }
       } else {
         usernameEl.focus();
