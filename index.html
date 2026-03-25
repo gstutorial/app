@@ -4387,39 +4387,34 @@ body.light-mode .pdf-name {
           </select>
         </div>
 
-        <!-- Question Text -->
-        <div class="editor-row">
-          <label>Question:</label>
-          <textarea id="editor-question" rows="3" placeholder="Enter question text"></textarea>
+       <div class="editor-row">
+          <label style="margin-bottom: 8px; display: block;">Question:</label>
+          <div style="position: relative; box-sizing: border-box;">
+            <textarea id="editor-question" rows="3" placeholder="Enter your question here (or leave blank for image only)..." style="width: 100%; padding: 12px 46px 12px 12px; border-radius: 6px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 16px; font-family: inherit; resize: vertical; margin: 0; box-sizing: border-box; -webkit-appearance: none; appearance: none;"></textarea>
+            
+            <div id="btn-q-img" onclick="toggleQEditorPanel('q-img-panel')" class="icon-upload-btn" style="top: 12px; transform: none;" title="Add Question Image">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            </div>
+            
+            <span id="q-img-icon" style="display:none;"></span>
+          </div>
         </div>
 
-       
-       <div class="editor-row">
-          <div onclick="toggleQEditorPanel('q-img-panel', 'q-img-icon')" style="cursor:pointer; background:#1e293b; padding:12px 15px; border-radius:8px; border:1px solid #3b82f6; display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-            <span style="font-weight:bold; color:#e5e7eb;">🖼️ Add Question Image (Optional)</span>
-            <span id="q-img-icon" style="transition:transform 0.3s;">▼</span>
-          </div>
-          
-          <div id="q-img-panel" style="display:none; background:#0f172a; padding:15px; border-radius:8px; border:1px solid #334155; margin-bottom:15px;">
-            <div class="image-upload-container" style="margin:0;">
-              <div class="upload-area" id="upload-question-image">
-                <div class="upload-icon">📷</div>
-                <div class="upload-text">Click to upload or drag & drop</div>
-                <div class="upload-hint">Supported: JPG, PNG, GIF (Max 5MB)</div>
-              </div>
-              <img id="preview-question-image" class="upload-preview" src="" alt="Preview">
-              <div class="upload-progress">
-                <div class="upload-progress-bar"></div>
-              </div>
-              <div class="upload-status"></div>
-              <div class="upload-buttons">
-                <button class="upload-clear-btn" onclick="clearImageUpload('preview-question-image', 'editor-image-url')">Clear</button>
-              </div>
-              <input type="hidden" id="editor-image-url">
+        <div id="q-img-panel" style="display:none; padding: 0 0 15px 0;">
+          <div class="image-upload-container" style="margin: 0;">
+            <div class="upload-area" id="upload-question-image" style="padding: 10px;">
+              <div class="upload-text">Upload question image</div>
+            </div>
+            <img id="preview-question-image" class="upload-preview" src="" alt="Preview">
+            <div class="upload-progress">
+              <div class="upload-progress-bar"></div>
+            </div>
+            <input type="hidden" id="editor-image-url">
+            <div class="upload-buttons" style="justify-content: flex-end;">
+              <button class="upload-clear-btn" style="padding:4px 8px; font-size:0.8rem;" onclick="clearImageUpload('preview-question-image', 'editor-image-url')">Clear</button>
             </div>
           </div>
         </div>
-
        <style>
           .option-text-input {
               display: block !important;
