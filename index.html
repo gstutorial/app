@@ -6786,7 +6786,35 @@ function validateUserAccount(user) {
       sideMenu.classList.remove('open');
       menuOverlay.classList.remove('open');
     }
+// ========== EXACT INACTIVITY TRACKER (FOR MINIMIZED APP) ==========
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible' && currentUser) {
+        const savedSession = localStorage.getItem('gs_tutorial_session');
+        if (savedSession) {
+          try {
+            const sessionData = JSON.parse(savedSession);
+            const INACTIVITY_LIMIT = 10 * 60 * 1000; // 10 minutes in milliseconds
+            
+            // Check the absolute real-world time passed since they last touched the screen
+            const timeSinceLastActivity = Date.now() - (sessionData.lastActivity || sessionData.timestamp);
+            
+            if (timeSinceLastActivity >= INACTIVITY_LIMIT) {
+              // 10+ minutes passed while minimized! Force logout.
+              window.showCustomAlert("Session Expired", "You have been logged out due to 10 minutes of inactivity.", () => {
+                logout();
+              });
+            } else {
+              // Less than 10 minutes passed. They stay exactly where they left off!
+              resetInactivityTimer();
+            }
+          } catch(e) {
+            console.error("Session parse error on wake", e);
+          }
+        }
+      }
+    }
 
+    
    function autoLogout() {
       if (currentUser) {
         window.showCustomAlert("Session Expired", "You have been automatically logged out due to 10 minutes of inactivity.", () => {
@@ -6795,11 +6823,21 @@ function validateUserAccount(user) {
       }
     }
 
-    function handleUserActivity() {
-      updateLastActivity();
+   function handleUserActivity() {
       resetInactivityTimer();
+      
+      // Save the exact real-world time of this touch to localStorage
+      if (currentUser) {
+        const savedSession = localStorage.getItem('gs_tutorial_session');
+        if (savedSession) {
+          try {
+            let sessionData = JSON.parse(savedSession);
+            sessionData.lastActivity = Date.now();
+            localStorage.setItem('gs_tutorial_session', JSON.stringify(sessionData));
+          } catch(e) {}
+        }
+      }
     }
-
     function resetInactivityTimer() {
       if (inactivityTimer) clearTimeout(inactivityTimer);
       if (currentUser) inactivityTimer = setTimeout(autoLogout, INACTIVITY_TIMEOUT);
@@ -7994,12 +8032,16 @@ function setupMobileBackButton() {
             return;
         }
 
-        // Main Menu -> Confirm Exit
+       // Main Menu -> Custom Logout Confirmation
         if (isScreenVisible('class-selection')) {
-            if (confirm("Are you sure you want to exit the app?")) {
-                allowAppExit = true;
-                window.history.back(); 
-            }
+            window.showCustomConfirm(
+                "Logout",
+                "Are you sure you want to logout?",
+                "Logout",
+                () => {
+                    logout(); // Securely clears session and returns to login
+                }
+            );
             return;
         }
         
@@ -10447,6 +10489,7 @@ function setupMobileBackButton() {
       document.addEventListener('click', handleUserActivity);
       document.addEventListener('scroll', handleUserActivity);
       document.addEventListener('touchstart', handleUserActivity);
+     document.addEventListener('visibilitychange', handleVisibilityChange);
 
       resetFailedAttempts();
     }
