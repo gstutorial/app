@@ -5860,7 +5860,8 @@ body.light-mode .pdf-name {
       });
       
       if (q.isSubjective) {
-        document.getElementById('editor-subjective-answer').value = q.options && q.options[0] ? q.options[0] : '';
+        // Handle subjective correctly
+        document.getElementById('editor-answer-subjective').value = q.explanation ? q.explanation.split(' - ')[0] : (q.answer || '');
       } else {
         document.getElementById('editor-option-a').value = q.options && q.options[0] ? q.options[0] : '';
         document.getElementById('editor-option-b').value = q.options && q.options[1] ? q.options[1] : '';
@@ -5886,13 +5887,16 @@ body.light-mode .pdf-name {
           }
         });
         
-        document.getElementById('editor-answer').value = q.answer || '';
+        // FIX 1: Correct ID for the Answer Dropdown
+        const answerLetter = String.fromCharCode(65 + q.correctIndex);
+        document.getElementById('editor-answer-mcq').value = answerLetter || 'A';
       }
       
-      // Populate hidden fields
-      document.getElementById('editor-original-index').value = q.originalIndex;
-      document.getElementById('editor-sheet-id').value = window.currentSheetId;
-      document.getElementById('editor-gid').value = window.currentGid;
+      // FIX 2: Set necessary hidden data properties for saving correctly
+      modal.dataset.editMode = 'edit';
+      modal.dataset.questionIndex = index;
+      modal.dataset.originalIndex = q.originalIndex;
+      modal.dataset.tempId = '';
       
       modal.style.display = 'flex';
 
@@ -5931,6 +5935,7 @@ body.light-mode .pdf-name {
       document.getElementById('editor-title').textContent = 'Add New Question';
       document.getElementById('editor-question-type').value = 'mcq';
       document.getElementById('editor-question').value = '';
+      
       // Hide all panels
       document.getElementById('q-img-panel').style.display = 'none';
       document.getElementById('q-img-icon').style.transform = 'rotate(0deg)';
@@ -5963,32 +5968,17 @@ body.light-mode .pdf-name {
         }
       });
       
-      document.getElementById('editor-answer').value = 'A';
-      document.getElementById('editor-subjective-answer').value = '';
+      // FIX 3: Correct ID for the Answer Dropdown
+      document.getElementById('editor-answer-mcq').value = 'A';
+      document.getElementById('editor-answer-subjective').value = '';
       
-      // Set metadata
-      document.getElementById('editor-original-index').value = 'new';
-      document.getElementById('editor-sheet-id').value = window.currentSheetId;
-      document.getElementById('editor-gid').value = window.currentGid;
+      // FIX 4: Set metadata to 'new' so it saves as a brand new row instead of editing
+      modal.dataset.editMode = 'new';
+      modal.dataset.originalIndex = 'new';
+      modal.dataset.tempId = '';
 
-      // Close all image panels by default for a clean UI
-      const qPanel = document.getElementById('q-img-panel');
-      if (qPanel) {
-          qPanel.style.display = 'none';
-          document.getElementById('q-img-icon').style.transform = 'rotate(0deg)';
-      }
-      ['a', 'b', 'c', 'd'].forEach(opt => {
-          const panel = document.getElementById('opt-' + opt + '-img-panel');
-          const btn = document.getElementById('btn-opt-' + opt + '-img');
-          if (panel && btn) {
-              panel.style.display = 'none';
-              btn.style.background = '#334155';
-          }
-      });
-      
       modal.style.display = 'flex';
     }
-      
       
     // ========== TOGGLE QUESTION TYPE SECTIONS ==========
     function toggleQuestionTypeSections(type) {
