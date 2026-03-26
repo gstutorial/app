@@ -8051,9 +8051,12 @@ function validateUserAccount(user) {
 
     
 // ========== UNIFIED BACK NAVIGATION (Hardware & Swipe) ==========
-    let backButtonListenerAdded = false;
-    let allowAppExit = false;
+    
+    // FIX: Using window object to prevent crash bugs!
+    window.backButtonListenerAdded = window.backButtonListenerAdded || false;
+    window.allowAppExit = window.allowAppExit || false;
 
+    // Helper to accurately check if a screen container is currently visible
     function isScreenVisible(id) {
         const el = document.getElementById(id);
         if (!el) return false;
@@ -8061,6 +8064,7 @@ function validateUserAccount(user) {
         return style.display === 'block' || style.display === 'flex';
     }
 
+    // The Central Brain for stepping backwards
     function handleAppBackNavigation() {
         // 1. Close Modals/Menus first
         const cropperModalEl = document.getElementById('cropper-modal');
@@ -8095,7 +8099,7 @@ function validateUserAccount(user) {
 
         // LEVEL 3 (PDFs): From PDF Folders/Categories -> Back to Subject Selection
         if (isScreenVisible('pyq-container') || isScreenVisible('pdf-category-menu')) {
-            window.currentPdfCategory = null; // Clear the active folder
+            window.currentPdfCategory = null; 
             showMenu('subject-selection'); 
             return;
         }
@@ -8149,19 +8153,20 @@ function validateUserAccount(user) {
         }
     }
 
+    // The Invisible Sensors (Hardware Button + Screen Swipe)
     function setupMobileBackButton() {
-      if (backButtonListenerAdded) return;
-      backButtonListenerAdded = true;
+      if (window.backButtonListenerAdded) return;
+      window.backButtonListenerAdded = true;
 
-      // 1. Trap the hardware back button
+      // Sensor 1: Trap the hardware back button
       window.history.pushState({ isAppTrap: true }, "");
       window.addEventListener('popstate', function(event) {
-        if (allowAppExit) return;
+        if (window.allowAppExit) return;
         window.history.pushState({ isAppTrap: true }, ""); // Immediately re-trap
-        handleAppBackNavigation(); // Route to central logic
+        handleAppBackNavigation(); 
       });
 
-      // 2. Trap the Mobile Swipe Gesture seamlessly
+      // Sensor 2: Mobile Swipe Gesture
       let touchStartX = 0;
       let touchStartY = 0;
       
@@ -8176,9 +8181,9 @@ function validateUserAccount(user) {
         const diffX = touchEndX - touchStartX;
         const diffY = Math.abs(touchEndY - touchStartY);
 
-        // Valid swipe from extreme left edge
-        if (diffX > 80 && diffY < 50 && touchStartX < 40) {
-          handleAppBackNavigation(); // Route to central logic without touching history.back()!
+        // Valid swipe from the left edge (Relaxed to 80px for better phone case support)
+        if (diffX > 70 && diffY < 60 && touchStartX < 80) {
+          handleAppBackNavigation(); 
         }
       }, {passive: true});
     }
