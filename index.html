@@ -8051,12 +8051,9 @@ function validateUserAccount(user) {
 
     
 // ========== UNIFIED BACK NAVIGATION (Hardware & Swipe) ==========
-    
-    // FIX: Using window object to prevent crash bugs!
-    window.backButtonListenerAdded = window.backButtonListenerAdded || false;
-    window.allowAppExit = window.allowAppExit || false;
+    let backButtonListenerAdded = false;
+    let allowAppExit = false;
 
-    // Helper to accurately check if a screen container is currently visible
     function isScreenVisible(id) {
         const el = document.getElementById(id);
         if (!el) return false;
@@ -8064,9 +8061,8 @@ function validateUserAccount(user) {
         return style.display === 'block' || style.display === 'flex';
     }
 
-// The Central Brain for stepping backwards safely
     function handleAppBackNavigation() {
-        // 1. Close Modals/Menus first
+        // 1. Trap Back Button for the Cropper Modal
         const cropperModalEl = document.getElementById('cropper-modal');
         if (cropperModalEl && isScreenVisible('cropper-modal')) { 
             const cancelBtn = document.getElementById('cancel-crop-btn');
@@ -8074,38 +8070,35 @@ function validateUserAccount(user) {
             return; 
         }
 
+        // Close UI Menus
         const sideMenu = document.getElementById('sideMenu');
         if (sideMenu && sideMenu.classList.contains('open')) { toggleMenu(); return; }
-
+        
         const editModal = document.getElementById('edit-pdf-modal');
         if (editModal && isScreenVisible('edit-pdf-modal')) { editModal.style.display = 'none'; return; }
 
         const qModal = document.getElementById('question-editor-modal');
         if (qModal && isScreenVisible('question-editor-modal')) { qModal.style.display = 'none'; return; }
 
-        // 2. Exact Step-by-Step Back Navigation using NATIVE functions
-
-        // LEVEL 4 (PDFs): From Inner Folder -> Back to Main PYQ Folder
+        // PDF Inner Folder View
         if (isScreenVisible('pyq-container') && window.currentPdfCategory) {
             window.currentPdfCategory = null;
-            const categorySelect = document.getElementById('new-pdf-category-select');
-            if (categorySelect) categorySelect.value = '';
-            if (typeof window.renderPdfView === 'function') window.renderPdfView();
+            if (typeof renderPdfView === 'function') renderPdfView();
             return;
         }
 
-        // LEVEL 3a (PDFs): From Main PYQ Folder -> Back to Subject Selection
-        if (isScreenVisible('pyq-container') && !window.currentPdfCategory) {
+        // PDF Main Folder View -> Back to Subjects
+        if (isScreenVisible('pyq-container')) {
             if (typeof navigateToSubjects === 'function') navigateToSubjects();
             return;
         }
 
-        // LEVEL 3b (Quiz): From Quiz Game -> Back to Subject Selection
+        // Quiz View -> Back to Subjects
         if (isScreenVisible('quiz-container')) {
-            if (typeof isQuizActive !== 'undefined' && isQuizActive) {
+            if (isQuizActive) {
                 window.showCustomConfirm(
                     "Warning",
-                    "Quiz is in progress. Are you sure you want to leave?",
+                    "Quiz is in progress. Are you sure you want to leave? Your progress will be lost.",
                     "Leave",
                     () => { if (typeof navigateToSubjects === 'function') navigateToSubjects(); }
                 );
@@ -8114,49 +8107,47 @@ function validateUserAccount(user) {
             }
             return;
         }
-
-        // LEVEL 2: From Subject Selection -> Back to Main Dashboard (Class Selection)
+        // Subject Selection -> Back to Classes
         if (isScreenVisible('subject-selection')) {
             if (typeof navigateToClasses === 'function') navigateToClasses();
             return;
         }
 
-        // LEVEL 1: Main Dashboard -> Trapped! Show Exit Popup
+        // Main Menu -> Confirm Exit with Custom Popup
         if (isScreenVisible('class-selection')) {
             window.showCustomConfirm(
               "Logout / Exit", 
               "Are you sure you want to log out and exit to the login screen?", 
               "Yes, Logout", 
               () => { 
-                window.allowAppExit = true;
-                if (typeof logout === 'function') logout(); 
+                allowAppExit = true;
+                logout(); 
               }
             );
             return;
         }
         
-        // LEVEL 0: Login Screen -> Exit App naturally
+        // Login Screen -> Exit freely
         if (isScreenVisible('login-container')) {
-            window.allowAppExit = true;
+            allowAppExit = true;
             window.history.back();
             return;
         }
     }
 
-    // The Invisible Sensors (Hardware Button + Screen Swipe)
     function setupMobileBackButton() {
-      if (window.backButtonListenerAdded) return;
-      window.backButtonListenerAdded = true;
+      if (backButtonListenerAdded) return;
+      backButtonListenerAdded = true;
 
-      // Sensor 1: Trap the hardware back button
+      // 1. Trap the hardware back button
       window.history.pushState({ isAppTrap: true }, "");
       window.addEventListener('popstate', function(event) {
-        if (window.allowAppExit) return;
+        if (allowAppExit) return;
         window.history.pushState({ isAppTrap: true }, ""); // Immediately re-trap
-        handleAppBackNavigation(); 
+        handleAppBackNavigation(); // Route to central logic
       });
 
-      // Sensor 2: Mobile Swipe Gesture
+      // 2. Trap the Mobile Swipe Gesture seamlessly
       let touchStartX = 0;
       let touchStartY = 0;
       
@@ -8171,9 +8162,9 @@ function validateUserAccount(user) {
         const diffX = touchEndX - touchStartX;
         const diffY = Math.abs(touchEndY - touchStartY);
 
-        // Valid swipe from the left edge (Relaxed to 80px for better phone case support)
-        if (diffX > 70 && diffY < 60 && touchStartX < 80) {
-          handleAppBackNavigation(); 
+        // Valid swipe from extreme left edge
+        if (diffX > 80 && diffY < 50 && touchStartX < 40) {
+          handleAppBackNavigation(); // Route to central logic without touching history.back()!
         }
       }, {passive: true});
     }
@@ -8857,14 +8848,7 @@ function validateUserAccount(user) {
             }
           }
 
-        // Extract option images FIRST so we know if they exist
-          const optImg1 = row.c[9]?.v?.toString().trim() || '';
-          const optImg2 = row.c[10]?.v?.toString().trim() || '';
-          const optImg3 = row.c[11]?.v?.toString().trim() || '';
-          const optImg4 = row.c[12]?.v?.toString().trim() || '';
-
-          // FIX: It is subjective ONLY if ALL text options AND ALL image options are empty!
-          const isSubjective = !option1 && !option2 && !option3 && !option4 && !optImg1 && !optImg2 && (question || imageUrl) && answer;
+          const isSubjective = !option1 && !option2 && !option3 && !option4 && question && answer;
 
           const options = [];
           const optionImages = [];
@@ -8872,10 +8856,6 @@ function validateUserAccount(user) {
           if (!isSubjective) {
             // Unconditionally push all 4 options to maintain the correct index A, B, C, D
             options.push(option1, option2, option3, option4);
-
-            // Unconditionally push all 4 image slots
-            optionImages.push(optImg1, optImg2, optImg3, optImg4);
-          }
 
             // Unconditionally push all 4 image slots
             optionImages.push(
@@ -8916,7 +8896,7 @@ function validateUserAccount(user) {
               originalIndex: i - 2
             });
           }
-    
+        }
 
         if (rawQuestions.length === 0) {
           questions = [];
