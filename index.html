@@ -8062,7 +8062,7 @@ function validateUserAccount(user) {
     }
 
     function handleAppBackNavigation() {
-        // 1. Trap Back Button for the Cropper Modal
+        // 1. Close Modals/Menus first
         const cropperModalEl = document.getElementById('cropper-modal');
         if (cropperModalEl && isScreenVisible('cropper-modal')) { 
             const cancelBtn = document.getElementById('cancel-crop-btn');
@@ -8070,66 +8070,80 @@ function validateUserAccount(user) {
             return; 
         }
 
-        // Close UI Menus
         const sideMenu = document.getElementById('sideMenu');
         if (sideMenu && sideMenu.classList.contains('open')) { toggleMenu(); return; }
-        
+
         const editModal = document.getElementById('edit-pdf-modal');
         if (editModal && isScreenVisible('edit-pdf-modal')) { editModal.style.display = 'none'; return; }
 
         const qModal = document.getElementById('question-editor-modal');
         if (qModal && isScreenVisible('question-editor-modal')) { qModal.style.display = 'none'; return; }
 
-        // PDF Inner Folder View
-        if (isScreenVisible('pyq-container') && window.currentPdfCategory) {
-            window.currentPdfCategory = null;
-            if (typeof renderPdfView === 'function') renderPdfView();
+        // 2. Exact Step-by-Step Back Navigation
+
+        // LEVEL 5: From PDF Viewer -> Back to PDF Files List
+        if (isScreenVisible('pdf-viewer')) {
+            showMenu('pdf-file-menu');
             return;
         }
 
-        // PDF Main Folder View -> Back to Subjects
-        if (isScreenVisible('pyq-container')) {
-            if (typeof navigateToSubjects === 'function') navigateToSubjects();
+        // LEVEL 4: From PDF Files List -> Back to PDF Folders/Categories (pyq-container)
+        if (isScreenVisible('pdf-file-menu')) {
+            showMenu('pyq-container');
             return;
         }
 
-        // Quiz View -> Back to Subjects
+        // LEVEL 3 (PDFs): From PDF Folders/Categories -> Back to Subject Selection
+        if (isScreenVisible('pyq-container') || isScreenVisible('pdf-category-menu')) {
+            window.currentPdfCategory = null; // Clear the active folder
+            showMenu('subject-selection'); 
+            return;
+        }
+
+        // LEVEL 3 (Quiz): From Active Quiz Game -> Back to Chapter Selection
         if (isScreenVisible('quiz-container')) {
-            if (isQuizActive) {
+            if (typeof isQuizActive !== 'undefined' && isQuizActive) {
                 window.showCustomConfirm(
                     "Warning",
-                    "Quiz is in progress. Are you sure you want to leave? Your progress will be lost.",
+                    "Quiz is in progress. Are you sure you want to leave?",
                     "Leave",
-                    () => { if (typeof navigateToSubjects === 'function') navigateToSubjects(); }
+                    () => { showMenu('chapter-selection-menu'); }
                 );
             } else {
-                if (typeof navigateToSubjects === 'function') navigateToSubjects();
+                showMenu('chapter-selection-menu');
             }
             return;
         }
-        // Subject Selection -> Back to Classes
-        if (isScreenVisible('subject-selection')) {
-            if (typeof navigateToClasses === 'function') navigateToClasses();
+        
+        // LEVEL 2: From Chapter Selection -> Back to Subject Selection
+        if (isScreenVisible('chapter-selection') || isScreenVisible('chapter-selection-menu')) {
+            showMenu('subject-selection');
             return;
         }
 
-        // Main Menu -> Confirm Exit with Custom Popup
+        // LEVEL 1: From Subject Selection -> Back to Main Dashboard (Class Selection)
+        if (isScreenVisible('subject-selection') || isScreenVisible('pdf-subject-menu') || isScreenVisible('quiz-subject-menu')) {
+            showMenu('class-selection');
+            return;
+        }
+
+        // LEVEL 0: Main Dashboard -> Trapped! Show Exit Popup
         if (isScreenVisible('class-selection')) {
             window.showCustomConfirm(
               "Logout / Exit", 
               "Are you sure you want to log out and exit to the login screen?", 
               "Yes, Logout", 
               () => { 
-                allowAppExit = true;
-                logout(); 
+                window.allowAppExit = true;
+                if (typeof logout === 'function') logout(); 
               }
             );
             return;
         }
         
-        // Login Screen -> Exit freely
+        // Login Screen -> Exit App naturally
         if (isScreenVisible('login-container')) {
-            allowAppExit = true;
+            window.allowAppExit = true;
             window.history.back();
             return;
         }
