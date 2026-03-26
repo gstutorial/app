@@ -20,6 +20,66 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   
   <style>
+.pdf-item {
+  background: rgba(15, 23, 42, 0.7);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+body.light-mode .pdf-item {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.pdf-item:hover {
+  transform: translateY(-2px);
+  border-color: #3b82f6;
+}
+
+.pdf-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pdf-icon {
+  font-size: 1.8rem;
+}
+
+.pdf-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+body.light-mode .pdf-name {
+  color: #1f2937;
+}
+
+.download-btn {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.download-btn:hover {
+  background: #3b82f6;
+  color: white;
+}
+    
     /* ===== ORIGINAL STYLES - COMPLETELY PRESERVED ===== */
     * {
       box-sizing: border-box;
@@ -568,7 +628,7 @@
       border-color: #3b82f6 !important;
       color: white !important;
       font-weight: 600;
-      box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+      box-shadow: 0 0 10px rgb(216 237 110 / 74%);
     }
 
     body.light-mode .question-number-btn.current {
@@ -924,6 +984,10 @@
     body.light-mode .image-upload-container {
       background: rgba(255, 255, 255, 0.7);
       border: 2px dashed rgba(59, 130, 246, 0.3);
+    }
+    /* Automatically hide the upload box when an image is successfully loaded */
+    .image-upload-container:has(img.visible) .upload-area {
+      display: none !important;
     }
 
     .upload-area {
@@ -3886,6 +3950,8 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 </head>
 <body>
   <!-- Image Preloading Overlay -->
@@ -4083,7 +4149,7 @@
       </div>
     </div>
     
-    <!-- Subject Selection Screen -->
+   <!-- Subject Selection Screen -->
     <div class="subject-selection" id="subject-selection">
       <div class="screen-header">
         <div class="screen-title">Select Subject</div>
@@ -4097,6 +4163,79 @@
       </button>
     </div>
     
+   <!-- PDF / Previous Year Questions Container -->
+    <div class="quiz-container" id="pyq-container" style="display: none;">
+      <div class="screen-header">
+        <div class="screen-title" id="pyq-title">Previous Year Questions</div>
+        <div class="screen-subtitle" id="pyq-subtitle">Download PDF files</div>
+      </div>
+
+      <!-- Admin Upload & Sort Section -->
+    <div id="admin-pdf-upload" class="admin-add-question" style="display: none; text-align: left; padding: 12px;">
+        
+        <div id="admin-pdf-upload-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+          <h4 style="margin:0; color:#10b981; display: flex; align-items: center; gap: 8px;">
+            <span id="admin-pdf-toggle-icon" style="transition: transform 0.3s ease; display: inline-block;">▼</span> 
+            Admin Panel (Upload & Sort)
+          </h4>
+        </div>
+
+        <div id="admin-pdf-upload-content" style="display: none; margin-top: 15px; border-top: 1px solid rgba(75, 85, 99, 0.4); padding-top: 15px;">
+          
+          <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label style="color:#9ca3af; font-size:0.85rem; font-weight:600;">Sort (For All Users):</label>
+              <select id="admin-pdf-sort" style="padding:6px; border-radius:6px; background:rgba(15, 23, 42, 0.9); color:#e5e7eb; border:1px solid rgba(75, 85, 99, 0.8); outline:none; font-size:0.85rem; cursor:pointer;">
+                <option value="asc">Oldest First</option>
+                <option value="desc">Newest First</option>
+                <option value="name_asc">Name (A to Z)</option>
+                <option value="name_desc">Name (Z to A)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 10px;">
+            <input type="text" id="new-pdf-name" class="form-input" placeholder="Enter PDF Name (e.g., Math 2024 Set A)">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 10px;">
+            <select id="new-pdf-category-select" class="form-input" onchange="document.getElementById('new-pdf-category-new').style.display = this.value === 'NEW' ? 'block' : 'none'">
+              <option value="">-- No Category (Main Folder) --</option>
+              <option value="NEW" style="font-weight:bold; color:#3b82f6;">➕ Create New Category...</option>
+            </select>
+            <input type="text" id="new-pdf-category-new" class="form-input" style="display:none; margin-top:10px;" placeholder="Type new category name...">
+          </div>
+
+          <div class="image-upload-container" style="margin: 0;">
+            <div class="upload-area" id="upload-pdf-area">
+              <div class="upload-icon">📄</div>
+              <div class="upload-text">Click to select PDF</div>
+            </div>
+            <input type="file" id="pdf-file-input" accept="application/pdf" style="display: none;">
+            <div class="upload-progress" id="pdf-upload-progress">
+              <div class="upload-progress-bar" id="pdf-progress-bar"></div>
+            </div>
+            <div class="upload-status" id="pdf-upload-status"></div>
+          </div>
+          
+          <button id="submit-pdf-btn" class="btn-success" style="margin-top: 10px;" disabled>Upload & Save</button>
+        </div>
+      </div>
+
+      <!-- PDF List -->
+     <div id="pdf-list-container" style="margin-top: 20px;">
+        </div>
+
+     <div style="display: flex; margin-top: 20px; gap: 8px; width: 100%;">
+        <button class="back-btn" onclick="navigateToSubjects()" style="margin-top: 0; flex: 1; justify-content: center; min-width: 0; padding: 8px 4px; font-size: clamp(0.7rem, 3.5vw, 0.9rem); white-space: nowrap;">
+          ← Back to Subjects
+        </button>
+        
+        <button class="back-btn" id="back-to-folders-btn" style="display: none; margin-top: 0; flex: 1; justify-content: center; min-width: 0; padding: 8px 4px; font-size: clamp(0.7rem, 3.5vw, 0.9rem); white-space: nowrap;" onclick="window.currentPdfCategory = null; const categorySelect = document.getElementById('new-pdf-category-select'); if (categorySelect) categorySelect.value = ''; window.renderPdfView();">
+          ← Back to Folders
+        </button>
+      </div>
+    </div>
     <!-- Quiz Container -->
     <div class="quiz-container" id="quiz-container">
       <!-- Path Display - Fixed navigation -->
@@ -4123,21 +4262,19 @@
         </div>
       </div>
 
-      <!-- QUESTION NAVIGATION SECTION -->
-      <div id="question-navigation" class="question-navigation collapsed">
-        <div class="navigation-header">
-          <div class="navigation-title">
+     <div id="question-navigation" class="question-navigation collapsed" style="padding: 12px;">
+        <div id="nav-header-toggle" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+          <h4 style="margin:0; color:#93c5fd; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 600;">
+            <span id="nav-toggle-icon" style="transition: transform 0.3s ease; display: inline-block;">▶</span> 
             Question Navigation
-          </div>
-          <button id="navigation-toggle-btn" class="navigation-toggle-btn collapsed">
-            <i>▶</i> Show Navigation
-          </button>
+          </h4>
         </div>
-        <div id="question-grid" class="question-grid">
-          <!-- Question buttons will be loaded dynamically -->
-        </div>
-        <div id="navigation-stats" class="navigation-stats">
-          <!-- Stats will be loaded dynamically -->
+        
+        <div id="nav-collapsible-content" style="display: none; margin-top: 12px; border-top: 1px solid rgba(75, 85, 99, 0.4); padding-top: 12px;">
+          <div id="question-grid" class="question-grid">
+            </div>
+          <div id="navigation-stats" class="navigation-stats">
+            </div>
         </div>
       </div>
 
@@ -4254,134 +4391,207 @@
           </select>
         </div>
 
-        <!-- Question Text -->
-        <div class="editor-row">
-          <label>Question:</label>
-          <textarea id="editor-question" rows="3" placeholder="Enter question text"></textarea>
-        </div>
-
-        <!-- Show/Hide Image URLs Toggle -->
-        <div class="image-toggle-row">
-          <input type="checkbox" id="show-image-urls" />
-          <label for="show-image-urls">Show/Hide Image Uploads</label>
-          <span class="toggle-hint">(Click to show image upload areas)</span>
-        </div>
-
-        <!-- Question Image Upload Section -->
-        <div id="question-image-upload-section" class="image-url-section hidden">
-          <div class="editor-row">
-            <label>Question Image:</label>
-            <div class="image-upload-container">
-              <div class="upload-area" id="upload-question-image">
-                <div class="upload-icon">📷</div>
-                <div class="upload-text">Click to upload or drag & drop</div>
-                <div class="upload-hint">Supported: JPG, PNG, GIF (Max 5MB)</div>
-              </div>
-              <img id="preview-question-image" class="upload-preview" src="" alt="Preview">
-              <div class="upload-progress">
-                <div class="upload-progress-bar"></div>
-              </div>
-              <div class="upload-status"></div>
-              <div class="upload-buttons">
-                <button class="upload-clear-btn" onclick="clearImageUpload('preview-question-image', 'editor-image-url')">Clear</button>
-              </div>
-              <!-- Hidden input field for image URL -->
-              <input type="hidden" id="editor-image-url">
-              <p style="color: #9ca3af; font-size: 0.8rem; margin-top: 5px;">Image will be uploaded and saved automatically</p>
+       <div class="editor-row">
+          <label style="margin-bottom: 8px; display: block;">Question:</label>
+          <div style="position: relative; box-sizing: border-box;">
+            <textarea id="editor-question" rows="3" placeholder="Enter your question here (or leave blank for image only)..." style="width: 100%; padding: 12px 46px 12px 12px; border-radius: 6px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 16px; font-family: inherit; resize: vertical; margin: 0; box-sizing: border-box; -webkit-appearance: none; appearance: none;"></textarea>
+            
+            <div id="btn-q-img" onclick="toggleQEditorPanel('q-img-panel')" class="icon-upload-btn" style="top: 12px; transform: none;" title="Add Question Image">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
             </div>
+            
+            <span id="q-img-icon" style="display:none;"></span>
           </div>
         </div>
 
-        <!-- Options Section -->
+        <div id="q-img-panel" style="display:none; padding: 0 0 15px 0;">
+          <div class="image-upload-container" style="margin: 0;">
+            <div class="upload-area" id="upload-question-image" style="padding: 10px;">
+              <div class="upload-text">Upload question image</div>
+            </div>
+            <img id="preview-question-image" class="upload-preview" src="" alt="Preview">
+            <div class="upload-progress">
+              <div class="upload-progress-bar"></div>
+            </div>
+            <input type="hidden" id="editor-image-url">
+            <div class="upload-buttons" style="justify-content: flex-end;">
+              <button class="upload-clear-btn" style="padding:4px 8px; font-size:0.8rem;" onclick="clearImageUpload('preview-question-image', 'editor-image-url')">Clear</button>
+            </div>
+          </div>
+        </div>
+       <style>
+          .option-text-input {
+              display: block !important;
+              width: 100% !important;
+              height: 42px !important;
+              /* 46px right padding guarantees typing never goes underneath the floating icon */
+              padding: 0 46px 0 12px !important; 
+              border-radius: 6px !important;
+              border: 1px solid rgba(75, 85, 99, 0.9) !important;
+              background: #111827 !important;
+              color: #e5e7eb !important;
+              font-size: 16px !important;
+              margin: 0 !important;
+              box-sizing: border-box !important;
+              -webkit-appearance: none !important;
+          }
+          body.light-mode .option-text-input {
+              background: #f3f4f6 !important;
+              color: #1f2937 !important;
+              border-color: #d1d5db !important;
+          }
+          .icon-upload-btn {
+              position: absolute !important;
+              right: 13px !important; /* mathematically pins it inside the right edge of the text box */
+              top: 50% !important;
+              transform: translateY(-50%) !important; /* perfectly centers it vertically */
+              width: 32px !important;
+              height: 32px !important;
+              background: #334155 !important;
+              color: #93c5fd !important;
+              border-radius: 4px !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              cursor: pointer !important;
+              box-sizing: border-box !important;
+              z-index: 10 !important;
+              transition: all 0.2s ease !important;
+          }
+          .icon-upload-btn:hover {
+              background: #475569 !important;
+          }
+          body.light-mode .icon-upload-btn {
+              background: #e5e7eb !important;
+              color: #2563eb !important;
+          }
+          body.light-mode .icon-upload-btn:hover {
+              background: #d1d5db !important;
+          }
+        </style>
+
         <div id="mcq-options-section">
           <label style="margin-bottom: 12px; display: block;">Options:</label>
           <div style="display: flex; flex-direction: column; gap: 12px;">
-            <!-- Option A -->
-            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden;">
-              <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">A.</div>
-              <div style="flex: 1; padding: 8px 12px;">
-                <input type="text" id="editor-option-a" placeholder="Option A" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem; margin-bottom: 8px;">
-                <div id="option-a-image-section" class="image-url-section hidden">
-                  <div class="image-upload-container" style="margin: 5px 0;">
-                    <div class="upload-area" id="upload-option-a-image" style="padding: 10px;">
-                      <div class="upload-text">Upload option A image</div>
-                    </div>
-                    <img id="preview-option-a-image" class="upload-preview" src="" alt="Preview">
-                    <div class="upload-progress">
-                      <div class="upload-progress-bar"></div>
-                    </div>
-                    <!-- Hidden input field for option image URL -->
-                    <input type="hidden" id="editor-option-a-img">
-                  </div>
-                </div>
-              </div>
-            </div>
             
-            <!-- Option B -->
-            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden;">
-              <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">B.</div>
-              <div style="flex: 1; padding: 8px 12px;">
-                <input type="text" id="editor-option-b" placeholder="Option B" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem; margin-bottom: 8px;">
-                <div id="option-b-image-section" class="image-url-section hidden">
-                  <div class="image-upload-container" style="margin: 5px 0;">
-                    <div class="upload-area" id="upload-option-b-image" style="padding: 10px;">
-                      <div class="upload-text">Upload option B image</div>
-                    </div>
-                    <img id="preview-option-b-image" class="upload-preview" src="" alt="Preview">
-                    <div class="upload-progress">
-                      <div class="upload-progress-bar"></div>
-                    </div>
-                    <!-- Hidden input field for option image URL -->
-                    <input type="hidden" id="editor-option-b-img">
+            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden; flex-direction: column;">
+              <div style="display: flex; width: 100%;">
+                <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">A.</div>
+                <div style="flex: 1; padding: 8px; position: relative; box-sizing: border-box;">
+                  <input type="text" id="editor-option-a" placeholder="Option A text" class="option-text-input">
+                  
+                  <div id="btn-opt-a-img" onclick="toggleQEditorPanel('opt-a-img-panel')" class="icon-upload-btn" title="Add Image">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  </div>
+                  
+                </div>
+              </div>
+              <div id="opt-a-img-panel" style="display:none; padding: 0 12px 12px 12px;">
+                <div class="image-upload-container" style="margin: 0;">
+                  <div class="upload-area" id="upload-option-a-image" style="padding: 10px;">
+                    <div class="upload-text">Upload option A image</div>
+                  </div>
+                  <img id="preview-option-a-image" class="upload-preview" src="" alt="Preview">
+                  <div class="upload-progress">
+                    <div class="upload-progress-bar"></div>
+                  </div>
+                  <input type="hidden" id="editor-option-a-img">
+                  <div class="upload-buttons" style="justify-content: flex-end;">
+                    <button class="upload-clear-btn" style="padding:4px 8px; font-size:0.8rem;" onclick="clearImageUpload('preview-option-a-image', 'editor-option-a-img')">Clear</button>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <!-- Option C -->
-            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden;">
-              <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">C.</div>
-              <div style="flex: 1; padding: 8px 12px;">
-                <input type="text" id="editor-option-c" placeholder="Option C" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem; margin-bottom: 8px;">
-                <div id="option-c-image-section" class="image-url-section hidden">
-                  <div class="image-upload-container" style="margin: 5px 0;">
-                    <div class="upload-area" id="upload-option-c-image" style="padding: 10px;">
-                      <div class="upload-text">Upload option C image</div>
-                    </div>
-                    <img id="preview-option-c-image" class="upload-preview" src="" alt="Preview">
-                    <div class="upload-progress">
-                      <div class="upload-progress-bar"></div>
-                    </div>
-                    <!-- Hidden input field for option image URL -->
-                    <input type="hidden" id="editor-option-c-img">
+
+            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden; flex-direction: column;">
+              <div style="display: flex; width: 100%;">
+                <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">B.</div>
+                <div style="flex: 1; padding: 8px; position: relative; box-sizing: border-box;">
+                  <input type="text" id="editor-option-b" placeholder="Option B text" class="option-text-input">
+                  
+                  <div id="btn-opt-b-img" onclick="toggleQEditorPanel('opt-b-img-panel')" class="icon-upload-btn" title="Add Image">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  </div>
+                  
+                </div>
+              </div>
+              <div id="opt-b-img-panel" style="display:none; padding: 0 12px 12px 12px;">
+                <div class="image-upload-container" style="margin: 0;">
+                  <div class="upload-area" id="upload-option-b-image" style="padding: 10px;">
+                    <div class="upload-text">Upload option B image</div>
+                  </div>
+                  <img id="preview-option-b-image" class="upload-preview" src="" alt="Preview">
+                  <div class="upload-progress">
+                    <div class="upload-progress-bar"></div>
+                  </div>
+                  <input type="hidden" id="editor-option-b-img">
+                  <div class="upload-buttons" style="justify-content: flex-end;">
+                    <button class="upload-clear-btn" style="padding:4px 8px; font-size:0.8rem;" onclick="clearImageUpload('preview-option-b-image', 'editor-option-b-img')">Clear</button>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <!-- Option D -->
-            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden;">
-              <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">D.</div>
-              <div style="flex: 1; padding: 8px 12px;">
-                <input type="text" id="editor-option-d" placeholder="Option D" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem; margin-bottom: 8px;">
-                <div id="option-d-image-section" class="image-url-section hidden">
-                  <div class="image-upload-container" style="margin: 5px 0;">
-                    <div class="upload-area" id="upload-option-d-image" style="padding: 10px;">
-                      <div class="upload-text">Upload option D image</div>
-                    </div>
-                    <img id="preview-option-d-image" class="upload-preview" src="" alt="Preview">
-                    <div class="upload-progress">
-                      <div class="upload-progress-bar"></div>
-                    </div>
-                    <!-- Hidden input field for option image URL -->
-                    <input type="hidden" id="editor-option-d-img">
+
+            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden; flex-direction: column;">
+              <div style="display: flex; width: 100%;">
+                <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">C.</div>
+                <div style="flex: 1; padding: 8px; position: relative; box-sizing: border-box;">
+                  <input type="text" id="editor-option-c" placeholder="Option C text" class="option-text-input">
+                  
+                  <div id="btn-opt-c-img" onclick="toggleQEditorPanel('opt-c-img-panel')" class="icon-upload-btn" title="Add Image">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  </div>
+                  
+                </div>
+              </div>
+              <div id="opt-c-img-panel" style="display:none; padding: 0 12px 12px 12px;">
+                <div class="image-upload-container" style="margin: 0;">
+                  <div class="upload-area" id="upload-option-c-image" style="padding: 10px;">
+                    <div class="upload-text">Upload option C image</div>
+                  </div>
+                  <img id="preview-option-c-image" class="upload-preview" src="" alt="Preview">
+                  <div class="upload-progress">
+                    <div class="upload-progress-bar"></div>
+                  </div>
+                  <input type="hidden" id="editor-option-c-img">
+                  <div class="upload-buttons" style="justify-content: flex-end;">
+                    <button class="upload-clear-btn" style="padding:4px 8px; font-size:0.8rem;" onclick="clearImageUpload('preview-option-c-image', 'editor-option-c-img')">Clear</button>
                   </div>
                 </div>
               </div>
             </div>
+
+            <div style="display: flex; align-items: stretch; min-height: 50px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.9); overflow: hidden; flex-direction: column;">
+              <div style="display: flex; width: 100%;">
+                <div style="display: flex; align-items: center; justify-content: center; min-width: 40px; background: rgba(30, 41, 59, 0.8); border-right: 1px solid rgba(75, 85, 99, 0.5); font-weight: 600; color: #93c5fd; padding: 8px;">D.</div>
+                <div style="flex: 1; padding: 8px; position: relative; box-sizing: border-box;">
+                  <input type="text" id="editor-option-d" placeholder="Option D text" class="option-text-input">
+                  
+                  <div id="btn-opt-d-img" onclick="toggleQEditorPanel('opt-d-img-panel')" class="icon-upload-btn" title="Add Image">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  </div>
+                  
+                </div>
+              </div>
+              <div id="opt-d-img-panel" style="display:none; padding: 0 12px 12px 12px;">
+                <div class="image-upload-container" style="margin: 0;">
+                  <div class="upload-area" id="upload-option-d-image" style="padding: 10px;">
+                    <div class="upload-text">Upload option D image</div>
+                  </div>
+                  <img id="preview-option-d-image" class="upload-preview" src="" alt="Preview">
+                  <div class="upload-progress">
+                    <div class="upload-progress-bar"></div>
+                  </div>
+                  <input type="hidden" id="editor-option-d-img">
+                  <div class="upload-buttons" style="justify-content: flex-end;">
+                    <button class="upload-clear-btn" style="padding:4px 8px; font-size:0.8rem;" onclick="clearImageUpload('preview-option-d-image', 'editor-option-d-img')">Clear</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
-
         <!-- Answer -->
         <div class="editor-row" id="answer-section">
           <label>Correct Answer:</label>
@@ -4415,12 +4625,13 @@
   </div>
 
   <script>
+    
     // ========== FORCE CACHE BUSTING ==========
     const version = Date.now();
     
     // ========== APPS SCRIPT CONFIGURATION ==========
-    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwf3FEX0Lcpq7IUOdM01uje7T4vWfVVSjObcFy4x4pPVikU5JshK_5-aCAV_T1swZ5cJQ/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw7MB-ziRjyvZBiVl2VERzCHUpUF1Cs8VTgwDhxbN51g55bOOcZwgRihzM4IooeBJvR/exec';
+    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwTgZ_M-oCBYGTKpxOLXKE9em7tESjtCz9kudPW82GpPeTkJVPx-G4E9V3rDs-dmuQuEg/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdYl51781-_kTLkj5_QauF36V5VXbQ-3Ro93tVvR8h5LSp7NPuB7VRdsLnxr58sRxy/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -4428,6 +4639,7 @@
     const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
     // ========== GLOBAL VARIABLES ==========
+    let sessionMonitorInterval = null;
     let questions = [];
     let originalQuestions = [];
     let currentIndex = 0;
@@ -4505,6 +4717,7 @@
     const classSelectionEl = document.getElementById("class-selection");
     const subjectSelectionEl = document.getElementById("subject-selection");
     const quizContainerEl = document.getElementById("quiz-container");
+    const pyqContainerEl = document.getElementById("pyq-container");
     const accountConfigErrorEl = document.getElementById("account-config-error");
     const subscriptionExpiredEl = document.getElementById("subscription-expired");
     
@@ -4616,6 +4829,55 @@
     const metaThemeColor = document.getElementById('meta-theme-color');
     const greetingMessageEl = document.getElementById('greetingMessage');
 
+    // ========== CUSTOM MODAL HELPERS ==========
+// ========== CUSTOM MODAL HELPERS ==========
+    window.showToast = function(message, color = 'linear-gradient(to right, #10b981, #059669)') {
+      const toast = document.getElementById('toast-notification');
+      const msgEl = document.getElementById('toast-message');
+      if (!toast || !msgEl) return;
+      
+      msgEl.innerHTML = message;
+      toast.style.background = color;
+      toast.style.display = 'block';
+      
+      // Small delay to allow display:block to apply before fading in
+      setTimeout(() => { toast.style.opacity = '1'; }, 10);
+      
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.style.display = 'none', 300);
+      }, 3000);
+    };
+
+   // window.showCustomConfirm = function(title, message, confirmText, onConfirm) {
+    
+    window.showCustomConfirm = function(title, message, confirmText, onConfirm) {
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-message').innerHTML = message;
+      document.getElementById('confirm-ok-btn').textContent = confirmText;
+      document.getElementById('custom-confirm-modal').style.display = 'flex';
+      
+      document.getElementById('confirm-ok-btn').onclick = function() {
+        document.getElementById('custom-confirm-modal').style.display = 'none';
+        onConfirm();
+      };
+      document.getElementById('confirm-cancel-btn').onclick = function() {
+        document.getElementById('custom-confirm-modal').style.display = 'none';
+      };
+    };
+
+    window.showCustomAlert = function(title, message, onOk) {
+      document.getElementById('alert-title').textContent = title;
+      document.getElementById('alert-message').innerHTML = message;
+      document.getElementById('custom-alert-modal').style.display = 'flex';
+      
+      document.getElementById('alert-ok-btn').onclick = function() {
+        document.getElementById('custom-alert-modal').style.display = 'none';
+        if(onOk) onOk();
+      };
+    };
+
     // ========== PDF OVERLAY FUNCTIONS ==========
     function showPDFOverlay(message = "Processing...") {
       console.log('Showing PDF overlay with message:', message);
@@ -4667,8 +4929,99 @@
     }
 
     // ========== IMAGE UPLOAD FUNCTIONS ==========
+   // ========== CROPPER LOGIC & IMAGE UPLOAD SETUP ==========
     let currentUploadField = null;
+    let cropperInstance = null;
+    let currentCropParams = null;
 
+   function openCropperModal(file, previewId, inputId, fieldName) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file (JPEG, PNG, GIF)');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const cropperModal = document.getElementById('cropper-modal');
+        const cropperImgEl = document.getElementById('cropper-image');
+        
+        if (cropperInstance) {
+            cropperInstance.destroy();
+            cropperInstance = null;
+        }
+
+        // 1. Reset image to clear any old dimensions
+        cropperImgEl.src = '';
+        
+        // 2. Show the modal so the browser calculates the height/width
+        cropperModal.style.display = 'flex';
+        currentCropParams = { previewId, inputId, fieldName, originalName: file.name };
+
+        // 3. Wait for the new image to load its pixels
+        cropperImgEl.onload = function() {
+            // CRITICAL FIX: Double requestAnimationFrame guarantees the mobile browser 
+            // has physically drawn the DOM before Cropper calculates coordinates.
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    cropperInstance = new Cropper(cropperImgEl, {
+                      viewMode: 1, // Keep crop box inside the canvas bounds
+                      dragMode: 'move', // Allow panning the image with one finger
+                      autoCropArea: 0.9, 
+                      restore: false,
+                      guides: true,
+                      center: true,
+                      highlight: false,
+                      cropBoxMovable: true,
+                      cropBoxResizable: true,
+                      toggleDragModeOnDblclick: false,
+                    });
+                });
+            });
+        };
+
+        // 4. Trigger the load
+        cropperImgEl.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+    function closeCropperModal() {
+      document.getElementById('cropper-modal').style.display = 'none';
+      if (cropperInstance) {
+        cropperInstance.destroy();
+        cropperInstance = null;
+      }
+      currentCropParams = null;
+    }
+
+    // Cropper Button Listeners
+    document.addEventListener('click', function(e) {
+      if (e.target && e.target.id === 'cancel-crop-btn') {
+        e.preventDefault();
+        closeCropperModal();
+      }
+      if (e.target && e.target.id === 'save-crop-btn') {
+        e.preventDefault();
+        if (!cropperInstance || !currentCropParams) return;
+
+        const canvas = cropperInstance.getCroppedCanvas({
+            maxWidth: 1200,
+            maxHeight: 1200,
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        });
+
+        // Convert the cropped area to a compressed JPEG file
+        canvas.toBlob(function(blob) {
+            const croppedFile = new File([blob], "cropped_" + currentCropParams.originalName, { type: "image/jpeg", lastModified: Date.now() });
+            
+            // Pass the cropped file cleanly into your existing Google Drive upload logic!
+            handleImageUpload(croppedFile, currentCropParams.previewId, currentCropParams.inputId, currentCropParams.fieldName);
+            closeCropperModal();
+        }, 'image/jpeg', 0.85); 
+      }
+    });
+
+    // Modified setup to intercept images and open Cropper
     function setupImageUpload(fieldId, previewId, inputId, fieldName) {
       const uploadArea = document.getElementById(fieldId);
       if (!uploadArea) return;
@@ -4680,13 +5033,11 @@
       fileInput.id = 'file-input-' + fieldId;
       document.body.appendChild(fileInput);
 
-      // Handle click on upload area
       uploadArea.addEventListener('click', () => {
         currentUploadField = { previewId, inputId };
         fileInput.click();
       });
 
-      // Handle drag and drop
       uploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
         uploadArea.classList.add('dragover');
@@ -4703,16 +5054,15 @@
         const files = e.dataTransfer.files;
         if (files.length > 0) {
           currentUploadField = { previewId, inputId };
-          handleImageUpload(files[0], previewId, inputId, fieldName);
+          openCropperModal(files[0], previewId, inputId, fieldName); // <--- Intercepted!
         }
       });
 
-      // Handle file selection
       fileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
-          handleImageUpload(e.target.files[0], previewId, inputId, fieldName);
+          openCropperModal(e.target.files[0], previewId, inputId, fieldName); // <--- Intercepted!
         }
-        fileInput.value = ''; // Reset so same file can be selected again
+        fileInput.value = ''; 
       });
     }
 
@@ -4770,7 +5120,7 @@
         return { success: false, error: "Network Error: " + error.toString() };
       }
     }
-    // ========== HANDLE IMAGE UPLOAD ==========
+// ========== UPGRADED IMAGE UPLOAD LOGIC ==========
     async function handleImageUpload(file, previewId, inputId, fieldName) {
       if (!file.type.startsWith('image/')) {
         alert('Please select an image file (JPEG, PNG, GIF)');
@@ -4782,76 +5132,38 @@
         return;
       }
 
-      // Show preview
       const preview = document.getElementById(previewId);
-      if (!preview) {
-        console.error('Preview element not found:', previewId);
-        return;
-      }
+      if (!preview) return;
       
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        preview.src = e.target.result;
-        preview.classList.add('visible');
-      };
-      reader.readAsDataURL(file);
-
-      // Show progress
+      const uploadArea = preview.closest('.image-upload-area') || preview.parentElement;
+      const originalText = uploadArea.querySelector('.upload-text');
       const container = preview.closest('.image-upload-container');
-      if (!container) {
-        console.error('Container not found for preview:', previewId);
-        return;
+      const progressContainer = container ? container.querySelector('.upload-progress') : null;
+      const progressBar = container ? container.querySelector('.upload-progress-bar') : null;
+      const statusEl = container ? container.querySelector('.upload-status') : null;
+      
+      if (originalText) {
+          originalText.style.display = 'block';
+          originalText.innerHTML = `<span style="color:#3b82f6; font-weight:bold;">Uploading to Drive... ⏳</span>`;
       }
-      
-      const progressContainer = container.querySelector('.upload-progress');
-      const progressBar = container.querySelector('.upload-progress-bar');
-      const statusEl = container.querySelector('.upload-status');
-      
       if (progressContainer) progressContainer.style.display = 'block';
-      if (progressBar) {
-        progressBar.style.width = '30%';
-        progressBar.classList.add('active');
-      }
-      if (statusEl) {
-        statusEl.style.display = 'block';
-        statusEl.textContent = 'Uploading to Google Drive...';
-        statusEl.style.color = '#93c5fd';
-      }
+      if (progressBar) { progressBar.style.width = '30%'; progressBar.classList.add('active'); }
+      if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = 'Uploading to Google Drive...'; statusEl.style.color = '#93c5fd'; }
 
       try {
-       // Compress image using Canvas API before uploading
         const base64Data = await new Promise((resolve) => {
           const reader = new FileReader();
           reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
               const canvas = document.createElement('canvas');
-              let width = img.width;
-              let height = img.height;
-              
-              // Set maximum dimensions (800px is great for mobile/web quizzes)
-              const MAX_WIDTH = 800;
-              const MAX_HEIGHT = 800;
-
-              // Calculate new dimensions while maintaining aspect ratio
-              if (width > height) {
-                if (width > MAX_WIDTH) {
-                  height = Math.round((height * MAX_WIDTH) / width);
-                  width = MAX_WIDTH;
-                }
-              } else {
-                if (height > MAX_HEIGHT) {
-                  width = Math.round((width * MAX_HEIGHT) / height);
-                  height = MAX_HEIGHT;
-                }
-              }
-
-              canvas.width = width;
-              canvas.height = height;
+              let width = img.width, height = img.height;
+              const MAX_WIDTH = 800, MAX_HEIGHT = 800;
+              if (width > height) { if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; } } 
+              else { if (height > MAX_HEIGHT) { width = Math.round((width * MAX_HEIGHT) / height); height = MAX_HEIGHT; } }
+              canvas.width = width; canvas.height = height;
               const ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0, width, height);
-
-              // Export as JPEG with 70% quality (drastically reduces file size)
               resolve(canvas.toDataURL('image/jpeg', 0.7));
             };
             img.src = e.target.result;
@@ -4859,103 +5171,120 @@
           reader.readAsDataURL(file);
         });
 
-        console.log('📤 Uploading to Google Drive...', { fileName: file.name, previewId, inputId, fieldName });
-
-       // Get the row index for the current question
-        let rowIndex = '';
-        let tempId = '';
+        let rowIndex = '', tempId = '';
         const modalDataset = document.getElementById('question-editor-modal').dataset;
         const editMode = modalDataset.editMode;
         
         if (editMode === 'edit') {
           rowIndex = modalDataset.originalIndex;
         } else {
-          // For new questions, set rowIndex to 'new'
           rowIndex = 'new';
-          
-          // FIX: Check if we already created a tempId for this new question session
-          if (modalDataset.tempId && modalDataset.tempId !== '') {
-            tempId = modalDataset.tempId;
-          } else {
-            // If not, create one and immediately save it to the dataset so it gets reused!
-            tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            modalDataset.tempId = tempId;
-          }
+          if (modalDataset.tempId && modalDataset.tempId !== '') tempId = modalDataset.tempId;
+          else { tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9); modalDataset.tempId = tempId; }
         }
 
-        // Upload to Google Drive via Apps Script
         const result = await uploadImageToDrive(file.name, base64Data, file.type, fieldName, rowIndex, tempId);
         
-        console.log('📥 Upload response:', result);
-        
-        if (progressBar) {
-          progressBar.style.width = '100%';
-          progressBar.classList.remove('active');
-        }
+        if (progressBar) { progressBar.style.width = '100%'; progressBar.classList.remove('active'); }
         
         if (result && result.success) {
-          if (statusEl) {
-            statusEl.textContent = 'Upload complete!';
-            statusEl.style.color = '#22c55e';
-          }
-          
-          // Set the actual URL in the hidden input
-          const input = document.getElementById(inputId);
-          if (input && result.fileUrl) {
-            input.value = result.fileUrl;
-            console.log(`✅ URL set in ${inputId}:`, result.fileUrl);
+          const finalDriveUrl = result.url || result.fileUrl || result.fileId;
             
-            // Store tempId for new questions
-            if (editMode === 'new') {
-              document.getElementById('question-editor-modal').dataset.tempId = tempId;
-            }
+          // FIX: Add ✅ before text and keep it visible
+          if (statusEl) { 
+              statusEl.innerHTML = '✅ Upload complete!'; 
+              statusEl.style.color = '#22c55e'; 
+              statusEl.style.display = 'block'; 
           }
           
-          // Hide progress after delay
-          setTimeout(() => {
-            if (progressContainer) progressContainer.style.display = 'none';
-            if (statusEl) statusEl.style.display = 'none';
-          }, 2000);
+          const input = document.getElementById(inputId);
+          if (input && finalDriveUrl) {
+            input.value = finalDriveUrl;
+            if (editMode === 'new') document.getElementById('question-editor-modal').dataset.tempId = tempId;
+          }
+          
+          // FIX: Use local base64Data for the preview
+          preview.src = base64Data;
+          preview.classList.add('visible');
+          preview.style.display = 'block';
+          if (originalText) originalText.style.display = 'none';
+
+          // Hide progress bar container but KEEP status text (✅ Upload complete!) visible
+          setTimeout(() => { if (progressContainer) progressContainer.style.display = 'none'; }, 2000);
         } else {
           throw new Error(result?.error || 'Upload failed');
         }
       } catch (error) {
-        console.error('❌ Upload failed:', error);
-        if (statusEl) {
-          statusEl.textContent = 'Upload failed: ' + error.message;
-          statusEl.style.color = '#ef4444';
-        }
-        if (progressBar) {
-          progressBar.style.width = '0%';
-          progressBar.classList.remove('active');
-        }
-        
+        if (statusEl) { statusEl.textContent = 'Upload failed: ' + error.message; statusEl.style.color = '#ef4444'; }
+        if (progressBar) { progressBar.style.width = '0%'; progressBar.classList.remove('active'); }
+        if (originalText) { originalText.innerHTML = 'Upload Failed. Try Again.'; originalText.style.display = 'block'; }
         setTimeout(() => {
           if (progressContainer) progressContainer.style.display = 'none';
           if (statusEl) statusEl.style.display = 'none';
         }, 3000);
       }
     }
-
-    function clearImageUpload(previewId, inputId) {
+   // ========== CLEAR UPLOAD & DELETE FROM GOOGLE DRIVE ==========
+    async function clearImageUpload(previewId, inputId) {
       const preview = document.getElementById(previewId);
       const input = document.getElementById(inputId);
       
+      const container = preview ? preview.closest('.image-upload-container') : null;
+      const uploadArea = container ? container.querySelector('.upload-area') : null;
+      const originalText = uploadArea ? uploadArea.querySelector('.upload-text') : null;
+      const clearBtn = container ? container.querySelector('.upload-clear-btn') : null;
+      const statusEl = container ? container.querySelector('.upload-status') : null;
+
+      const urlToDelete = input ? input.value : '';
+
+      // 1. If it's saved in Drive, delete it from Drive first
+      if (urlToDelete && urlToDelete.includes('drive.google')) {
+          const oldBtnText = clearBtn ? clearBtn.innerHTML : 'Clear';
+          if (clearBtn) {
+              clearBtn.innerHTML = '⏳ Deleting...';
+              clearBtn.style.pointerEvents = 'none';
+          }
+          try {
+              let deleteUrl = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=deleteUploadedImage' +
+                              '&fileUrl=' + encodeURIComponent(urlToDelete) +
+                              '&username=' + encodeURIComponent(currentUser.username) +
+                              '&role=' + encodeURIComponent(currentUser.role) +
+                              '&token=' + encodeURIComponent(currentUser.token) +
+                              '&_t=' + Date.now();
+              await jsonpRequest(deleteUrl, 'delImgCb');
+          } catch(e) { 
+              console.log('Delete command sent.'); 
+          }
+          if (clearBtn) {
+              clearBtn.innerHTML = oldBtnText;
+              clearBtn.style.pointerEvents = 'auto';
+          }
+      }
+
+      // 2. Clear the Interface completely
       if (preview) {
         preview.src = '';
         preview.classList.remove('visible');
+        preview.style.display = 'none';
       }
+
       if (input) input.value = '';
-      
-      const container = preview ? preview.closest('.image-upload-container') : null;
+
+      if (originalText) {
+          originalText.innerHTML = 'Click to upload or drag & drop';
+          originalText.style.display = 'block';
+      }
+
+      // Hide the "✅ Upload complete!" text and progress bar
       if (container) {
         const progressContainer = container.querySelector('.upload-progress');
-        const statusEl = container.querySelector('.upload-status');
         if (progressContainer) progressContainer.style.display = 'none';
-        if (statusEl) statusEl.style.display = 'none';
+        if (statusEl) {
+            statusEl.style.display = 'none';
+            statusEl.innerHTML = '';
+        }
       }
     }
-
     function setupImageUploadHandlers() {
       setupImageUpload('upload-question-image', 'preview-question-image', 'editor-image-url', 'imageUrl');
       setupImageUpload('upload-option-a-image', 'preview-option-a-image', 'editor-option-a-img', 'optionImage1');
@@ -5060,6 +5389,7 @@
       if (subjectLower.includes('elect')) return '⚡';
       if (subjectLower.includes('english')) return '📖';
       if (subjectLower.includes('social')) return '🌍';
+      if (subjectLower.includes('previous year') || subjectLower.includes('question answer') || subjectLower.includes('download')) return '📄';
       return '📚';
     }
 
@@ -5072,6 +5402,7 @@
       if (subjectLower.includes('bio')) return 'Biology - Life processes, Cells';
       if (subjectLower.includes('mech')) return 'Mechanical Engineering - Machines';
       if (subjectLower.includes('elect')) return 'Electrical Engineering - Circuits';
+      if (subjectLower.includes('previous year') || subjectLower.includes('question answer') || subjectLower.includes('download')) return 'Download PDF resources';
       return 'Interactive Learning';
     }
 
@@ -5084,49 +5415,69 @@
     }
 
     // ========== CHECK IF USER IS ADMIN ==========
-    function isAdmin() {
-      return currentUser && currentUser.role === 'Admin';
+   // ========== CHECK PERMISSIONS ==========
+    function isAdmin() { return currentUser && currentUser.role === 'Admin'; }
+    function isEditor() { return currentUser && currentUser.role === 'Editor'; }
+
+    function hasPermission(action) {
+      if (!currentUser) return false;
+      if (currentUser.role === 'Admin') return true;
+      if (currentUser.role === 'Editor' && currentUser.permission) {
+        return currentUser.permission.toLowerCase().includes(action.toLowerCase());
+      }
+      return false;
     }
 
-    // ========== UPDATE ADMIN CONTROLS AND WHATSAPP VISIBILITY ==========
+    function canAdd() { return hasPermission('add'); }
+    function canEdit() { return hasPermission('edit'); }
+    function canDelete() { return hasPermission('delete'); }
+    
+    window.showTrialPopup = function() {
+      document.getElementById('trial-popup-modal').style.display = 'flex';
+    };
+
+    window.showEditorPopup = function(actionRequired) {
+      document.getElementById('missing-permission-name').textContent = actionRequired.toUpperCase();
+      const msg = encodeURIComponent(`Hello Admin, I need ${actionRequired.toUpperCase()} permission for my Editor account in the G.S. Tutorial App. Username: ${currentUser.username}`);
+      document.getElementById('editor-whatsapp-btn').href = `https://wa.me/919706195457?text=${msg}`;
+      document.getElementById('editor-popup-modal').style.display = 'flex';
+    };
+
+   
+   // ========== UPDATE ADMIN CONTROLS AND WHATSAPP VISIBILITY ==========
     function updateAdminControls() {
-      // WhatsApp icon: visible to non-admin users, hidden for admin
       if (questionWhatsappIconEl) {
         if (questionsLoaded && questions.length > 0) {
-          questionWhatsappIconEl.style.display = isAdmin() ? 'none' : 'block';
+          questionWhatsappIconEl.style.display = (isAdmin() || isEditor()) ? 'none' : 'block';
         } else {
           questionWhatsappIconEl.style.display = 'none';
         }
       }
       
-      // Edit icon: only visible to admin
       if (questionEditIconEl) {
-        if (isAdmin() && questionsLoaded && questions.length > 0) {
+        if ((isAdmin() || isEditor()) && questionsLoaded && questions.length > 0) {
           questionEditIconEl.style.display = 'block';
         } else {
           questionEditIconEl.style.display = 'none';
         }
       }
       
-      // Delete icon: only visible to admin
       if (questionDeleteIconEl) {
-        if (isAdmin() && questionsLoaded && questions.length > 0) {
+        if ((isAdmin() || isEditor()) && questionsLoaded && questions.length > 0) {
           questionDeleteIconEl.style.display = 'block';
         } else {
           questionDeleteIconEl.style.display = 'none';
         }
       }
       
-      // Add question button: visible to admin when chapter is selected (even if no questions)
-      if (addQuestionBtn) {
-        if (isAdmin() && currentSubjectConfig && currentTopicName) {
+      if (adminAddQuestionDiv) {
+        if ((isAdmin() || isEditor()) && currentSubjectConfig && currentTopicName) {
           adminAddQuestionDiv.style.display = 'block';
         } else {
           adminAddQuestionDiv.style.display = 'none';
         }
       }
     }
-
     // ========== NAVIGATION FUNCTIONS ==========
     function navigateToClasses() {
       if (timerInterval) {
@@ -5146,35 +5497,38 @@
       showSubjectSelection(currentClass);
     }
 
-    // ========== LOAD ALL CONFIG AT ONCE ==========
-   async function loadAllConfigAtOnce() {
+   // ========== LOAD ALL CONFIG AT ONCE ==========
+    async function loadAllConfigAtOnce() {
       if (ALL_CONFIG_CACHE && ALL_CONFIG_CACHE_TIME && 
           (Date.now() - ALL_CONFIG_CACHE_TIME < CACHE_DURATION)) {
         return ALL_CONFIG_CACHE;
       }
 
       try {
-        // ADDED: username and token parameters to pass the security gate
         const url = MASTER_CONFIG_APPS_SCRIPT_URL + 
                     '?action=getAllConfig' +
                     '&username=' + encodeURIComponent(currentUser?.username || '') +
                     '&token=' + encodeURIComponent(currentUser?.token || '') +
                     '&_t=' + Date.now();
 
+        // If the server rejects the token, this instantly triggers the catch block below
         const data = await jsonpRequest(url, 'allConfigCallback');
         
-        if (data.success) {
-          ALL_CONFIG_CACHE = data;
-          ALL_CONFIG_CACHE_TIME = Date.now();
-          return data;
-        } else {
-          // If server rejects the token, force a logout
-          if (data.error && data.error.includes("Unauthorized")) logout();
-          throw new Error(data.error || 'Failed to load config');
-        }
+        ALL_CONFIG_CACHE = data;
+        ALL_CONFIG_CACHE_TIME = Date.now();
+        return data;
+
       } catch (error) {
         console.error("Error loading all config:", error);
-        return null;
+        const errorMsg = typeof error === 'string' ? error : (error.message || '');
+        
+        // 🚨 KICK THE HACKER OUT AND RAISE THE ALARM
+        if (errorMsg.includes("Unauthorized") || errorMsg.includes("Invalid Session")) {
+          if (typeof logout === 'function') logout();
+          throw new Error("Unauthorized"); // This tells loadClasses() to stop trying to show the UI
+        }
+        
+        throw new Error(errorMsg || "Failed to load config");
       }
     }
     // ========== JSONP HELPER FUNCTION ==========
@@ -5346,11 +5700,12 @@
     }
 
     // ========== SETUP EDIT ICON ==========
-    function setupEditIcon() {
+   function setupEditIcon() {
       if (!questionEditIconEl) return;
-      
       questionEditIconEl.addEventListener("click", function() {
-        if (!isAdmin()) return;
+        if (isEditor() && !canEdit()) { window.showEditorPopup('Edit'); return; } // NEW
+        if (!isAdmin() && !isEditor()) return;
+       
         if (!questionsLoaded || questions.length === 0 || currentIndex >= questions.length) {
           alert("No question to edit.");
           return;
@@ -5358,29 +5713,33 @@
         openQuestionEditor(currentIndex);
       });
     }
-
-    // ========== SETUP DELETE ICON ==========
+// ========== SETUP DELETE ICON ==========
     function setupDeleteIcon() {
       if (!questionDeleteIconEl) return;
-      
       questionDeleteIconEl.addEventListener("click", function() {
-        if (!isAdmin()) return;
+        if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; } 
+        if (!isAdmin() && !isEditor()) return;
+      
         if (!questionsLoaded || questions.length === 0 || currentIndex >= questions.length) {
-          alert("No question to delete.");
+          window.showCustomAlert("Notice", "No question to delete.");
           return;
         }
         
-        if (confirm("⚠️ Are you sure you want to delete this question?\n\nThis action cannot be undone!")) {
-          deleteCurrentQuestion();
-        }
+        window.showCustomConfirm(
+          "Delete Question", 
+          "⚠️ Are you sure you want to delete this question?<br><br>This action cannot be undone!", 
+          "Delete", 
+          () => { deleteCurrentQuestion(); }
+        );
       });
     }
 
-    // ========== DELETE CURRENT QUESTION ==========
-    // ========== DELETE CURRENT QUESTION ==========
+    
+  // ========== DELETE CURRENT QUESTION ==========
     async function deleteCurrentQuestion() {
-      if (!isAdmin()) {
-        alert("Unauthorized access");
+      // FIX: Allow Editors through
+      if (!isAdmin() && !isEditor()) {
+        window.showCustomAlert("Error", "Unauthorized access");
         return;
       }
 
@@ -5407,7 +5766,7 @@
         
         if (result && result.success) {
           hidePDFOverlay();
-          alert('Question deleted successfully!');
+          window.showToast('✅ Question deleted successfully!');
           
           // --- FIX: Update local arrays and shift originalIndex down by 1 ---
           questions.splice(currentIndex, 1);
@@ -5512,8 +5871,30 @@
       });
     }
 
+    // Handles opening/closing the new Editor UI panels
+    function toggleQEditorPanel(panelId, iconId) {
+      const panel = document.getElementById(panelId);
+      if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        if(iconId) document.getElementById(iconId).style.transform = 'rotate(180deg)';
+        
+        // Highlight option button blue when panel is open
+        const btnId = panelId.replace('-img-panel', '-img');
+        const btn = document.getElementById('btn-' + btnId);
+        if(btn) btn.style.background = '#3b82f6';
+      } else {
+        panel.style.display = 'none';
+        if(iconId) document.getElementById(iconId).style.transform = 'rotate(0deg)';
+        
+        // Revert option button color when panel is closed
+        const btnId = panelId.replace('-img-panel', '-img');
+        const btn = document.getElementById('btn-' + btnId);
+        if(btn) btn.style.background = '#334155';
+      }
+    }
+
     // ========== OPEN QUESTION EDITOR ==========
-  function openQuestionEditor(index) {
+ function openQuestionEditor(index) {
       if (!questions[index]) return;
       
       const q = questions[index];
@@ -5523,17 +5904,129 @@
       document.getElementById('editor-question-type').value = q.isSubjective ? 'subjective' : 'mcq';
       document.getElementById('editor-question').value = q.question;
       
-      // Reset image URL toggle and hide fields by default
-      if (showImageUrlsCheckbox) {
-        showImageUrlsCheckbox.checked = false;
-        toggleImageUrlFields();
-      }
-      
       document.getElementById('editor-image-url').value = q.imageUrl || '';
       document.getElementById('editor-marks').value = q.marks || 1;
       document.getElementById('editor-explanation').value = q.explanation || '';
       
       toggleQuestionTypeSections(q.isSubjective ? 'subjective' : 'mcq');
+      
+     // Clear and Reset Previews
+      ['question', 'option-a', 'option-b', 'option-c', 'option-d'].forEach(prefix => {
+        const preview = document.getElementById(`preview-${prefix}-image`);
+        if (preview) {
+          preview.src = '';
+          preview.classList.remove('visible');
+          preview.style.display = 'none'; // FIX: Completely hides the broken image icon
+        }
+      });
+      
+      if (q.isSubjective) {
+        // Handle subjective correctly
+        document.getElementById('editor-answer-subjective').value = q.explanation ? q.explanation.split(' - ')[0] : (q.answer || '');
+      } else {
+        document.getElementById('editor-option-a').value = q.options && q.options[0] ? q.options[0] : '';
+        document.getElementById('editor-option-b').value = q.options && q.options[1] ? q.options[1] : '';
+        document.getElementById('editor-option-c').value = q.options && q.options[2] ? q.options[2] : '';
+        document.getElementById('editor-option-d').value = q.options && q.options[3] ? q.options[3] : '';
+        
+        // Load option images
+        document.getElementById('editor-option-a-img').value = q.optionImages && q.optionImages[0] ? q.optionImages[0] : '';
+        document.getElementById('editor-option-b-img').value = q.optionImages && q.optionImages[1] ? q.optionImages[1] : '';
+        document.getElementById('editor-option-c-img').value = q.optionImages && q.optionImages[2] ? q.optionImages[2] : '';
+        document.getElementById('editor-option-d-img').value = q.optionImages && q.optionImages[3] ? q.optionImages[3] : '';
+        
+       // Restore image previews if URLs exist
+        if (q.imageUrl) {
+          const preview = document.getElementById('preview-question-image');
+          if (preview) { 
+            preview.src = convertImageUrl(q.imageUrl); // FIX: Convert to displayable thumbnail
+            preview.classList.add('visible'); 
+            preview.style.display = 'block'; 
+          }
+        }
+        
+       ['a', 'b', 'c', 'd'].forEach((opt, idx) => {
+          if (q.optionImages && q.optionImages[idx]) {
+            const preview = document.getElementById(`preview-option-${opt}-image`);
+            if (preview) { 
+              preview.src = convertImageUrl(q.optionImages[idx]); // FIX: Convert to displayable thumbnail
+              preview.classList.add('visible'); 
+              preview.style.display = 'block'; 
+            }
+          }
+        });
+        
+        // FIX 1: Correct ID for the Answer Dropdown
+        const answerLetter = String.fromCharCode(65 + q.correctIndex);
+        document.getElementById('editor-answer-mcq').value = answerLetter || 'A';
+      }
+      
+      // FIX 2: Set necessary hidden data properties for saving correctly
+      modal.dataset.editMode = 'edit';
+      modal.dataset.questionIndex = index;
+      modal.dataset.originalIndex = q.originalIndex;
+      modal.dataset.tempId = '';
+      
+      modal.style.display = 'flex';
+
+      // NEW: Smart Auto-Expander for the panels
+      setTimeout(() => {
+          const qPanel = document.getElementById('q-img-panel');
+          const qUrl = document.getElementById('editor-image-url');
+          if(qPanel && qUrl && qUrl.value) {
+              qPanel.style.display = 'block';
+              document.getElementById('q-img-icon').style.transform = 'rotate(180deg)';
+          } else if (qPanel) {
+              qPanel.style.display = 'none';
+              document.getElementById('q-img-icon').style.transform = 'rotate(0deg)';
+          }
+          
+          ['a', 'b', 'c', 'd'].forEach(opt => {
+              const input = document.getElementById('editor-option-' + opt + '-img');
+              const panel = document.getElementById('opt-' + opt + '-img-panel');
+              const btn = document.getElementById('btn-opt-' + opt + '-img');
+              if(input && panel && btn) {
+                  if(input.value) {
+                      panel.style.display = 'block';
+                      btn.style.background = '#3b82f6';
+                  } else {
+                      panel.style.display = 'none';
+                      btn.style.background = '#334155';
+                  }
+              }
+          });
+      }, 50);
+    }
+
+    function openNewQuestionEditor() {
+      const modal = document.getElementById('question-editor-modal');
+      
+      document.getElementById('editor-title').textContent = 'Add New Question';
+      document.getElementById('editor-question-type').value = 'mcq';
+      document.getElementById('editor-question').value = '';
+      
+      // Hide all panels
+      document.getElementById('q-img-panel').style.display = 'none';
+      document.getElementById('q-img-icon').style.transform = 'rotate(0deg)';
+      ['a', 'b', 'c', 'd'].forEach(opt => {
+          document.getElementById('opt-' + opt + '-img-panel').style.display = 'none';
+          document.getElementById('btn-opt-' + opt + '-img').style.background = '#334155';
+      });
+      
+      document.getElementById('editor-image-url').value = '';
+      document.getElementById('editor-marks').value = 1;
+      document.getElementById('editor-explanation').value = '';
+      
+      toggleQuestionTypeSections('mcq');
+      
+      // Clear option fields
+      ['a', 'b', 'c', 'd'].forEach(opt => {
+        const input = document.getElementById(`editor-option-${opt}`);
+        if (input) input.value = '';
+        
+        const imgInput = document.getElementById(`editor-option-${opt}-img`);
+        if (imgInput) imgInput.value = '';
+      });
       
       // Clear and Reset Previews
       ['question', 'option-a', 'option-b', 'option-c', 'option-d'].forEach(prefix => {
@@ -5541,110 +6034,22 @@
         if (preview) {
           preview.src = '';
           preview.classList.remove('visible');
+          preview.style.display = 'none'; // FIX: Completely hides the broken image icon
         }
       });
       
-      // --- SECURITY FIX: Target specific Upload Area IDs ---
-      const isAdminUser = currentUser && currentUser.role && currentUser.role.toString().toLowerCase() === 'admin';
-      
-      const uploadAreaIds = [
-        'upload-question-image', 
-        'upload-option-a-image', 
-        'upload-option-b-image', 
-        'upload-option-c-image', 
-        'upload-option-d-image'
-      ];
-
-      uploadAreaIds.forEach(id => {
-        const area = document.getElementById(id);
-        if (area) {
-          if (isAdminUser) {
-            area.style.display = 'block';
-            area.style.pointerEvents = 'auto';
-            area.style.opacity = '1';
-          } else {
-            // Hide for students to prevent unauthorized upload attempts
-            area.style.display = 'none'; 
-          }
-        }
-      });
-
-      if (!q.isSubjective) {
-        document.getElementById('editor-option-a').value = q.options[0] || '';
-        document.getElementById('editor-option-b').value = q.options[1] || '';
-        document.getElementById('editor-option-c').value = q.options[2] || '';
-        document.getElementById('editor-option-d').value = q.options[3] || '';
-        
-        if (q.optionImages) {
-          document.getElementById('editor-option-a-img').value = q.optionImages[0] || '';
-          document.getElementById('editor-option-b-img').value = q.optionImages[1] || '';
-          document.getElementById('editor-option-c-img').value = q.optionImages[2] || '';
-          document.getElementById('editor-option-d-img').value = q.optionImages[3] || '';
-        }
-        
-        const answerLetter = String.fromCharCode(65 + q.correctIndex);
-        document.getElementById('editor-answer-mcq').value = answerLetter;
-      } else {
-        document.getElementById('editor-answer-subjective').value = q.explanation || '';
-      }
-      
-      // Set Metadata for the Save/Update action
-      modal.dataset.editMode = 'edit';
-      modal.dataset.questionIndex = index;
-      modal.dataset.originalIndex = q.originalIndex;
-      modal.dataset.tempId = '';
-      
-      modal.style.display = 'flex';
-      
-      // Refresh handlers to ensure they use the current token
-      //setupImageUploadHandlers();
-    }
-
-    // ========== OPEN NEW QUESTION EDITOR ==========
-    function openNewQuestionEditor() {
-      document.getElementById('editor-title').textContent = 'Add New Question';
-      document.getElementById('editor-question-type').value = 'mcq';
-      document.getElementById('editor-question').value = '';
-      
-      // Reset image URL toggle and hide fields by default
-      if (showImageUrlsCheckbox) {
-        showImageUrlsCheckbox.checked = false;
-        toggleImageUrlFields();
-      }
-      
-      document.getElementById('editor-image-url').value = '';
-      document.getElementById('editor-marks').value = '1';
-      document.getElementById('editor-explanation').value = '';
-      
-      // Clear all fields
-      ['a', 'b', 'c', 'd'].forEach(letter => {
-        document.getElementById(`editor-option-${letter}`).value = '';
-        document.getElementById(`editor-option-${letter}-img`).value = '';
-      });
-      
-      // Clear previews
-      ['question', 'option-a', 'option-b', 'option-c', 'option-d'].forEach(prefix => {
-        const preview = document.getElementById(`preview-${prefix}-image`);
-        if (preview) {
-          preview.src = '';
-          preview.classList.remove('visible');
-        }
-      });
-      
+      // FIX 3: Correct ID for the Answer Dropdown
       document.getElementById('editor-answer-mcq').value = 'A';
       document.getElementById('editor-answer-subjective').value = '';
       
-      toggleQuestionTypeSections('mcq');
-      
-      document.getElementById('question-editor-modal').dataset.editMode = 'new';
-      document.getElementById('question-editor-modal').dataset.tempId = '';
-      
-      document.getElementById('question-editor-modal').style.display = 'flex';
-      
-      // Setup upload handlers
-      //setTimeout(setupImageUploadHandlers, 100);
-    }
+      // FIX 4: Set metadata to 'new' so it saves as a brand new row instead of editing
+      modal.dataset.editMode = 'new';
+      modal.dataset.originalIndex = 'new';
+      modal.dataset.tempId = '';
 
+      modal.style.display = 'flex';
+    }
+      
     // ========== TOGGLE QUESTION TYPE SECTIONS ==========
     function toggleQuestionTypeSections(type) {
       const mcqSection = document.getElementById('mcq-options-section');
@@ -5665,8 +6070,9 @@
     // ========== SAVE QUESTION CHANGES - WITH CIRCULAR ANIMATION AND TEXT ==========
     // ========== SAVE QUESTION CHANGES ==========
     async function saveQuestionChanges() {
-      if (!isAdmin()) {
-        alert("Unauthorized access");
+      // FIX: Allow Editors through
+      if (!isAdmin() && !isEditor()) {
+        window.showCustomAlert("Error", "Unauthorized access");
         return;
       }
 
@@ -5676,9 +6082,12 @@
       const questionType = document.getElementById('editor-question-type').value;
       const tempId = document.getElementById('question-editor-modal').dataset.tempId || '';
       
+      // MODIFICATION: Allow saving from the Admin panel if there is an image but no text
+      const questionImageUrl = document.getElementById('editor-image-url').value.trim();
       const question = document.getElementById('editor-question').value.trim();
-      if (!question) {
-        alert("Please enter a question.");
+      
+      if (!question && !questionImageUrl) {
+        alert("Please enter a question or upload a question image.");
         return;
       }
 
@@ -5688,7 +6097,7 @@
         return;
       }
       
-      const questionImageUrl = document.getElementById('editor-image-url').value.trim();
+    
       const optionAImg = document.getElementById('editor-option-a-img').value.trim();
       const optionBImg = document.getElementById('editor-option-b-img').value.trim();
       const optionCImg = document.getElementById('editor-option-c-img').value.trim();
@@ -5704,15 +6113,22 @@
           document.getElementById('editor-option-d').value.trim()
         ];
         
-        const filledOptions = options.filter(opt => opt !== '');
-        if (filledOptions.length < 2) {
-          alert("Please provide at least 2 options for MCQ questions.");
+        const optionImages = [optionAImg, optionBImg, optionCImg, optionDImg];
+        
+        // Count how many options have EITHER text OR an image
+        let validOptionsCount = 0;
+        for (let i = 0; i < 4; i++) {
+          if (options[i] !== '' || optionImages[i] !== '') {
+            validOptionsCount++;
+          }
+        }
+        
+        if (validOptionsCount < 2) {
+          alert("Please provide at least 2 options for MCQ questions (can be text, image, or both).");
           return;
         }
         
-        const optionImages = [optionAImg, optionBImg, optionCImg, optionDImg];
-        const answer = document.getElementById('editor-answer-mcq').value;
-        
+        const answer = document.getElementById('editor-answer-mcq').value;        
         rowData = {
           question: question,
           option1: options[0],
@@ -5828,7 +6244,7 @@
           
           updateQuestionNavigation();
           renderQuestion();
-          alert('Question saved successfully!');
+          window.showToast('✅ Question saved successfully!');
         } else {
           throw new Error(result?.error || 'Failed to save question');
         }
@@ -5901,24 +6317,34 @@
     }
 
     // ========== LOAD TELEGRAM CONFIG ==========
-    async function loadTelegramConfig() {
+   async function loadTelegramConfig() {
+      // 🚨 ADDED: Don't try to load if there is no token yet!
+      if (!currentUser || !currentUser.token) {
+         console.log("Waiting for login to fetch Telegram config...");
+         return; 
+      }
+
       try {
-        const data = await jsonpRequest(
-          MASTER_CONFIG_APPS_SCRIPT_URL + '?action=getTelegramConfig&_t=' + Date.now(),
-          'telegramCallback'
-        );
+        const url = MASTER_CONFIG_APPS_SCRIPT_URL + 
+                    '?action=getTelegramConfig' +
+                    '&username=' + encodeURIComponent(currentUser?.username || '') +
+                    '&token=' + encodeURIComponent(currentUser?.token || '') +
+                    '&_t=' + Date.now();
+
+        const data = await jsonpRequest(url, 'telegramCallback');
         
         if (data.success) {
           TELEGRAM_CONFIG.ENABLED = data.enabled;
           TELEGRAM_CONFIG.BOT_TOKEN = data.botToken;
           TELEGRAM_CONFIG.CHAT_ID = data.chatId;
           console.log("Telegram config loaded successfully");
+        } else {
+          console.error("Failed to load Telegram config:", data.error);
         }
       } catch (error) {
         console.error("Error loading Telegram config:", error);
       }
     }
-
     // ========== LOAD CLASSES ==========
     async function loadClasses() {
       try {
@@ -6054,7 +6480,7 @@
       }
     }
 
-    function renderSubjectGrid(subjects) {
+   function renderSubjectGrid(subjects) {
       subjectGridEl.innerHTML = "";
 
       if (subjects.length === 0) {
@@ -6066,7 +6492,7 @@
         return;
       }
 
-      subjects.forEach(subject => {
+     subjects.forEach((subject, index) => {
         const card = document.createElement("div");
         card.className = "subject-card";
         card.innerHTML = `
@@ -6075,16 +6501,33 @@
           <div class="subject-desc">${subject.desc}</div>
         `;
 
-        card.addEventListener("click", () => {
+       card.addEventListener("click", () => {
+          // --- FIX: Trial Restriction (First Subject Only) ---
+          if (currentUser.role === 'Trial' && index > 0) {
+            window.showTrialPopup();
+            return; // Stops them from opening it
+          }
+         
+          // ------------------------------
           currentSubject = subject.name;
-          showQuizContainer(currentSubject);
+          // ... rest of the existing code ...
+          
+          // Cleaner approach: store it in a variable first
+          const lowerName = subject.name.toLowerCase();
+          
+          // Intercept if the subject is "Previous Year Questions", "PYQ", or "Download"
+          if (lowerName.includes('previous year') || lowerName.includes('question answer') || lowerName.includes('download')) {
+            showPyqContainer(currentSubject);
+          } else {
+            showQuizContainer(currentSubject);
+          }
           resetInactivityTimer();
         });
 
+        // Add the card to the grid
         subjectGridEl.appendChild(card);
       });
     }
-
     // ========== LOAD CHAPTERS ==========
     async function loadChapters() {
       try {
@@ -6262,52 +6705,138 @@
       if (failedAttempts >= MAX_ATTEMPTS) startCooldown();
     }
 
-   
-   // ========== VALIDATION FUNCTIONS ==========
-    function validateUserAccount(user) {
-      // SECURITY UPGRADE: Reject anyone trying to login without a server-generated token
-      if (!user.token) {
-        console.warn("Security Alert: Blocked unauthorized login attempt without token.");
-        return { valid: false, error: 'unknown' };
-      }
+   // ========== SINGLE DEVICE LOGIN MONITOR (FASTER & RESPONSIVE) ==========
+    // let sessionMonitorInterval = null;
+    let isCheckingSession = false; // Prevents overlapping network requests
 
-      const validRoles = ['Admin', 'Teacher', 'User', 'Student'];
-      if (!validRoles.includes(user.role)) {
-        return { valid: false, error: 'invalid_role' };
-      }
-
-      const userClassValue = user.class || "";
-      const assignedClasses = userClassValue
-        .split(',')
-        .map(c => c.trim())
-        .filter(c => c && c.toLowerCase() !== 'none' && c.toLowerCase() !== 'null');
-
-      if (user.role === 'Admin') {
-        return { valid: true, assignedClasses: [] };
-      }
-
-      if (user.role === 'Teacher' || user.role === 'User') {
-        if (assignedClasses.length === 0) {
-          return { valid: false, error: 'no_class_assigned', assignedClasses: [] };
+    // 1. The core check function
+    async function checkCurrentSessionNow() {
+      // Don't check if they aren't fully logged in or if a check is already running
+      if (!currentUser || !currentUser.username || !currentUser.token || isCheckingSession) return;
+      
+      isCheckingSession = true;
+      try {
+        const url = `${AUTH_APPS_SCRIPT_URL}?action=check_session&username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&_t=${Date.now()}`;
+        const response = await jsonpRequest(url, 'sessionCheckCb');
+        
+        if (response && response.valid === false && response.reason === 'multi_login') {
+          // Token mismatch! Someone else logged in.
+          if (sessionMonitorInterval) clearInterval(sessionMonitorInterval);
+          document.getElementById('multi-login-modal').style.display = 'flex';
         }
-        return { valid: true, assignedClasses: assignedClasses };
+      } catch (e) {
+        console.log("Session monitor check skipped due to network fluctuation.");
+      } finally {
+        isCheckingSession = false;
       }
-
-      if (user.role === 'Student') {
-        if (assignedClasses.length === 0) {
-          return { valid: false, error: 'no_class_assigned', assignedClasses: [] };
-        }
-        return { valid: true, assignedClasses: [assignedClasses[0]] };
-      }
-
-      return { valid: false, error: 'unknown' };
     }
-    // ========== LOGIN FUNCTION ==========
-    function login(user, isRestore = false) {
+
+    // 2. Start the monitor
+    function startSessionMonitor() {
+      if (sessionMonitorInterval) clearInterval(sessionMonitorInterval);
+      
+      // Check every 8 seconds (8000 ms) instead of 30 seconds
+      sessionMonitorInterval = setInterval(checkCurrentSessionNow, 8000); 
+    }
+
+    // 3. BONUS: Instant check when they switch back to the app tab or wake their phone
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === 'visible') {
+        checkCurrentSessionNow();
+      }
+    });
+
+    // 4. Button action for the popup
+    window.executeForceLogout = function() {
+      document.getElementById('multi-login-modal').style.display = 'none';
+      logout();
+      location.reload(); // Hard reload ensures a clean slate
+    };
+ 
+ 
+// ========== VALIDATION FUNCTIONS ==========
+function validateUserAccount(user) {
+  // SECURITY UPGRADE: Reject anyone trying to login without a server-generated token
+  if (!user.token) {
+    console.warn("Security Alert: Blocked unauthorized login attempt without token.");
+    return { valid: false, error: 'unknown' };
+  }
+
+  // --- SUBSCRIPTION EXPIRY CHECK ---
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  if (user.lastDate && user.lastDate.toString().trim() !== '') {
+    try {
+      let lastDateValue = user.lastDate;
+      let lastDate = null;
+      
+      if (typeof lastDateValue === "string" && lastDateValue.startsWith("Date(")) {
+        const parts = lastDateValue.replace("Date(", "").replace(")", "").split(",").map(Number);
+        lastDate = new Date(parts[0], parts[1], parts[2]);
+      } else if (typeof lastDateValue === "string") {
+        lastDate = new Date(lastDateValue);
+      } else if (typeof lastDateValue === "number") {
+        lastDate = new Date(Math.round((lastDateValue - 25569) * 86400 * 1000));
+      }
+
+      if (lastDate && !isNaN(lastDate.getTime())) {
+        lastDate.setHours(23, 59, 59, 999);
+        if (lastDate < today) {
+          return { valid: false, error: 'expired' };
+        }
+      }
+    } catch (e) {
+      console.error("Date parsing error on frontend", e);
+    }
+  }
+
+  // --- FIX 1: NORMALIZE ROLE CASE SENSITIVITY ---
+  const normalizedRole = user.role ? user.role.trim().charAt(0).toUpperCase() + user.role.trim().slice(1).toLowerCase() : '';
+  user.role = normalizedRole;
+
+  // --- EXISTING: ROLE CHECKS ---
+  const validRoles = ['Admin', 'Teacher', 'User', 'Student', 'Editor', 'Trial'];
+  if (!validRoles.includes(user.role)) {
+    return { valid: false, error: 'invalid_role' };
+  }
+
+  const userClassValue = user.class || "";
+  const assignedClasses = userClassValue
+    .split(',')
+    .map(c => c.trim())
+    .filter(c => c && c.toLowerCase() !== 'none' && c.toLowerCase() !== 'null');
+
+  if (user.role === 'Admin') {
+    return { valid: true, assignedClasses: [] };
+  }
+
+  // --- FIX 2: ADD EDITOR (Treat like Teacher) ---
+  if (user.role === 'Teacher' || user.role === 'User' || user.role === 'Editor') {
+    if (assignedClasses.length === 0) {
+      return { valid: false, error: 'no_class_assigned', assignedClasses: [] };
+    }
+    return { valid: true, assignedClasses: assignedClasses };
+  }
+
+  // --- FIX 3: ADD TRIAL (Treat like Student) ---
+  if (user.role === 'Student' || user.role === 'Trial') {
+    if (assignedClasses.length === 0) {
+      return { valid: false, error: 'no_class_assigned', assignedClasses: [] };
+    }
+    return { valid: true, assignedClasses: [assignedClasses[0]] };
+  }
+
+  return { valid: false, error: 'unknown' };
+}
+   
+   // ========== LOGIN FUNCTION ==========
+    // 🚨 ADDED "async" HERE
+    async function login(user, isRestore = false) {
       const validation = validateUserAccount(user);
 
       if (!validation.valid) {
-        if (user.subscriptionReason === 'expired') {
+        if (validation.error === 'expired') {
           showSubscriptionExpired(user, user.joiningDate, user.lastDate);
         } else {
           showAccountConfigError(user, validation.error, {
@@ -6335,20 +6864,26 @@
       resetInactivityTimer();
       loadClasses();
       saveSession();
+      
+      // 🚨 ADDED "await" HERE to pause the code until the keys arrive!
+      await loadTelegramConfig();
 
       updateAdminControls();
+      startSessionMonitor();
 
       if (!isRestore) sendLoginNotification(user);
     }
-
     // ========== LOGOUT FUNCTION ==========
     function logout() {
       if (timerInterval) clearInterval(timerInterval);
       if (inactivityTimer) clearTimeout(inactivityTimer);
       if (cooldownTimer) clearInterval(cooldownTimer);
+      if (sessionMonitorInterval) clearInterval(sessionMonitorInterval);
 
       imageCache.clear();
       clearSession();
+      ALL_CONFIG_CACHE = null;
+      ALL_CONFIG_CACHE_TIME = null;
 
       hasSentLoginNotification = false;
       hasSentQuizResultNotification = false;
@@ -6368,6 +6903,7 @@
       classSelectionEl.style.display = "none";
       subjectSelectionEl.style.display = "none";
       quizContainerEl.style.display = "none";
+      pyqContainerEl.style.display = "none";
       accountConfigErrorEl.style.display = "none";
       subscriptionExpiredEl.style.display = "none";
       loginContainerEl.style.display = "flex";
@@ -6384,10 +6920,11 @@
       menuOverlay.classList.remove('open');
     }
 
-    function autoLogout() {
+   function autoLogout() {
       if (currentUser) {
-        alert("You have been automatically logged out due to inactivity (10 minutes).");
-        logout();
+        window.showCustomAlert("Session Expired", "You have been automatically logged out due to 10 minutes of inactivity.", () => {
+          logout();
+        });
       }
     }
 
@@ -6806,19 +7343,22 @@
     }
 
     // ========== QUESTION NAVIGATION FUNCTIONS ==========
-    function toggleQuestionNavigation() {
-      const isCollapsed = questionNavigationEl.classList.contains('collapsed');
-      if (isCollapsed) {
-        questionNavigationEl.classList.remove('collapsed');
-        questionNavigationEl.classList.add('expanded');
-        navigationToggleBtn.innerHTML = '<i>▼</i> Hide Navigation';
-        navigationToggleBtn.classList.remove('collapsed');
+   function toggleQuestionNavigation() {
+      const content = document.getElementById('nav-collapsible-content');
+      const icon = document.getElementById('nav-toggle-icon');
+      const navEl = document.getElementById('question-navigation');
+      
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.style.transform = 'rotate(90deg)'; // Arrow points down
+        navEl.classList.remove('collapsed');
+        navEl.classList.add('expanded');
         updateQuestionNavigation();
       } else {
-        questionNavigationEl.classList.remove('expanded');
-        questionNavigationEl.classList.add('collapsed');
-        navigationToggleBtn.innerHTML = '<i>▶</i> Show Navigation';
-        navigationToggleBtn.classList.add('collapsed');
+        content.style.display = 'none';
+        icon.style.transform = 'rotate(0deg)'; // Arrow points right
+        navEl.classList.remove('expanded');
+        navEl.classList.add('collapsed');
       }
       resetInactivityTimer();
     }
@@ -6935,9 +7475,14 @@
 
     function showQuestionNavigation() {
       questionNavigationEl.style.display = 'block';
+      const content = document.getElementById('nav-collapsible-content');
+      const icon = document.getElementById('nav-toggle-icon');
+      
+      if(content) content.style.display = 'none';
+      if(icon) icon.style.transform = 'rotate(0deg)';
+      
+      questionNavigationEl.classList.remove('expanded');
       questionNavigationEl.classList.add('collapsed');
-      navigationToggleBtn.innerHTML = '<i>▶</i> Show Navigation';
-      navigationToggleBtn.classList.add('collapsed');
     }
 
     // ========== NAVIGATION FUNCTIONS ==========
@@ -6945,6 +7490,7 @@
       classSelectionEl.style.display = "block";
       subjectSelectionEl.style.display = "none";
       quizContainerEl.style.display = "none";
+      pyqContainerEl.style.display = "none";
       accountConfigErrorEl.style.display = "none";
       subscriptionExpiredEl.style.display = "none";
       resetQuizState();
@@ -6963,6 +7509,7 @@
       classSelectionEl.style.display = "none";
       subjectSelectionEl.style.display = "block";
       quizContainerEl.style.display = "none";
+      pyqContainerEl.style.display = "none";
       accountConfigErrorEl.style.display = "none";
       subscriptionExpiredEl.style.display = "none";
 
@@ -6982,6 +7529,7 @@
 
       subjectSelectionEl.style.display = "none";
       quizContainerEl.style.display = "block";
+      pyqContainerEl.style.display = "none";
       accountConfigErrorEl.style.display = "none";
       subscriptionExpiredEl.style.display = "none";
 
@@ -6994,6 +7542,632 @@
       resetInactivityTimer();
     }
 
+        // ========== PYQ / PDF LOGIC ==========
+    async function showPyqContainer(subjectName) {
+      subjectSelectionEl.style.display = "none";
+      quizContainerEl.style.display = "none";
+      pyqContainerEl.style.display = "block";
+      
+      document.getElementById("pyq-title").textContent = subjectName;
+
+      // Check admin rights to show upload area
+    // Check admin/editor rights to show upload area
+      const adminUploadDiv = document.getElementById("admin-pdf-upload");
+      if (isAdmin() || isEditor()) {
+        adminUploadDiv.style.display = "block";
+        setupPdfUpload();
+      } else {
+        adminUploadDiv.style.display = "none";
+      }
+
+      await loadPdfList();
+    }
+
+ // ========== SAVE SORT PREFERENCE ==========
+    // Defined properly so it is always available to the dropdown
+    async function savePdfSortOrder(order) {
+      window.pendingSortOrder = order; // Save preference locally to bypass 5-min Google cache
+      showPDFOverlay("Saving sort preference...");
+      try {
+        let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=setPdfSortOrder';
+        url += '&sheetId=' + window.currentPyqContext.sheetId;
+        url += '&gid=' + window.currentPyqContext.gid;
+        url += '&order=' + encodeURIComponent(order);
+        url += '&username=' + encodeURIComponent(currentUser.username);
+        url += '&role=' + encodeURIComponent(currentUser.role);
+        url += '&token=' + encodeURIComponent(currentUser.token);
+        url += '&_t=' + Date.now();
+        
+        const data = await jsonpRequest(url, 'sortPdfCb');
+        hidePDFOverlay();
+        if (data && data.success) {
+          loadPdfList(); // Instantly apply the new order visually
+        } else {
+          alert("Error saving sort preference: " + (data.error || "Unknown"));
+        }
+      } catch(e) {
+        hidePDFOverlay();
+        alert("Network error: " + e);
+      }
+    }
+
+  // ========== LOAD PDF LIST (UPDATED WITH DROPDOWNS) ==========
+    async function loadPdfList() {
+      const container = document.getElementById("pdf-list-container");
+      container.innerHTML = `
+        <div class="loading-container">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Loading PDFs...</div>
+        </div>
+      `;
+
+      try {
+        const allData = await loadAllConfigAtOnce();
+        const key = `${currentClass}_${currentSubject.toLowerCase()}`;
+        if (!allData.config[key]) throw new Error("No configuration found for this subject");
+
+        const sheetId = allData.config[key].sheetId;
+        const firstChapterKey = Object.keys(allData.config[key].chapters)[0]; 
+        const gid = allData.config[key].chapters[firstChapterKey];
+
+        const apiUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&headers=0&gid=${gid}&_t=${Date.now()}`;
+        const response = await fetch(apiUrl);
+        const dataText = await response.text();
+        const jsonData = JSON.parse(dataText.substring(47).slice(0, -2));
+        const rows = jsonData.table.rows;
+
+        let sortOrder = 'asc'; 
+        if (rows[0] && rows[0].c && rows[0].c[2] && rows[0].c[2].v) sortOrder = rows[0].c[2].v.toString().trim().toLowerCase();
+        if (window.pendingSortOrder) sortOrder = window.pendingSortOrder;
+
+       if (isAdmin() || isEditor()) {
+          const sortDropdown = document.getElementById('admin-pdf-sort');
+          if (sortDropdown) {
+            sortDropdown.value = sortOrder;
+            sortDropdown.onchange = (e) => savePdfSortOrder(e.target.value);
+          }
+        }
+
+        let pdfArray = [];
+        let categoriesList = new Set();
+        
+        for (let i = 1; i < rows.length; i++) { 
+          const row = rows[i];
+          if (!row || !row.c) continue;
+          
+          const pdfName = row.c[0] ? (row.c[0].v ? row.c[0].v.toString().trim() : '') : '';
+          let pdfUrl = row.c[1] ? (row.c[1].v ? row.c[1].v.toString().trim() : '') : '';
+          let category = row.c[2] ? (row.c[2].v ? row.c[2].v.toString().trim() : '') : '';
+
+          if (!pdfUrl || !pdfUrl.startsWith('http')) continue;
+
+          if (pdfName && pdfUrl) {
+            pdfArray.push({ index: i, name: pdfName, url: pdfUrl, category: category });
+            if (category) categoriesList.add(category);
+          }
+        }
+
+      // --- UPDATE ADMIN DROPDOWNS ---
+        if (isAdmin() || isEditor()) {
+            const uploadSelect = document.getElementById('new-pdf-category-select');
+            const editSelect = document.getElementById('edit-pdf-category-select');
+            
+            let optionsHTML = `<option value="">-- No Category (Main Folder) --</option>`;
+            Array.from(categoriesList).sort().forEach(c => {
+                optionsHTML += `<option value="${c}">${c}</option>`;
+            });
+            optionsHTML += `<option value="NEW" style="font-weight:bold; color:#3b82f6;">➕ Create New Category...</option>`;
+            
+            if (uploadSelect) {
+                let currentVal = uploadSelect.value;
+                uploadSelect.innerHTML = optionsHTML;
+                if(categoriesList.has(currentVal)) uploadSelect.value = currentVal;
+            }
+            if (editSelect) editSelect.innerHTML = optionsHTML;
+        }
+
+       window.currentPdfArray = pdfArray;
+        window.currentPdfSortOrder = sortOrder;
+        window.currentPyqContext = { sheetId, gid };
+        window.currentPdfCategory = null; // <-- FIX: ALWAYS reset to main folder on load
+        
+        renderPdfView();
+
+      } catch (error) {
+        container.innerHTML = `<div style="color: #ef4444; text-align: center;">Error loading PDFs: ${error.message}</div>`;
+      }
+    }
+
+    // ========== RENDER PDF VIEW ==========
+    // (This remains largely the same, handling folders and sorting)
+   // ========== RENDER PDF VIEW ==========
+    window.renderPdfView = function() {
+      const container = document.getElementById("pdf-list-container");
+      container.innerHTML = "";
+      
+      // NEW: Toggle visibility of the bottom right "Back to Folders" button
+      const bottomBackToFoldersBtn = document.getElementById('back-to-folders-btn');
+      if (bottomBackToFoldersBtn) {
+          bottomBackToFoldersBtn.style.display = window.currentPdfCategory ? 'flex' : 'none';
+      }
+      
+      if (!window.currentPdfArray || window.currentPdfArray.length === 0) {
+          container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 20px;">No PDFs available yet.</div>';
+          return;
+      }
+
+      let sortedPdfs = [...window.currentPdfArray];
+      
+      if (window.currentPdfSortOrder === 'desc') sortedPdfs.reverse(); 
+      else if (window.currentPdfSortOrder === 'name_asc') sortedPdfs.sort((a, b) => a.name.localeCompare(b.name));
+      else if (window.currentPdfSortOrder === 'name_desc') sortedPdfs.sort((a, b) => b.name.localeCompare(a.name));
+
+      if (window.currentPdfCategory) {
+        // (Removed the top button creation from here)
+        const header = document.createElement('h3');
+        header.style.cssText = "color: #3b82f6; margin-bottom: 15px;";
+        header.innerHTML = `📁 ${window.currentPdfCategory}`;
+        container.appendChild(header);
+
+        const categoryPdfs = sortedPdfs.filter(p => p.category === window.currentPdfCategory);
+        categoryPdfs.forEach(pdf => renderSinglePdf(pdf, container));
+        
+      } else {
+        const categorized = {};
+        const uncategorized = [];
+        
+        sortedPdfs.forEach(pdf => {
+           if (pdf.category) {
+               if (!categorized[pdf.category]) categorized[pdf.category] = [];
+               categorized[pdf.category].push(pdf);
+           } else uncategorized.push(pdf);
+        });
+        
+       let folderNames = Object.keys(categorized).sort();
+        // If sorting preference is newest/Z-to-A, reverse the folders so they sort correctly too!
+        if (window.currentPdfSortOrder === 'desc' || window.currentPdfSortOrder === 'name_desc') {
+            folderNames.reverse();
+        }
+        
+        if (folderNames.length > 0) {
+           const folderGrid = document.createElement('div');
+           folderGrid.style.display = 'grid';
+           folderGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(130px, 1fr))';
+           folderGrid.style.gap = '12px';
+           folderGrid.style.marginBottom = '20px';
+           
+           folderNames.forEach(folderName => {
+               const folderEl = document.createElement('div');
+               folderEl.className = 'pdf-item';
+               folderEl.style.cssText = `
+                 flex-direction: column; align-items: center; justify-content: center; 
+                 padding: 20px 10px; text-align: center; cursor: pointer;
+                 background: rgba(15, 23, 42, 0.7); border-radius: 12px;
+                 border: 1px solid rgba(75, 85, 99, 0.5); transition: all 0.2s;
+               `;
+               if (document.body.classList.contains('light-mode')) {
+                 folderEl.style.background = '#f9fafb';
+                 folderEl.style.borderColor = '#e5e7eb';
+               }
+               
+               folderEl.innerHTML = `
+                  <div style="font-size: 2.5rem; margin-bottom: 8px;">📁</div>
+                  <div class="pdf-name" style="text-align:center;">${folderName}</div>
+                  <div style="font-size: 0.8rem; color: #9ca3af; margin-top: 5px;">${categorized[folderName].length} file(s)</div>
+               `;
+               folderEl.onmouseover = () => { folderEl.style.transform = 'translateY(-3px)'; folderEl.style.borderColor = '#3b82f6'; };
+               folderEl.onmouseout = () => { folderEl.style.transform = 'none'; folderEl.style.borderColor = document.body.classList.contains('light-mode') ? '#e5e7eb' : 'rgba(75, 85, 99, 0.5)'; };
+              folderEl.onclick = () => { 
+    window.currentPdfCategory = folderName; 
+    const categorySelect = document.getElementById('new-pdf-category-select');
+    if (categorySelect) categorySelect.value = folderName;
+    window.renderPdfView(); 
+};
+               
+               folderGrid.appendChild(folderEl);
+           });
+           container.appendChild(folderGrid);
+        }
+        
+        if (uncategorized.length > 0) {
+           if (folderNames.length > 0) {
+               const separator = document.createElement('div');
+               separator.innerHTML = '<h4 style="color:#93c5fd; margin-bottom:12px; border-bottom:1px solid rgba(147,197,253,0.2); padding-bottom:5px;">Other Files</h4>';
+               container.appendChild(separator);
+           }
+           uncategorized.forEach(pdf => renderSinglePdf(pdf, container));
+        }
+      }
+    };
+
+    function renderSinglePdf(pdf, container) {
+      let downloadUrl = pdf.url;
+      let viewUrl = pdf.url;
+      
+      if (pdf.url.includes('drive.google.com') || pdf.url.includes('docs.google.com')) {
+        const matchId = pdf.url.match(/[?&]id=([a-zA-Z0-9_-]+)/) || pdf.url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || pdf.url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (matchId && matchId[1]) {
+          const fileId = matchId[1];
+          downloadUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=download&authuser=0`;
+          viewUrl = `https://drive.google.com/file/d/${fileId}/view`;
+        }
+      }
+
+      let actionButtons = `
+        <button class="download-btn-icon" id="pdf-btn-${pdf.index}" title="Download PDF" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; color:#60a5fa; width:38px; height:38px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        </button>
+      `;
+
+     if (isAdmin() || isEditor()) {
+        const sheetRowIndex = pdf.index + 1; 
+        const safeName = pdf.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const safeCategory = (pdf.category || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        
+        actionButtons += `
+          <button title="Edit PDF Details" onclick="event.stopPropagation(); window.openEditPdfModal(${sheetRowIndex}, '${safeName}', '${safeCategory}')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; width:38px; height:38px;">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24'%3E%3Cpath fill='%233b82f6' d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/%3E%3C/svg%3E" alt="Edit">
+          </button>
+          <button title="Delete PDF" onclick="event.stopPropagation(); deletePdfItem(${sheetRowIndex})" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:8px; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; transition:0.2s; width:38px; height:38px;">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24'%3E%3Cpath fill='%23ef4444' d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/%3E%3C/svg%3E" alt="Delete">
+          </button>
+        `;
+      }
+
+      const item = document.createElement('div');
+      item.className = 'pdf-item';
+      item.style.cursor = 'pointer';
+      
+      item.innerHTML = `
+        <div class="pdf-info" style="flex: 1; margin-right: 12px; align-items: flex-start; display: flex;">
+          <div class="pdf-icon" style="font-size: 1.5rem; margin-top: 2px; margin-right: 8px;">📄</div>
+          <div class="pdf-name" style="white-space: normal; word-break: break-word; line-height: 1.3; font-size: 0.95rem;">${pdf.name}</div>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
+          ${actionButtons}
+        </div>
+      `;
+      container.appendChild(item);
+
+      const btn = document.getElementById(`pdf-btn-${pdf.index}`);
+      btn.addEventListener('click', function(e) {
+        e.preventDefault(); e.stopPropagation(); 
+        if (btn.classList.contains('downloaded')) { window.open(viewUrl, '_blank'); return; }
+
+        btn.innerHTML = `<span style="display:inline-block; width:18px; height:18px; border:2px solid rgba(96,165,250,0.3); border-top-color:#60a5fa; border-radius:50%; animation:spin 1s linear infinite;"></span>`;
+        btn.style.pointerEvents = 'none';
+
+        const a = document.createElement('a');
+        a.href = downloadUrl; a.download = `${pdf.name}.pdf`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+
+        setTimeout(() => {
+          btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+          btn.classList.add('downloaded');
+          btn.style.background = document.body.classList.contains('light-mode') ? '#dcfce7' : 'rgba(34, 197, 94, 0.15)'; 
+          btn.style.borderColor = 'rgba(34, 197, 94, 0.4)';
+          btn.style.color = document.body.classList.contains('light-mode') ? '#166534' : '#22c55e'; 
+          btn.style.pointerEvents = 'auto';
+        }, 2000); 
+      });
+
+      item.addEventListener('click', function(e) {
+        if(e.target.closest('button[title="Edit PDF Details"]') || e.target.closest('button[title="Delete PDF"]')) return;
+        e.preventDefault(); window.open(viewUrl, '_blank'); 
+      });
+    }
+
+    // ========== NEW UI EDIT MODAL ACTIONS ==========
+   window.openEditPdfModal = function(rowIndex, currentName, currentCategory) {
+      if (isEditor() && !canEdit()) { window.showEditorPopup('Edit'); return; } // NEW
+    
+      document.getElementById('edit-pdf-row-index').value = rowIndex;
+      document.getElementById('edit-pdf-name').value = currentName;
+      
+      const select = document.getElementById('edit-pdf-category-select');
+      const customInput = document.getElementById('edit-pdf-category-new');
+      
+      // Check if category exists in dropdown
+      let hasCategory = false;
+      for(let i=0; i<select.options.length; i++) {
+          if(select.options[i].value === currentCategory) { hasCategory = true; break; }
+      }
+      
+      if(currentCategory && !hasCategory) {
+          select.value = 'NEW';
+          customInput.value = currentCategory;
+          customInput.style.display = 'block';
+      } else {
+          select.value = currentCategory || "";
+          customInput.style.display = 'none';
+          customInput.value = "";
+      }
+      
+      document.getElementById('edit-pdf-modal').style.display = 'flex';
+    };
+
+    window.savePdfEditDetails = async function() {
+      const rowIndex = document.getElementById('edit-pdf-row-index').value;
+      const newName = document.getElementById('edit-pdf-name').value;
+      const selectVal = document.getElementById('edit-pdf-category-select').value;
+      const newCategory = selectVal === 'NEW' ? document.getElementById('edit-pdf-category-new').value : selectVal;
+      
+      if (!newName || newName.trim() === "") { alert("PDF Name cannot be empty."); return; }
+      if (selectVal === 'NEW' && newCategory.trim() === "") { alert("Please type a new category name."); return; }
+
+      document.getElementById('edit-pdf-modal').style.display = 'none';
+      showPDFOverlay("Updating PDF details...");
+      
+      try {
+        let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=updatePdfName';
+        url += '&sheetId=' + window.currentPyqContext.sheetId;
+        url += '&gid=' + window.currentPyqContext.gid;
+        url += '&rowIndex=' + rowIndex;
+        url += '&newName=' + encodeURIComponent(newName.trim());
+        url += '&newCategory=' + encodeURIComponent(newCategory.trim()); 
+        url += '&username=' + encodeURIComponent(currentUser.username);
+        url += '&role=' + encodeURIComponent(currentUser.role);
+        url += '&token=' + encodeURIComponent(currentUser.token);
+        url += '&_t=' + Date.now();
+        
+        const data = await jsonpRequest(url, 'updatePdfCb');
+        hidePDFOverlay();
+        
+        if (data && data.success) loadPdfList(); 
+        else alert("Error updating PDF: " + (data.error || "Unknown error"));
+      } catch(e) {
+        hidePDFOverlay(); alert("Network error: " + e);
+      }
+    };
+
+   window.deletePdfItem = async function(rowIndex) {
+      if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; }
+      
+      window.showCustomConfirm(
+        "Delete PDF", 
+        "⚠️ Are you sure you want to delete this PDF?<br><br>This cannot be undone!", 
+        "Delete", 
+        async () => {
+          showPDFOverlay("Deleting PDF...");
+          try {
+            let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=deletePdf&sheetId=' + window.currentPyqContext.sheetId + '&gid=' + window.currentPyqContext.gid + '&rowIndex=' + rowIndex + '&username=' + encodeURIComponent(currentUser.username) + '&role=' + encodeURIComponent(currentUser.role) + '&token=' + encodeURIComponent(currentUser.token) + '&_t=' + Date.now();
+            const data = await jsonpRequest(url, 'deletePdfCb');
+            hidePDFOverlay();
+            if (data && data.success) loadPdfList(); 
+            else window.showCustomAlert("Error", "Error deleting PDF: " + (data.error || "Unknown error"));
+          } catch(e) { hidePDFOverlay(); window.showCustomAlert("Error", "Network error: " + e); }
+        }
+      );
+    };
+    // ========== SETUP ADMIN UPLOAD ==========
+    function setupPdfUpload() {
+      // --- NEW: Setup Collapsible Panel Logic ---
+      const pdfHeader = document.getElementById("admin-pdf-upload-header");
+      const pdfContent = document.getElementById("admin-pdf-upload-content");
+      const pdfToggleIcon = document.getElementById("admin-pdf-toggle-icon");
+      
+      if (pdfHeader && pdfContent && pdfToggleIcon) {
+        // Remove previous onclick to avoid duplicates if called multiple times
+        pdfHeader.onclick = function() {
+          if (pdfContent.style.display === "none") {
+            pdfContent.style.display = "block";
+            pdfToggleIcon.style.transform = "rotate(180deg)"; // Arrow points up
+          } else {
+            pdfContent.style.display = "none";
+            pdfToggleIcon.style.transform = "rotate(0deg)"; // Arrow points down
+          }
+        };
+      }
+      // --- END NEW ---
+
+      const uploadArea = document.getElementById("upload-pdf-area");
+      const fileInput = document.getElementById("pdf-file-input");
+      const submitBtn = document.getElementById("submit-pdf-btn");
+      const nameInput = document.getElementById("new-pdf-name");
+      
+     
+      
+      const newUploadArea = uploadArea.cloneNode(true);
+      uploadArea.parentNode.replaceChild(newUploadArea, uploadArea);
+      
+      let selectedFile = null;
+      newUploadArea.addEventListener("click", () => fileInput.click());
+      
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files.length > 0) {
+          selectedFile = e.target.files[0];
+          if (selectedFile.type !== "application/pdf") { alert("Please select a valid PDF."); selectedFile = null; return; }
+          newUploadArea.querySelector(".upload-text").textContent = `Selected: ${selectedFile.name}`;
+          submitBtn.disabled = false;
+          if (!nameInput.value) nameInput.value = selectedFile.name.replace('.pdf', '');
+        }
+      });
+
+     submitBtn.onclick = async () => {
+        if (isEditor() && !canAdd()) { window.showEditorPopup('Add'); return; } // NEW
+        if (!selectedFile || !nameInput.value.trim()) { alert("Provide PDF and Name."); return; }
+        
+        // Handle new dropdown combo logic
+        const selectElement = document.getElementById("new-pdf-category-select");
+        const customInput = document.getElementById("new-pdf-category-new");
+        let finalCategory = "";
+        if (selectElement) {
+           finalCategory = selectElement.value === 'NEW' ? customInput.value.trim() : selectElement.value;
+        }
+
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = "Uploading..."; submitBtn.disabled = true;
+        document.getElementById("pdf-upload-progress").style.display = "block";
+        document.getElementById("pdf-progress-bar").style.width = "50%";
+        document.getElementById("pdf-upload-status").textContent = "Uploading to Drive...";
+
+        try {
+          const base64Data = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.readAsDataURL(selectedFile);
+          });
+
+          const formData = new FormData();
+          formData.append('action', 'uploadPdf');
+          formData.append('username', currentUser.username);
+          formData.append('token', currentUser.token);
+          formData.append('role', currentUser.role);
+          formData.append('fileData', base64Data);
+          formData.append('fileName', selectedFile.name);
+          formData.append('mimeType', 'application/pdf');
+          formData.append('pdfNameText', nameInput.value.trim());
+          formData.append('category', finalCategory); 
+          formData.append('sheetId', window.currentPyqContext.sheetId);
+          formData.append('gid', window.currentPyqContext.gid);
+
+          const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, { method: 'POST', body: formData });
+          const result = await response.json();
+
+          if (result.success) {
+            document.getElementById("pdf-progress-bar").style.width = "100%";
+            document.getElementById("pdf-upload-status").textContent = "Success!";
+            document.getElementById("pdf-upload-status").style.color = "#22c55e";
+            
+            nameInput.value = "";
+            if (selectElement) selectElement.value = ""; 
+            if (customInput) { customInput.value = ""; customInput.style.display = 'none'; }
+            selectedFile = null;
+            newUploadArea.querySelector(".upload-text").textContent = "Click to select PDF";
+            
+            setTimeout(() => {
+              document.getElementById("pdf-upload-progress").style.display = "none";
+              document.getElementById("pdf-upload-status").textContent = "";
+              loadPdfList();
+            }, 1500);
+          } else throw new Error(result.error);
+       } catch (err) {
+          alert("Upload failed: " + err.message);
+          document.getElementById("pdf-upload-progress").style.display = "none";
+          document.getElementById("pdf-upload-status").textContent = "";
+        } finally { submitBtn.textContent = originalText; }
+      };
+    }
+
+    
+// ========== UNIFIED BACK NAVIGATION (Hardware & Swipe) ==========
+    let backButtonListenerAdded = false;
+    let allowAppExit = false;
+
+    function isScreenVisible(id) {
+        const el = document.getElementById(id);
+        if (!el) return false;
+        const style = window.getComputedStyle(el);
+        return style.display === 'block' || style.display === 'flex';
+    }
+
+    function handleAppBackNavigation() {
+        // 1. Trap Back Button for the Cropper Modal
+        const cropperModalEl = document.getElementById('cropper-modal');
+        if (cropperModalEl && isScreenVisible('cropper-modal')) { 
+            const cancelBtn = document.getElementById('cancel-crop-btn');
+            if (cancelBtn) cancelBtn.click();
+            return; 
+        }
+
+        // Close UI Menus
+        const sideMenu = document.getElementById('sideMenu');
+        if (sideMenu && sideMenu.classList.contains('open')) { toggleMenu(); return; }
+        
+        const editModal = document.getElementById('edit-pdf-modal');
+        if (editModal && isScreenVisible('edit-pdf-modal')) { editModal.style.display = 'none'; return; }
+
+        const qModal = document.getElementById('question-editor-modal');
+        if (qModal && isScreenVisible('question-editor-modal')) { qModal.style.display = 'none'; return; }
+
+        // PDF Inner Folder View
+        if (isScreenVisible('pyq-container') && window.currentPdfCategory) {
+            window.currentPdfCategory = null;
+            if (typeof renderPdfView === 'function') renderPdfView();
+            return;
+        }
+
+        // PDF Main Folder View -> Back to Subjects
+        if (isScreenVisible('pyq-container')) {
+            if (typeof navigateToSubjects === 'function') navigateToSubjects();
+            return;
+        }
+
+        // Quiz View -> Back to Subjects
+        if (isScreenVisible('quiz-container')) {
+            if (isQuizActive) {
+                window.showCustomConfirm(
+                    "Warning",
+                    "Quiz is in progress. Are you sure you want to leave? Your progress will be lost.",
+                    "Leave",
+                    () => { if (typeof navigateToSubjects === 'function') navigateToSubjects(); }
+                );
+            } else {
+                if (typeof navigateToSubjects === 'function') navigateToSubjects();
+            }
+            return;
+        }
+        // Subject Selection -> Back to Classes
+        if (isScreenVisible('subject-selection')) {
+            if (typeof navigateToClasses === 'function') navigateToClasses();
+            return;
+        }
+
+        // Main Menu -> Confirm Exit with Custom Popup
+        if (isScreenVisible('class-selection')) {
+            window.showCustomConfirm(
+              "Logout / Exit", 
+              "Are you sure you want to log out and exit to the login screen?", 
+              "Yes, Logout", 
+              () => { 
+                allowAppExit = true;
+                logout(); 
+              }
+            );
+            return;
+        }
+        
+        // Login Screen -> Exit freely
+        if (isScreenVisible('login-container')) {
+            allowAppExit = true;
+            window.history.back();
+            return;
+        }
+    }
+
+    function setupMobileBackButton() {
+      if (backButtonListenerAdded) return;
+      backButtonListenerAdded = true;
+
+      // 1. Trap the hardware back button
+      window.history.pushState({ isAppTrap: true }, "");
+      window.addEventListener('popstate', function(event) {
+        if (allowAppExit) return;
+        window.history.pushState({ isAppTrap: true }, ""); // Immediately re-trap
+        handleAppBackNavigation(); // Route to central logic
+      });
+
+      // 2. Trap the Mobile Swipe Gesture seamlessly
+      let touchStartX = 0;
+      let touchStartY = 0;
+      
+      document.addEventListener('touchstart', function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+      }, {passive: true});
+
+      document.addEventListener('touchend', function(e) {
+        const touchEndX = e.changedTouches[0].screenX;
+        const touchEndY = e.changedTouches[0].screenY;
+        const diffX = touchEndX - touchStartX;
+        const diffY = Math.abs(touchEndY - touchStartY);
+
+        // Valid swipe from extreme left edge
+        if (diffX > 80 && diffY < 50 && touchStartX < 40) {
+          handleAppBackNavigation(); // Route to central logic without touching history.back()!
+        }
+      }, {passive: true});
+    }
     // ========== QUIZ FUNCTIONS ==========
     function resetQuizState() {
       questions = [];
@@ -7035,8 +8209,15 @@
       finishBtn.textContent = "Submit";
       finishBtn.onclick = () => {
         if (!questionsLoaded || !isQuizActive) return;
-        if (confirm("Are you sure you want to finish the quiz?")) showFinalResult();
-        resetInactivityTimer();
+        window.showCustomConfirm(
+          "Finish Quiz", 
+          "Are you sure you want to finish the quiz and submit your answers?", 
+          "Submit", 
+          () => { 
+            showFinalResult(); 
+            resetInactivityTimer();
+          }
+        );
       };
       finalScoreEl.style.display = "none";
       progressBarFillEl.style.width = "0%";
@@ -7054,8 +8235,10 @@
 
       questionNavigationEl.classList.remove('expanded');
       questionNavigationEl.classList.add('collapsed');
-      navigationToggleBtn.innerHTML = '<i>▶</i> Show Navigation';
-      navigationToggleBtn.classList.add('collapsed');
+      const content = document.getElementById('nav-collapsible-content');
+      const icon = document.getElementById('nav-toggle-icon');
+      if(content) content.style.display = 'none';
+      if(icon) icon.style.transform = 'rotate(0deg)';
 
       quizTopicNameEl.style.cssText = "";
       removeTimerNotification();
@@ -7118,10 +8301,13 @@
       currentIndex = 0;
       renderIncorrectReviewQuestion();
 
-      questionNavigationEl.classList.remove('collapsed');
-      questionNavigationEl.classList.add('expanded');
-      navigationToggleBtn.innerHTML = '<i>▼</i> Hide Navigation';
-      navigationToggleBtn.classList.remove('collapsed');
+      // Keep navigation collapsed by default to save space
+      const content = document.getElementById('nav-collapsible-content');
+      const icon = document.getElementById('nav-toggle-icon');
+      if(content) content.style.display = 'none';
+      if(icon) icon.style.transform = 'rotate(0deg)';
+      questionNavigationEl.classList.remove('expanded');
+      questionNavigationEl.classList.add('collapsed');
       updateQuestionNavigation();
 
       const headerDiv = document.createElement('div');
@@ -7166,19 +8352,25 @@
 
       finishBtn.style.display = "inline-block";
       finishBtn.textContent = "Finish Reattempt";
-      finishBtn.onclick = () => {
-        if (confirm("Are you sure you want to finish the reattempt?")) {
-          showReattemptResult();
-        }
+     finishBtn.onclick = () => {
+        window.showCustomConfirm(
+          "Finish Reattempt", 
+          "Are you sure you want to finish the reattempt and submit your answers?", 
+          "Submit", 
+          () => { showReattemptResult(); }
+        );
       };
 
       currentIndex = 0;
       renderReattemptQuestion();
 
-      questionNavigationEl.classList.remove('collapsed');
-      questionNavigationEl.classList.add('expanded');
-      navigationToggleBtn.innerHTML = '<i>▼</i> Hide Navigation';
-      navigationToggleBtn.classList.remove('collapsed');
+      // Keep navigation collapsed by default to save space
+      const content = document.getElementById('nav-collapsible-content');
+      const icon = document.getElementById('nav-toggle-icon');
+      if(content) content.style.display = 'none';
+      if(icon) icon.style.transform = 'rotate(0deg)';
+      questionNavigationEl.classList.remove('expanded');
+      questionNavigationEl.classList.add('collapsed');
       updateQuestionNavigation();
 
       if (reattemptStatusBanner) {
@@ -7202,11 +8394,18 @@
       questionCounterEl.textContent = `Incorrect Q${currentIndex + 1}/${incorrectQuestionIndices.length}`;
       progressBarFillEl.style.width = `${((currentIndex + 1) / incorrectQuestionIndices.length) * 100}%`;
 
+      // MODIFICATION: Collapse the text space if there is no question text, allowing the image to slide up
       const marksHtml = `<span class="question-marks-badge">${q.marks || 1} mark${(q.marks || 1) > 1 ? 's' : ''}</span>`;
-      questionTextEl.innerHTML = q.question
-        .replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>')
-        .replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>')
-        .replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim() + ' ' + marksHtml;
+      const rawQ = q.question || '';
+      const cleanedQ = rawQ.replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>').replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>').replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim();
+      
+      if (cleanedQ === '') {
+        questionTextEl.innerHTML = marksHtml;
+        questionTextEl.style.marginBottom = '0'; // Remove space below the invisible text
+      } else {
+        questionTextEl.innerHTML = cleanedQ + ' ' + marksHtml;
+        questionTextEl.style.marginBottom = '8px'; // Restore normal spacing
+      }
 
       questionWhatsappIconEl.style.display = "block";
 
@@ -7272,7 +8471,7 @@
             if (optionImageUrl) {
               const wrapper = document.createElement("div");
               wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
-              wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
+              wrapper.innerHTML = (opt ? `<span style="margin-bottom:8px">${opt}</span>` : '') + `<img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
               contentDiv.appendChild(wrapper);
             } else {
               contentDiv.textContent = opt;
@@ -7311,11 +8510,18 @@
       questionCounterEl.textContent = `Q${currentIndex + 1}/${reattemptQuestions.length}`;
       progressBarFillEl.style.width = `${((currentIndex + 1) / reattemptQuestions.length) * 100}%`;
 
+      // MODIFICATION: Collapse the text space if there is no question text, allowing the image to slide up
       const marksHtml = `<span class="question-marks-badge">${q.marks || 1} mark${(q.marks || 1) > 1 ? 's' : ''}</span>`;
-      questionTextEl.innerHTML = q.question
-        .replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>')
-        .replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>')
-        .replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim() + ' ' + marksHtml;
+      const rawQ = q.question || '';
+      const cleanedQ = rawQ.replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>').replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>').replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim();
+      
+      if (cleanedQ === '') {
+        questionTextEl.innerHTML = marksHtml;
+        questionTextEl.style.marginBottom = '0'; // Remove space below the invisible text
+      } else {
+        questionTextEl.innerHTML = cleanedQ + ' ' + marksHtml;
+        questionTextEl.style.marginBottom = '8px'; // Restore normal spacing
+      }
 
       questionWhatsappIconEl.style.display = "block";
 
@@ -7382,7 +8588,7 @@
             if (optionImageUrl) {
               const wrapper = document.createElement("div");
               wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
-              wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
+              wrapper.innerHTML = (opt ? `<span style="margin-bottom:8px">${opt}</span>` : '') + `<img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
               contentDiv.appendChild(wrapper);
             } else {
               contentDiv.textContent = opt;
@@ -7562,10 +8768,17 @@
         finishBtn.disabled = true;
         finishBtn.textContent = "Submit";
         finishBtn.onclick = () => {
-          if (!questionsLoaded || !isQuizActive) return;
-          if (confirm("Are you sure you want to finish the quiz?")) showFinalResult();
-          resetInactivityTimer();
-        };
+        if (!questionsLoaded || !isQuizActive) return;
+        window.showCustomConfirm(
+          "Finish Quiz", 
+          "Are you sure you want to finish the quiz and submit your answers?", 
+          "Submit", 
+          () => { 
+            showFinalResult(); 
+            resetInactivityTimer();
+          }
+        );
+      };
         finalScoreEl.style.display = "none";
         progressBarFillEl.style.width = "0%";
         questionCounterEl.textContent = "Loading…";
@@ -7641,17 +8854,17 @@
           const optionImages = [];
           
           if (!isSubjective) {
-            if (option1) options.push(option1);
-            if (option2) options.push(option2);
-            if (option3) options.push(option3);
-            if (option4) options.push(option4);
+            // Unconditionally push all 4 options to maintain the correct index A, B, C, D
+            options.push(option1, option2, option3, option4);
 
-            if (row.c[9]?.v) optionImages.push(row.c[9].v.toString().trim() || '');
-            if (row.c[10]?.v) optionImages.push(row.c[10].v.toString().trim() || '');
-            if (row.c[11]?.v) optionImages.push(row.c[11].v.toString().trim() || '');
-            if (row.c[12]?.v) optionImages.push(row.c[12].v.toString().trim() || '');
+            // Unconditionally push all 4 image slots
+            optionImages.push(
+              row.c[9]?.v?.toString().trim() || '',
+              row.c[10]?.v?.toString().trim() || '',
+              row.c[11]?.v?.toString().trim() || '',
+              row.c[12]?.v?.toString().trim() || ''
+            );
           }
-
           let correctIndex = 0;
           if (!isSubjective) {
             const answerUpper = answer.toUpperCase().trim();
@@ -7669,7 +8882,8 @@
             }
           }
 
-          if (question) {
+          // MODIFICATION: Allow questions that have NO text as long as they have an image
+          if (question || imageUrl) {
             rawQuestions.push({
               question,
               options,
@@ -7891,11 +9105,18 @@
       questionCounterEl.textContent = `Q${currentIndex + 1}/${questions.length}`;
       progressBarFillEl.style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
 
+      // MODIFICATION: Collapse the text space if there is no question text, allowing the image to slide up
       const marksHtml = `<span class="question-marks-badge">${q.marks || 1} mark${(q.marks || 1) > 1 ? 's' : ''}</span>`;
-      questionTextEl.innerHTML = q.question
-        .replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>')
-        .replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>')
-        .replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim() + ' ' + marksHtml;
+      const rawQ = q.question || '';
+      const cleanedQ = rawQ.replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>').replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>').replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim();
+      
+      if (cleanedQ === '') {
+        questionTextEl.innerHTML = marksHtml;
+        questionTextEl.style.marginBottom = '0'; // Remove space below the invisible text
+      } else {
+        questionTextEl.innerHTML = cleanedQ + ' ' + marksHtml;
+        questionTextEl.style.marginBottom = '8px'; // Restore normal spacing
+      }
 
       // Update icons visibility
       updateAdminControls();
@@ -7981,7 +9202,7 @@
             if (optionImageUrl) {
               const wrapper = document.createElement("div");
               wrapper.style.cssText = "display:flex;flex-direction:column;width:100%";
-              wrapper.innerHTML = `<span style="margin-bottom:8px">${opt}</span><img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
+              wrapper.innerHTML = (opt ? `<span style="margin-bottom:8px">${opt}</span>` : '') + `<img src="${optionImageUrl}" class="option-image" alt="Option ${String.fromCharCode(65+idx)}" onerror="this.style.display='none'">`;
               contentDiv.appendChild(wrapper);
             } else {
               contentDiv.textContent = opt;
@@ -8442,10 +9663,13 @@
       currentIndex = 0;
       renderQuestion();
 
-      questionNavigationEl.classList.remove('collapsed');
-      questionNavigationEl.classList.add('expanded');
-      navigationToggleBtn.innerHTML = '<i>▼</i> Hide Navigation';
-      navigationToggleBtn.classList.remove('collapsed');
+     // Keep navigation collapsed by default to save space
+      const content = document.getElementById('nav-collapsible-content');
+      const icon = document.getElementById('nav-toggle-icon');
+      if(content) content.style.display = 'none';
+      if(icon) icon.style.transform = 'rotate(0deg)';
+      questionNavigationEl.classList.remove('expanded');
+      questionNavigationEl.classList.add('collapsed');
       updateQuestionNavigation();
     }
 
@@ -8538,10 +9762,16 @@
       finishBtn.textContent = "Submit";
       finishBtn.onclick = () => {
         if (!questionsLoaded || !isQuizActive) return;
-        if (confirm("Are you sure you want to finish the quiz?")) showFinalResult();
-        resetInactivityTimer();
+        window.showCustomConfirm(
+          "Finish Quiz", 
+          "Are you sure you want to finish the quiz and submit your answers?", 
+          "Submit", 
+          () => { 
+            showFinalResult(); 
+            resetInactivityTimer();
+          }
+        );
       };
-
       finalScoreEl.style.display = "none";
       document.getElementById('review-header')?.remove();
       document.getElementById('reattempt-header')?.remove();
@@ -8555,8 +9785,10 @@
       questionNavigationEl.style.display = 'block';
       questionNavigationEl.classList.remove('expanded');
       questionNavigationEl.classList.add('collapsed');
-      navigationToggleBtn.innerHTML = '<i>▶</i> Show Navigation';
-      navigationToggleBtn.classList.add('collapsed');
+      const content = document.getElementById('nav-collapsible-content');
+      const icon = document.getElementById('nav-toggle-icon');
+      if(content) content.style.display = 'none';
+      if(icon) icon.style.transform = 'rotate(0deg)';
 
       timerContainerEl.classList.remove('hidden');
       controlsEl.classList.remove('hidden');
@@ -9121,18 +10353,10 @@
         resetFailedAttempts();
         const user = result.user;
 
-        if (!result.subscriptionValid) {
-          showSubscriptionExpired(user, user.joiningDate, user.lastDate);
-        } else {
-          const validation = validateUserAccount(user);
-          if (!validation.valid) {
-            showAccountConfigError(user, validation.error, {
-              assignedClasses: validation.assignedClasses
-            });
-          } else {
-            login(user, false);
-          }
-        }
+        // NEW LOGIC: Just pass the user straight to login().
+        // The updated login() and validateUserAccount() functions handle everything now!
+        login(user, false);
+        
       } else {
         recordFailedAttempt();
         loginErrorEl.textContent = failedAttempts >= MAX_ATTEMPTS ? 
@@ -9197,15 +10421,29 @@
       goToPreviousQuestion();
     });
     
-    navigationToggleBtn.addEventListener("click", function(e) {
-      e.preventDefault();
-      toggleQuestionNavigation();
-    });
+    const navHeaderToggle = document.getElementById("nav-header-toggle");
+    if (navHeaderToggle) {
+      navHeaderToggle.addEventListener("click", function(e) {
+        e.preventDefault();
+        toggleQuestionNavigation();
+      });
+    }
     
     randomToggleEl.addEventListener("change", function() {
       resetInactivityTimer();
     });
 
+   // Intercept chapter dropdown changes
+    topicSelectEl.addEventListener('change', function() {
+      if (currentUser && currentUser.role === 'Trial' && this.selectedIndex > 1) {
+        window.showTrialPopup();
+        this.selectedIndex = 0; 
+        startBtnEl.disabled = true;
+      } else {
+        // Enable if valid chapter is selected, disable if they went back to "Select Chapter"
+        startBtnEl.disabled = (this.selectedIndex === 0);
+      }
+    });
     // Setup image URL toggle
     if (showImageUrlsCheckbox) {
       showImageUrlsCheckbox.addEventListener('change', toggleImageUrlFields);
@@ -9217,10 +10455,12 @@
 
     if (addQuestionBtn) {
       addQuestionBtn.addEventListener("click", function() {
-        if (!isAdmin()) {
-          alert("Admin access required");
+        if (isEditor() && !canAdd()) { window.showEditorPopup('Add'); return; } // NEW
+        if (!isAdmin() && !isEditor()) {
+          alert("Admin/Editor access required");
           return;
         }
+      
         if (!currentSubjectConfig || !currentTopicName) {
           alert("Please select a chapter first.");
           return;
@@ -9316,9 +10556,12 @@
     
     setTheme(localStorage.getItem('theme') || 'dark');
 
-    // ========== INITIALIZATION ==========
-   // ========== INITIALIZATION (SECURE VERSION) ==========
+    
+  // ========== INITIALIZATION (SECURE VERSION) ==========
    async function initializeApp() {
+      // Activate the back button router
+      setupMobileBackButton();
+
       // 1. Get initial configurations
       await loadTelegramConfig();
       await getUserIP();
@@ -9333,17 +10576,29 @@
 
           // 2. THE SECURITY HANDSHAKE
           // Ask the server to verify the token before letting the user in
-          const verifyUrl = `${MASTER_CONFIG_APPS_SCRIPT_URL}?action=verifyToken&username=${user.username}&token=${user.token}&callback=handleTokenVerification`;
           
+          const verifyUrl = `${MASTER_CONFIG_APPS_SCRIPT_URL}?action=verifyToken&username=${encodeURIComponent(user.username)}&token=${encodeURIComponent(user.token)}&callback=handleTokenVerification`;
           const isTokenValid = await new Promise((resolve) => {
             window.handleTokenVerification = function(response) {
+              // Only let them in if Google explicitly says TRUE
               resolve(response && response.success === true);
             };
-            
+
             const script = document.createElement('script');
             script.src = verifyUrl;
-            // Handle network errors (server down)
-            script.onerror = () => resolve(false);
+            
+            // STRICT SECURITY: If Google doesn't answer in 15 seconds, lock them out.
+            setTimeout(() => {
+              console.error("Server timeout. Enforcing security lockout.");
+              resolve(false); 
+            }, 15000); 
+
+            // STRICT SECURITY: If their internet drops completely, lock them out.
+            script.onerror = () => {
+              console.error("Network error. Enforcing security lockout.");
+              resolve(false);
+            };
+            
             document.head.appendChild(script);
           });
 
@@ -9374,11 +10629,106 @@
 
       resetFailedAttempts();
     }
-    
+
+        
     // Start the app and load configs
     window.addEventListener('DOMContentLoaded', initializeApp);
   </script>
-  
+  <div id="edit-pdf-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center;">
+    <div class="modal-content" style="background: var(--bg-color, #1e293b); padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; border: 1px solid #3b82f6;">
+      <h3 style="margin-bottom: 15px; color: #3b82f6;">✏️ Edit PDF Details</h3>
+      
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label style="font-size: 0.9rem; margin-bottom: 5px; display: block;">PDF Name</label>
+        <input type="text" id="edit-pdf-name" class="form-input">
+      </div>
+      
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label style="font-size: 0.9rem; margin-bottom: 5px; display: block;">Category / Folder</label>
+        <select id="edit-pdf-category-select" class="form-input" onchange="document.getElementById('edit-pdf-category-new').style.display = this.value === 'NEW' ? 'block' : 'none'">
+          <option value="">-- No Category (Main Folder) --</option>
+          <option value="NEW" style="font-weight:bold; color:#3b82f6;">➕ Create New Category...</option>
+        </select>
+        <input type="text" id="edit-pdf-category-new" class="form-input" style="display:none; margin-top:10px;" placeholder="Type new category name...">
+      </div>
+      
+      <input type="hidden" id="edit-pdf-row-index">
+      
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button onclick="document.getElementById('edit-pdf-modal').style.display='none'" style="padding: 10px 15px; border-radius: 8px; border: none; background: #64748b; color: white; cursor: pointer;">Cancel</button>
+        <button onclick="savePdfEditDetails()" style="padding: 10px 15px; border-radius: 8px; border: none; background: #3b82f6; color: white; cursor: pointer;">Save Changes</button>
+      </div>
+    </div>
+  </div>
+ <div id="cropper-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000000; z-index: 10005; flex-direction: column;">
+    <div style="width: 100%; flex: 1; min-height: 0; position: relative; overflow: hidden; background: #111;">
+      <img id="cropper-image" style="display: block; max-width: 100%;">
+    </div>
+    
+    <div style="display: flex; gap: 15px; height: 80px; flex-shrink: 0; align-items: center; justify-content: center; width: 100%; background: #0f172a; border-top: 1px solid #334155;">
+      <button id="cancel-crop-btn" style="padding: 12px 24px; border-radius: 8px; border: none; background: #ef4444; color: white; font-weight: bold; font-size: 1rem; cursor: pointer;">Cancel</button>
+      <button id="save-crop-btn" style="padding: 12px 24px; border-radius: 8px; border: none; background: #22c55e; color: white; font-weight: bold; font-size: 1rem; cursor: pointer;">Crop & Save</button>
+    </div>
+  </div>
+<!-- force logout popup -->
+  <div id="multi-login-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center;">
+    <div style="background:#1e293b; padding:30px; border-radius:12px; text-align:center; max-width:90%; width:400px; border:1px solid #ef4444; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <div style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
+      <h2 style="color:#ef4444; margin-top:0; font-family: 'Noto Sans', sans-serif;">Session Terminated</h2>
+      <p style="color:#e5e7eb; font-size: 1rem; margin-bottom: 25px;">Your account was logged in from another device. You have been forcibly logged out of this session to secure your account.</p>
+      <button onclick="executeForceLogout()" style="background:#ef4444; color:white; border:none; padding:12px 24px; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1.1rem;">Log In Again</button>
+    </div>
+  </div>
+
+  <!-- Trial Popopup -->
+  <div id="trial-popup-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center;">
+    <div style="background:#1e293b; padding:30px; border-radius:12px; text-align:center; max-width:90%; width:400px; border:1px solid #f59e0b; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <div style="font-size: 40px; margin-bottom: 10px;">🔒</div>
+      <h2 style="color:#f59e0b; margin-top:0; font-family: 'Noto Sans', sans-serif;">Premium Content</h2>
+     <p style="color:#e5e7eb; font-size: 1rem; margin-bottom: 25px;">As a <strong>Trial</strong> user, you only have access to the first subject and its first chapter. Upgrade to a full subscription to unlock all subjects and chapters!</p>
+      <a href="https://wa.me/919706195457?text=Hello%20Admin,%20I%20want%20to%20upgrade%20my%20Trial%20account%20to%20a%20Premium%20Subscription." target="_blank" style="display:flex; align-items:center; justify-content:center; gap:10px; background: linear-gradient(to right, #25d366, #128c7e); color:white; border:none; padding:12px 24px; border-radius:8px; cursor:pointer; font-weight:bold; text-decoration:none; width: 100%; box-sizing: border-box; font-size: 1.1rem; margin-bottom: 10px;">
+        <img src="whatsapp.png" style="width:24px;height:24px;"> Contact Admin
+      </a>
+      <button onclick="document.getElementById('trial-popup-modal').style.display='none'" style="background:transparent; color:#9ca3af; border:1px solid #4b5563; padding:10px 24px; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1rem;">Close</button>
+    </div>
+  </div>
+  <!-- Editor Popopup -->
+  <div id="editor-popup-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center;">
+    <div style="background:#1e293b; padding:30px; border-radius:12px; text-align:center; max-width:90%; width:400px; border:1px solid #ef4444; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <div style="font-size: 40px; margin-bottom: 10px;">⛔</div>
+      <h2 style="color:#ef4444; margin-top:0; font-family: 'Noto Sans', sans-serif;">Permission Denied</h2>
+      <p style="color:#e5e7eb; font-size: 1rem; margin-bottom: 25px;">You do not have <strong><span id="missing-permission-name"></span></strong> permission for this action.</p>
+      <a id="editor-whatsapp-btn" href="#" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:10px; background: linear-gradient(to right, #25d366, #128c7e); color:white; border:none; padding:12px 24px; border-radius:8px; cursor:pointer; font-weight:bold; text-decoration:none; width: 100%; box-sizing: border-box; font-size: 1.1rem; margin-bottom: 10px;">
+        <img src="whatsapp.png" style="width:24px;height:24px;"> Request Permission
+      </a>
+      <button onclick="document.getElementById('editor-popup-modal').style.display='none'" style="background:transparent; color:#9ca3af; border:1px solid #4b5563; padding:10px 24px; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1rem;">Close</button>
+    </div>
+  </div>
+
+  <div id="custom-confirm-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center;">
+    <div style="background:#1e293b; padding:30px; border-radius:12px; text-align:center; max-width:90%; width:400px; border:1px solid #f59e0b; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <div style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
+      <h2 id="confirm-title" style="color:#f59e0b; margin-top:0; font-family: 'Noto Sans', sans-serif;">Confirm Action</h2>
+      <p id="confirm-message" style="color:#e5e7eb; font-size: 1rem; margin-bottom: 25px;">Are you sure?</p>
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button id="confirm-cancel-btn" style="background:transparent; color:#9ca3af; border:1px solid #4b5563; padding:10px 24px; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1rem;">Cancel</button>
+        <button id="confirm-ok-btn" style="background:#ef4444; color:white; border:none; padding:10px 24px; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1rem;">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="custom-alert-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center;">
+    <div style="background:#1e293b; padding:30px; border-radius:12px; text-align:center; max-width:90%; width:400px; border:1px solid #3b82f6; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <div style="font-size: 40px; margin-bottom: 10px;">ℹ️</div>
+      <h2 id="alert-title" style="color:#3b82f6; margin-top:0; font-family: 'Noto Sans', sans-serif;">Notice</h2>
+      <p id="alert-message" style="color:#e5e7eb; font-size: 1rem; margin-bottom: 25px;">Message goes here</p>
+      <button id="alert-ok-btn" style="background:#3b82f6; color:white; border:none; padding:10px 24px; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1rem;">OK</button>
+    </div>
+  </div>
+
+  <div id="toast-notification" style="display:none; position:fixed; bottom:40px; left:50%; transform:translateX(-50%); background:#1e293b; color:#e5e7eb; padding:16px 32px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.6); z-index:999999; font-weight:600; text-align:center; transition: opacity 0.3s ease; font-size: 1.05rem; border-left: 6px solid #3b82f6; border-right: 1px solid #334155; border-top: 1px solid #334155; border-bottom: 1px solid #334155; min-width: 300px;">
+    <span id="toast-message">Message</span>
+  </div>
   <!-- NO SERVICE WORKER REGISTRATION - Completely disabled -->
 </body>
 </html>
