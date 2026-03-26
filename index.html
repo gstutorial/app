@@ -5938,7 +5938,11 @@ body.light-mode .pdf-name {
         // Restore image previews if URLs exist
         if (q.imageUrl) {
           const preview = document.getElementById('preview-question-image');
-          if (preview) { preview.src = q.imageUrl; preview.classList.add('visible'); }
+          if (preview) { 
+            preview.src = q.imageUrl; 
+            preview.classList.add('visible'); 
+            preview.style.display = 'block'; // FIX: Forces question image to show
+          }
         }
         
        ['a', 'b', 'c', 'd'].forEach((opt, idx) => {
@@ -8123,12 +8127,17 @@ function setupMobileBackButton() {
             return;
         }
 
-        // Main Menu -> Confirm Exit
+        // Main Menu -> Confirm Exit (Using your beautiful Custom UI!)
         if (isScreenVisible('class-selection')) {
-            if (confirm("Are you sure you want to exit the app?")) {
+            window.showCustomConfirm(
+              "Logout / Exit", 
+              "Are you sure you want to log out and exit to the login screen?", 
+              "Yes, Logout", 
+              () => { 
                 allowAppExit = true;
-                window.history.back(); 
-            }
+                logout(); 
+              }
+            );
             return;
         }
         
@@ -8826,17 +8835,17 @@ function setupMobileBackButton() {
           const optionImages = [];
           
           if (!isSubjective) {
-            if (option1) options.push(option1);
-            if (option2) options.push(option2);
-            if (option3) options.push(option3);
-            if (option4) options.push(option4);
+            // Unconditionally push all 4 options to maintain the correct index A, B, C, D
+            options.push(option1, option2, option3, option4);
 
-            if (row.c[9]?.v) optionImages.push(row.c[9].v.toString().trim() || '');
-            if (row.c[10]?.v) optionImages.push(row.c[10].v.toString().trim() || '');
-            if (row.c[11]?.v) optionImages.push(row.c[11].v.toString().trim() || '');
-            if (row.c[12]?.v) optionImages.push(row.c[12].v.toString().trim() || '');
+            // Unconditionally push all 4 image slots
+            optionImages.push(
+              row.c[9]?.v?.toString().trim() || '',
+              row.c[10]?.v?.toString().trim() || '',
+              row.c[11]?.v?.toString().trim() || '',
+              row.c[12]?.v?.toString().trim() || ''
+            );
           }
-
           let correctIndex = 0;
           if (!isSubjective) {
             const answerUpper = answer.toUpperCase().trim();
@@ -10601,6 +10610,43 @@ function setupMobileBackButton() {
 
       resetFailedAttempts();
     }
+
+    // ========== MOBILE SWIPE TO GO BACK ==========
+    let touchStartX = 0;
+    let touchStartY = 0;
+    
+    document.addEventListener('touchstart', function(e) {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+    }, {passive: true});
+
+    document.addEventListener('touchend', function(e) {
+      const touchEndX = e.changedTouches[0].screenX;
+      const touchEndY = e.changedTouches[0].screenY;
+      
+      const diffX = touchEndX - touchStartX;
+      const diffY = Math.abs(touchEndY - touchStartY);
+
+      // If swipe is horizontal, to the right, long enough, and not too much vertical scrolling
+      if (diffX > 80 && diffY < 50 && touchStartX < 50) {
+        // User swiped from the left edge to the right (Back Gesture)
+        
+        // Prevent swipe back if we are actively dragging the Cropper
+        const cropperModal = document.getElementById('cropper-modal');
+        if (cropperModal && cropperModal.style.display === 'flex') return;
+
+        // If we are at the main dashboard, show the exit/logout popup manually
+        if (isScreenVisible('class-selection')) {
+          if (confirm("Are you sure you want to exit/logout?")) {
+            logout();
+          }
+          return;
+        }
+        
+        // Otherwise, trigger the hardware back button which runs your setupMobileBackButton logic!
+        window.history.back();
+      }
+    }, {passive: true});
     
     // Start the app and load configs
     window.addEventListener('DOMContentLoaded', initializeApp);
