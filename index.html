@@ -8064,7 +8064,7 @@ function validateUserAccount(user) {
         return style.display === 'block' || style.display === 'flex';
     }
 
-// The Central Brain for stepping backwards
+// The Central Brain for stepping backwards safely
     function handleAppBackNavigation() {
         // 1. Close Modals/Menus first
         const cropperModalEl = document.getElementById('cropper-modal');
@@ -8857,7 +8857,14 @@ function validateUserAccount(user) {
             }
           }
 
-         const isSubjective = !option1 && !option2 && !option3 && !option4 && (question || imageUrl) && answer;
+        // Extract option images FIRST so we know if they exist
+          const optImg1 = row.c[9]?.v?.toString().trim() || '';
+          const optImg2 = row.c[10]?.v?.toString().trim() || '';
+          const optImg3 = row.c[11]?.v?.toString().trim() || '';
+          const optImg4 = row.c[12]?.v?.toString().trim() || '';
+
+          // FIX: It is subjective ONLY if ALL text options AND ALL image options are empty!
+          const isSubjective = !option1 && !option2 && !option3 && !option4 && !optImg1 && !optImg2 && (question || imageUrl) && answer;
 
           const options = [];
           const optionImages = [];
@@ -8865,6 +8872,10 @@ function validateUserAccount(user) {
           if (!isSubjective) {
             // Unconditionally push all 4 options to maintain the correct index A, B, C, D
             options.push(option1, option2, option3, option4);
+
+            // Unconditionally push all 4 image slots
+            optionImages.push(optImg1, optImg2, optImg3, optImg4);
+          }
 
             // Unconditionally push all 4 image slots
             optionImages.push(
