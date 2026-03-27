@@ -8090,10 +8090,14 @@ function validateUserAccount(user) {
         // PDF Inner Folder View
         if (isScreenVisible('pyq-container') && window.currentPdfCategory) {
             window.currentPdfCategory = null;
+            
+            // NEW: Reset the upload dropdown visually when backing out of a folder
+            const categorySelect = document.getElementById('new-pdf-category-select');
+            if (categorySelect) categorySelect.value = '';
+            
             if (typeof renderPdfView === 'function') renderPdfView();
             return;
         }
-
         // PDF Main Folder View -> Back to Subjects
         if (isScreenVisible('pyq-container')) {
             if (typeof navigateToSubjects === 'function') navigateToSubjects();
@@ -8157,27 +8161,27 @@ function validateUserAccount(user) {
       if (backButtonListenerAdded) return;
       backButtonListenerAdded = true;
 
-      // 1. FIX: Bulletproof Hash-Based Back Button Trap
-      // By using a URL hash (#app), mobile browsers treat edge-swipes as legitimate navigation 
-      // and will not throttle or ignore the back button trap.
       const basePath = window.location.pathname + window.location.search;
-      window.history.pushState(null, null, basePath);
-      window.history.pushState(null, null, basePath + '#app');
+      
+      // 1. FIX: Deep-Buffer History Trap
+      // By stacking history states, the browser never runs out of history 
+      // during rapid double-swipes, preventing the app from closing/disappearing.
+      window.history.replaceState({ trap: 'base' }, null, basePath);
+      window.history.pushState({ trap: 'buffer' }, null, basePath + '#app');
+      window.history.pushState({ trap: 'active' }, null, basePath + '#app');
 
       window.addEventListener('popstate', function(event) {
         if (allowAppExit) return;
         
-        // If the hash is gone, the user performed a native edge-swipe back
-        if (window.location.hash !== '#app') {
-          // Push the #app state again immediately to trap the NEXT swipe
-          window.history.pushState(null, null, basePath + '#app');
-          handleAppBackNavigation(); 
-        }
+        // Immediately restore the buffer state so the NEXT swipe is also trapped instantly
+        window.history.pushState({ trap: 'active' }, null, basePath + '#app');
+        
+        // Safely execute your perfectly working back navigation logic
+        handleAppBackNavigation(); 
       });
 
-      // 2. Fix: Better Mobile Swipe Gesture (Allows Swiping Left or Right to go back)
+      // 2. Mobile Swipe Gesture (Allows Swiping Left or Right to go back)
       let touchStartX = 0;
-      // ... KEEP THE REST OF THE TOUCH EVENT LISTENERS EXACTLY AS THEY ARE ...
       let touchStartY = 0;
       
       document.addEventListener('touchstart', function(e) {
@@ -8198,7 +8202,7 @@ function validateUserAccount(user) {
 
         // If horizontal swipe distance is large (either Left or Right) and vertical movement is small
         if (Math.abs(diffX) > 70 && diffY < 50) {
-          handleAppBackNavigation(); // Safely triggers your back navigation order
+          handleAppBackNavigation(); 
         }
       }, {passive: true});
     }
