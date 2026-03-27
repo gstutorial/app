@@ -4631,7 +4631,7 @@ body.light-mode .pdf-name {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwTgZ_M-oCBYGTKpxOLXKE9em7tESjtCz9kudPW82GpPeTkJVPx-G4E9V3rDs-dmuQuEg/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzo50E6h1iWegFMb2qubeW4Z4aHfe-Ul88-koCkbqEJ9Hw0vDqtcYb-lPygkWDTrsyG/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5xwsIgIn4goUOmlGatoZa8WDxHP5cklhfCrSvM9jebkSa3lU7VHDAHx5_VTAD5WjI/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -5304,73 +5304,62 @@ body.light-mode .pdf-name {
       }
     }
 
-    // ========== 1. PERFECT MANUAL LOGIN (HYBRID FETCH + JSONP) ==========
+    // ========== AUTHENTICATION FUNCTION ==========
     async function authenticateWithAppsScript(username, password) {
-      const callbackName = 'authCb_' + Date.now() + Math.floor(Math.random() * 1000);
-      const authUrl = `${AUTH_APPS_SCRIPT_URL}?action=authenticate&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&callback=${callbackName}&_t=${Date.now()}`;
-
-      // ATTEMPT 1: Super-Fetch (Bypasses Android WebView <script> blockers)
       try {
-        const fetchResponse = await fetch(authUrl);
-        if (fetchResponse.ok) {
-           const textData = await fetchResponse.text();
-           
-           // Google Apps Script returns JSONP text: authCb_123({"success":true...})
-           // We extract just the JSON part to parse it manually
-           const startIndex = textData.indexOf('(') + 1;
-           const endIndex = textData.lastIndexOf(')');
-           
-           if (startIndex > 0 && endIndex > startIndex) {
-               const jsonString = textData.substring(startIndex, endIndex);
-               const data = JSON.parse(jsonString);
-               return data.success ? data : { success: false, error: data.error || 'Invalid credentials' };
-           }
-        }
-      } catch (fetchErr) {
-        console.warn("Fetch blocked by CORS. Falling back to classic JSONP...");
-      }
-
-      // ATTEMPT 2: Classic JSONP Fallback (Injected into body, not head)
-      const performAuthJSONP = () => {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
+          const callbackName = 'authCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+          
           const script = document.createElement('script');
-          let isDone = false;
-
-          const timeoutTimer = setTimeout(() => {
-            if (!isDone) { isDone = true; script.remove(); delete window[callbackName]; resolve({ networkFailed: true, error: 'timeout' }); }
-          }, 15000);
-
+          
           window[callbackName] = function(data) {
-            if (!isDone) { isDone = true; clearTimeout(timeoutTimer); script.remove(); delete window[callbackName]; resolve({ networkFailed: false, data: data }); }
+            delete window[callbackName];
+            document.body.removeChild(script);
+            
+            if (data && data.success) {
+              resolve(data);
+            } else {
+              resolve({ 
+                success: false, 
+                error: data?.error || 'Invalid username or password' 
+              });
+            }
           };
-
+          
           script.onerror = function() {
-            if (!isDone) { isDone = true; clearTimeout(timeoutTimer); script.remove(); delete window[callbackName]; resolve({ networkFailed: true, error: 'script_blocked' }); }
+            delete window[callbackName];
+            document.body.removeChild(script);
+            resolve({ 
+              success: false, 
+              error: 'Network error. Please check your connection.' 
+            });
           };
-
-          script.src = authUrl;
-          document.body.appendChild(script); // Body is much safer for Android wrappers
+          
+          const url = `${AUTH_APPS_SCRIPT_URL}?action=authenticate&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&_t=${Date.now()}&callback=${callbackName}`;
+          script.src = url;
+          document.body.appendChild(script);
+          
+          setTimeout(() => {
+            if (window[callbackName]) {
+              delete window[callbackName];
+              document.body.removeChild(script);
+              resolve({ 
+                success: false, 
+                error: 'Request timeout. Please try again.' 
+              });
+            }
+          }, 10000);
         });
-      };
 
-      try {
-        let result = await performAuthJSONP();
-
-        // 3. Retry Logic if Network Fails
-        if (result.networkFailed) {
-            console.warn(`JSONP snag (${result.error}). Retrying in 2 seconds...`);
-            await new Promise(r => setTimeout(r, 2000));
-            result = await performAuthJSONP();
-        }
-
-        if (!result.networkFailed) {
-            if (result.data && result.data.success) { return result.data; }
-            else { return { success: false, error: result.data?.error || 'Invalid username or password' }; }
-        } else {
-            return { success: false, error: 'Server unreachable. Ensure internet is active and your Google Apps Script is published as "Anyone".' };
-        }
-      } catch (error) { return { success: false, error: 'Unexpected error occurred.' }; }
+      } catch (error) {
+        console.error('Authentication error:', error);
+        return {
+          success: false,
+          error: 'Cannot connect to authentication server. Please try again later.'
+        };
+      }
     }
+
     // ========== HELPER FUNCTIONS ==========
     function formatDisplayDate(val) {
       if (!val) return "Not available";
@@ -10609,72 +10598,9 @@ function validateUserAccount(user) {
     
     setTheme(localStorage.getItem('theme') || 'dark');
 
-    // ========== BACKGROUND SECURITY MONITOR ==========
-    let backgroundSecurityInterval = null;
-
-    function startBackgroundSecuritySweep() {
-        if (backgroundSecurityInterval) clearInterval(backgroundSecurityInterval);
-
-        // Run the sweep every 60 seconds (60000 ms)
-        backgroundSecurityInterval = setInterval(() => {
-            const savedSession = localStorage.getItem('gs_tutorial_session');
-            if (!savedSession) {
-                clearInterval(backgroundSecurityInterval);
-                return;
-            }
-
-            try {
-                const sessionData = JSON.parse(savedSession);
-                const user = sessionData.user;
-                if (!user || !user.username || !user.token) return;
-
-                const verifyUrl = `${MASTER_CONFIG_APPS_SCRIPT_URL}?action=verifyToken&username=${encodeURIComponent(user.username)}&token=${encodeURIComponent(user.token)}&_t=${Date.now()}`;
-                
-                const callbackName = 'bgVerifyCb_' + Date.now() + Math.floor(Math.random() * 1000);
-                const script = document.createElement('script');
-                let isDone = false;
-
-                const timeoutTimer = setTimeout(() => {
-                    if (!isDone) {
-                        isDone = true;
-                        script.remove();
-                        delete window[callbackName];
-                    }
-                }, 10000);
-
-                window[callbackName] = function(response) {
-                    if (!isDone) {
-                        isDone = true; clearTimeout(timeoutTimer); script.remove(); delete window[callbackName];
-                        
-                        // FIX: Only kick them if the script ran perfectly (success: true) AND explicitly rejected the token (valid: false)
-                        if (response && response.success === true && response.valid === false) {
-                            console.error("Security Sweep: Fake token detected! Terminating session.");
-                            clearInterval(backgroundSecurityInterval);
-                            logout(); 
-                        }
-                        // If response.success === false, it means Google Sheets just had a temporary glitch. Do nothing!
-                    }
-                };
-
-                script.onerror = function() {
-                    if (!isDone) {
-                        isDone = true;
-                        clearTimeout(timeoutTimer);
-                        script.remove();
-                        delete window[callbackName];
-                    }
-                };
-
-                script.src = `${verifyUrl}&callback=${callbackName}`;
-                document.head.appendChild(script);
-
-            } catch (e) {
-                console.error("Background Monitor Error:", e);
-            }
-        }, 60000);
-    }
- // ========== INITIALIZATION (SECURE & OFFLINE TOLERANT) ==========
-    async function initializeApp() {
+    
+  // ========== INITIALIZATION (SECURE VERSION) ==========
+   async function initializeApp() {
       // Activate the back button router
       setupMobileBackButton();
 
@@ -10690,82 +10616,43 @@ function validateUserAccount(user) {
           const sessionData = JSON.parse(savedSession);
           const user = sessionData.user;
 
-          // 2. ROBUST SECURITY HANDSHAKE (With Retries & Offline Tolerance)
-          const verifyUrl = `${MASTER_CONFIG_APPS_SCRIPT_URL}?action=verifyToken&username=${encodeURIComponent(user.username)}&token=${encodeURIComponent(user.token)}&_t=${Date.now()}`;
+          // 2. THE SECURITY HANDSHAKE
+          // Ask the server to verify the token before letting the user in
           
-          const performVerification = () => {
-              return new Promise((resolve) => {
-                  const callbackName = 'initVerifyCb_' + Date.now() + Math.floor(Math.random() * 1000);
-                  const script = document.createElement('script');
-                  let isDone = false;
+          const verifyUrl = `${MASTER_CONFIG_APPS_SCRIPT_URL}?action=verifyToken&username=${encodeURIComponent(user.username)}&token=${encodeURIComponent(user.token)}&callback=handleTokenVerification`;
+          const isTokenValid = await new Promise((resolve) => {
+            window.handleTokenVerification = function(response) {
+              // Only let them in if Google explicitly says TRUE
+              resolve(response && response.success === true);
+            };
 
-                  const timeoutTimer = setTimeout(() => {
-                      if (!isDone) {
-                          isDone = true;
-                          script.remove();
-                          delete window[callbackName];
-                          resolve({ networkFailed: true, explicitlyFake: false });
-                      }
-                  }, 10000);
+            const script = document.createElement('script');
+            script.src = verifyUrl;
+            
+            // STRICT SECURITY: If Google doesn't answer in 15 seconds, lock them out.
+            setTimeout(() => {
+              console.error("Server timeout. Enforcing security lockout.");
+              resolve(false); 
+            }, 15000); 
 
-                  window[callbackName] = function(response) {
-                      if (!isDone) {
-                          isDone = true; clearTimeout(timeoutTimer); script.remove(); delete window[callbackName];
-                          
-                          if (response && response.success === true) {
-                              if (response.valid === true) {
-                                  resolve({ networkFailed: false, explicitlyFake: false }); // Perfect Token
-                              } else {
-                                  resolve({ networkFailed: false, explicitlyFake: true });  // Hacker Fake Token
-                              }
-                          } else {
-                              // FIX: Google Sheets crashed or timed out. Treat it as a network drop to allow Offline Tolerance!
-                              resolve({ networkFailed: true, explicitlyFake: false }); 
-                          }
-                      }
-                  };
+            // STRICT SECURITY: If their internet drops completely, lock them out.
+            script.onerror = () => {
+              console.error("Network error. Enforcing security lockout.");
+              resolve(false);
+            };
+            
+            document.head.appendChild(script);
+          });
 
-                  script.onerror = function() {
-                      if (!isDone) {
-                          isDone = true;
-                          clearTimeout(timeoutTimer);
-                          script.remove();
-                          delete window[callbackName];
-                          resolve({ networkFailed: true, explicitlyFake: false }); // Network Drop
-                      }
-                  };
-
-                  script.src = `${verifyUrl}&callback=${callbackName}`;
-                  document.head.appendChild(script);
-              });
-          };
-
-          let verifyResult = await performVerification();
-
-          // RETRY LOGIC: If network dropped prematurely, try ONE more time.
-          if (verifyResult.networkFailed) {
-              console.warn("Verification dropped. Retrying in 2 seconds...");
-              await new Promise(r => setTimeout(r, 2000));
-              verifyResult = await performVerification();
-          }
-
-          // 3. ENFORCE SECURITY
-          if (verifyResult.explicitlyFake) {
-              // Google confirmed the token is invalid.
-              console.error("Security Alert: Invalid session detected. Clearing storage.");
-              logout(); 
+          if (isTokenValid) {
+            // Token is real! Log the user in normally
+            currentUser = user;
+            login(currentUser, true);
           } else {
-              // Either token is valid, or the network is dead (Offline Tolerance)
-              if (verifyResult.networkFailed) {
-                  console.warn("Server unreachable. Enabling Offline Tolerance.");
-              }
-              currentUser = user;
-              login(currentUser, true);
-              
-              // TRIGGER THE BACKGROUND ASSASSIN
-              startBackgroundSecuritySweep();
+            // TOKEN IS FAKE OR EXPIRED - CLEAR EVERYTHING
+            console.error("Security Alert: Invalid session detected. Clearing storage.");
+            logout(); // This clears the fake localStorage data
           }
-
         } catch (e) {
           console.error("Session Corrupted:", e);
           logout();
@@ -10785,6 +10672,7 @@ function validateUserAccount(user) {
       resetFailedAttempts();
     }
 
+        
     // Start the app and load configs
     window.addEventListener('DOMContentLoaded', initializeApp);
   </script>
