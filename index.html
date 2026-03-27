@@ -8106,6 +8106,17 @@ function validateUserAccount(user) {
                     "Leave",
                     () => { if (typeof navigateToSubjects === 'function') navigateToSubjects(); }
                 );
+            } else if (isReattemptMode) {
+                // NEW: Catch back button/swipe during Reattempt Mode
+                window.showCustomConfirm(
+                    "Warning",
+                    "Reattempt is in progress. Are you sure you want to leave? Your progress will be lost.",
+                    "Leave",
+                    () => { if (typeof navigateToSubjects === 'function') navigateToSubjects(); }
+                );
+            } else if (isReviewMode || isIncorrectReviewMode) {
+                // Optional UX bonus: If they are just reviewing, take them back to the results screen instead of all the way out
+                showFinalResultWithoutNotification(); 
             } else {
                 if (typeof navigateToSubjects === 'function') navigateToSubjects();
             }
