@@ -5893,77 +5893,80 @@ body.light-mode .pdf-name {
       }
     }
 
-    // ========== OPEN QUESTION EDITOR ==========
- function openQuestionEditor(index) {
-      if (!questions[index]) return;
-      
-      const q = questions[index];
-      const modal = document.getElementById('question-editor-modal');
-      
-      document.getElementById('editor-title').textContent = 'Edit Question';
-      document.getElementById('editor-question-type').value = q.isSubjective ? 'subjective' : 'mcq';
-      document.getElementById('editor-question').value = q.question;
-      
-      document.getElementById('editor-image-url').value = q.imageUrl || '';
-      document.getElementById('editor-marks').value = q.marks || 1;
-      document.getElementById('editor-explanation').value = q.explanation || '';
-      
-      toggleQuestionTypeSections(q.isSubjective ? 'subjective' : 'mcq');
-      
-     // Clear and Reset Previews
-      ['question', 'option-a', 'option-b', 'option-c', 'option-d'].forEach(prefix => {
-        const preview = document.getElementById(`preview-${prefix}-image`);
-        if (preview) {
-          preview.src = '';
-          preview.classList.remove('visible');
-          preview.style.display = 'none'; // FIX: Completely hides the broken image icon
+   // ========== OPEN QUESTION EDITOR (UPDATED) ==========
+function openQuestionEditor(index) {
+  if (!questions[index]) return;
+  
+  const q = questions[index];
+  const modal = document.getElementById('question-editor-modal');
+  
+  document.getElementById('editor-title').textContent = 'Edit Question';
+  document.getElementById('editor-question-type').value = q.isSubjective ? 'subjective' : 'mcq';
+  document.getElementById('editor-question').value = q.question;
+  
+  document.getElementById('editor-image-url').value = q.imageUrl || '';
+  document.getElementById('editor-marks').value = q.marks || 1;
+  document.getElementById('editor-explanation').value = q.explanation || '';
+  
+  toggleQuestionTypeSections(q.isSubjective ? 'subjective' : 'mcq');
+  
+  // Clear and Reset Previews
+  ['question', 'option-a', 'option-b', 'option-c', 'option-d'].forEach(prefix => {
+    const preview = document.getElementById(`preview-${prefix}-image`);
+    if (preview) {
+      preview.src = '';
+      preview.classList.remove('visible');
+      preview.style.display = 'none';
+    }
+  });
+
+  // --- NEW PLACEMENT: MOVED OUTSIDE THE IF/ELSE ---
+  // This ensures the main question image shows for BOTH MCQ and Subjective
+  if (q.imageUrl) {
+    const preview = document.getElementById('preview-question-image');
+    if (preview) { 
+      preview.src = convertImageUrl(q.imageUrl);
+      preview.classList.add('visible'); 
+      preview.style.display = 'block'; 
+    }
+  }
+
+  if (q.isSubjective) {
+    // Handle subjective correctly
+    document.getElementById('editor-answer-subjective').value = q.explanation ? q.explanation.split(' - ')[0] : (q.answer || '');
+  } else {
+    // Handle MCQ options
+    document.getElementById('editor-option-a').value = q.options && q.options[0] ? q.options[0] : '';
+    document.getElementById('editor-option-b').value = q.options && q.options[1] ? q.options[1] : '';
+    document.getElementById('editor-option-c').value = q.options && q.options[2] ? q.options[2] : '';
+    document.getElementById('editor-option-d').value = q.options && q.options[3] ? q.options[3] : '';
+    
+    // Load option images
+    document.getElementById('editor-option-a-img').value = q.optionImages && q.optionImages[0] ? q.optionImages[0] : '';
+    document.getElementById('editor-option-b-img').value = q.optionImages && q.optionImages[1] ? q.optionImages[1] : '';
+    document.getElementById('editor-option-c-img').value = q.optionImages && q.optionImages[2] ? q.optionImages[2] : '';
+    document.getElementById('editor-option-d-img').value = q.optionImages && q.optionImages[3] ? q.optionImages[3] : '';
+    
+    // Option previews stay inside the 'else' because subjective doesn't have options
+    ['a', 'b', 'c', 'd'].forEach((opt, idx) => {
+      if (q.optionImages && q.optionImages[idx]) {
+        const preview = document.getElementById(`preview-option-${opt}-image`);
+        if (preview) { 
+          preview.src = convertImageUrl(q.optionImages[idx]);
+          preview.classList.add('visible'); 
+          preview.style.display = 'block'; 
         }
-      });
-      
-      if (q.isSubjective) {
-        // Handle subjective correctly
-        document.getElementById('editor-answer-subjective').value = q.explanation ? q.explanation.split(' - ')[0] : (q.answer || '');
-      } else {
-        document.getElementById('editor-option-a').value = q.options && q.options[0] ? q.options[0] : '';
-        document.getElementById('editor-option-b').value = q.options && q.options[1] ? q.options[1] : '';
-        document.getElementById('editor-option-c').value = q.options && q.options[2] ? q.options[2] : '';
-        document.getElementById('editor-option-d').value = q.options && q.options[3] ? q.options[3] : '';
-        
-        // Load option images
-        document.getElementById('editor-option-a-img').value = q.optionImages && q.optionImages[0] ? q.optionImages[0] : '';
-        document.getElementById('editor-option-b-img').value = q.optionImages && q.optionImages[1] ? q.optionImages[1] : '';
-        document.getElementById('editor-option-c-img').value = q.optionImages && q.optionImages[2] ? q.optionImages[2] : '';
-        document.getElementById('editor-option-d-img').value = q.optionImages && q.optionImages[3] ? q.optionImages[3] : '';
-        
-       // Restore image previews if URLs exist
-        if (q.imageUrl) {
-          const preview = document.getElementById('preview-question-image');
-          if (preview) { 
-            preview.src = convertImageUrl(q.imageUrl); // FIX: Convert to displayable thumbnail
-            preview.classList.add('visible'); 
-            preview.style.display = 'block'; 
-          }
-        }
-        
-       ['a', 'b', 'c', 'd'].forEach((opt, idx) => {
-          if (q.optionImages && q.optionImages[idx]) {
-            const preview = document.getElementById(`preview-option-${opt}-image`);
-            if (preview) { 
-              preview.src = convertImageUrl(q.optionImages[idx]); // FIX: Convert to displayable thumbnail
-              preview.classList.add('visible'); 
-              preview.style.display = 'block'; 
-            }
-          }
-        });
-        
-        // FIX 1: Correct ID for the Answer Dropdown
-        const answerLetter = String.fromCharCode(65 + q.correctIndex);
-        document.getElementById('editor-answer-mcq').value = answerLetter || 'A';
       }
-      
-      // FIX 2: Set necessary hidden data properties for saving correctly
-      modal.dataset.editMode = 'edit';
-      modal.dataset.questionIndex = index;
+    });
+    
+    const answerLetter = String.fromCharCode(65 + q.correctIndex);
+    document.getElementById('editor-answer-mcq').value = answerLetter || 'A';
+  }
+  
+  // Keep your Fix 2 and Smart Auto-Expander logic exactly as it was...
+  modal.dataset.editMode = 'edit';
+  modal.dataset.questionIndex = index;
+  // ... rest of your code
       modal.dataset.originalIndex = q.originalIndex;
       modal.dataset.tempId = '';
       
