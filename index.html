@@ -8139,15 +8139,20 @@ function validateUserAccount(user) {
       if (backButtonListenerAdded) return;
       backButtonListenerAdded = true;
 
-      // 1. Trap the hardware back button
+      // 1. Fix: Double trap the hardware back button for better mobile browser support
       window.history.pushState({ isAppTrap: true }, "");
+      window.history.pushState({ isAppTrap: true }, "");
+      
       window.addEventListener('popstate', function(event) {
         if (allowAppExit) return;
-        window.history.pushState({ isAppTrap: true }, ""); // Immediately re-trap
-        handleAppBackNavigation(); // Route to central logic
+        
+        // Push state again immediately so the NEXT back button press is also trapped
+        window.history.pushState({ isAppTrap: true }, ""); 
+        
+        handleAppBackNavigation(); // This calls your flawless E->D->B->A->Popup logic
       });
 
-      // 2. Trap the Mobile Swipe Gesture seamlessly
+      // 2. Fix: Better Mobile Swipe Gesture (Allows Swiping Left or Right to go back)
       let touchStartX = 0;
       let touchStartY = 0;
       
@@ -8157,14 +8162,19 @@ function validateUserAccount(user) {
       }, {passive: true});
 
       document.addEventListener('touchend', function(e) {
+        // Prevent swipe from triggering when typing in inputs or zooming images
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.classList.contains('question-image')) {
+            return; 
+        }
+
         const touchEndX = e.changedTouches[0].screenX;
         const touchEndY = e.changedTouches[0].screenY;
         const diffX = touchEndX - touchStartX;
         const diffY = Math.abs(touchEndY - touchStartY);
 
-        // Valid swipe from extreme left edge
-        if (diffX > 80 && diffY < 50 && touchStartX < 40) {
-          handleAppBackNavigation(); // Route to central logic without touching history.back()!
+        // If horizontal swipe distance is large (either Left or Right) and vertical movement is small
+        if (Math.abs(diffX) > 70 && diffY < 50) {
+          handleAppBackNavigation(); // Safely triggers your back navigation order
         }
       }, {passive: true});
     }
@@ -8848,7 +8858,8 @@ function validateUserAccount(user) {
             }
           }
 
-          const isSubjective = !option1 && !option2 && !option3 && !option4 && question && answer;
+          // Modified: Allows subjective questions to work even if they only have an image
+const isSubjective = (!option1 && !option2 && !option3 && !option4) && (question || imageUrl);
 
           const options = [];
           const optionImages = [];
