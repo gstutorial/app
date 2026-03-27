@@ -5967,6 +5967,7 @@ function openQuestionEditor(index) {
   modal.dataset.editMode = 'edit';
   modal.dataset.questionIndex = index;
   // ... rest of your code
+
       modal.dataset.originalIndex = q.originalIndex;
       modal.dataset.tempId = '';
       
@@ -8139,42 +8140,48 @@ function validateUserAccount(user) {
     }
 
     function setupMobileBackButton() {
-  if (backButtonListenerAdded) return;
-  backButtonListenerAdded = true;
+      if (backButtonListenerAdded) return;
+      backButtonListenerAdded = true;
 
-  // 1. Trap the hardware back button by pushing states
-  window.history.pushState({ isAppTrap: true }, "");
-  window.addEventListener('popstate', function(event) {
-    if (allowAppExit) return;
-    // Immediately re-trap to prevent browser from leaving
-    window.history.pushState({ isAppTrap: true }, "");
-    // Route to the central navigation logic
-    handleAppBackNavigation(); 
-  });
+      // 1. Fix: Double trap the hardware back button for better mobile browser support
+      window.history.pushState({ isAppTrap: true }, "");
+      window.history.pushState({ isAppTrap: true }, "");
+      
+      window.addEventListener('popstate', function(event) {
+        if (allowAppExit) return;
+        
+        // Push state again immediately so the NEXT back button press is also trapped
+        window.history.pushState({ isAppTrap: true }, ""); 
+        
+        handleAppBackNavigation(); // This calls your flawless E->D->B->A->Popup logic
+      });
 
-  // 2. Mobile Swipe Gesture Logic
-  let touchStartX = 0;
-  let touchStartY = 0;
+      // 2. Fix: Better Mobile Swipe Gesture (Allows Swiping Left or Right to go back)
+      let touchStartX = 0;
+      let touchStartY = 0;
+      
+      document.addEventListener('touchstart', function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+      }, {passive: true});
 
-  document.addEventListener('touchstart', function(e) {
-    touchStartX = e.changedTouches[0].screenX;
-    touchStartY = e.changedTouches[0].screenY;
-  }, {passive: true});
+      document.addEventListener('touchend', function(e) {
+        // Prevent swipe from triggering when typing in inputs or zooming images
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.classList.contains('question-image')) {
+            return; 
+        }
 
-  document.addEventListener('touchend', function(e) {
-    const touchEndX = e.changedTouches[0].screenX;
-    const touchEndY = e.changedTouches[0].screenY;
-    
-    const diffX = touchEndX - touchStartX;
-    const diffY = Math.abs(touchEndY - touchStartY);
+        const touchEndX = e.changedTouches[0].screenX;
+        const touchEndY = e.changedTouches[0].screenY;
+        const diffX = touchEndX - touchStartX;
+        const diffY = Math.abs(touchEndY - touchStartY);
 
-    // FIX: works for swipes anywhere in the left 120px (not just the thin 40px edge)
-    // This makes it feel "Native" and responsive like iOS/Android system swipes
-    if (diffX > 70 && diffY < 50 && touchStartX < 120) {
-      handleAppBackNavigation(); 
+        // If horizontal swipe distance is large (either Left or Right) and vertical movement is small
+        if (Math.abs(diffX) > 70 && diffY < 50) {
+          handleAppBackNavigation(); // Safely triggers your back navigation order
+        }
+      }, {passive: true});
     }
-  }, {passive: true});
-}
     // ========== QUIZ FUNCTIONS ==========
     function resetQuizState() {
       questions = [];
