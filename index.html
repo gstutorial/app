@@ -8848,8 +8848,15 @@ function validateUserAccount(user) {
           const option4 = row.c[4]?.v?.toString().trim() || '';
           const answer = row.c[5]?.v?.toString().trim() || '';
           const explanation = row.c[6]?.v?.toString().trim() || '';
-          const imageUrl = (row.c[8]?.v?.toString().trim() || ''); 
           
+         const imageUrl = (row.c[8]?.v?.toString().trim() || '');
+          
+          // 1. Get the option images first so we can check them
+          const optImg1 = row.c[9]?.v?.toString().trim() || '';
+          const optImg2 = row.c[10]?.v?.toString().trim() || '';
+          const optImg3 = row.c[11]?.v?.toString().trim() || '';
+          const optImg4 = row.c[12]?.v?.toString().trim() || '';
+
           let marks = 1;
           if (row.c[7]?.v) {
             const marksValue = row.c[7].v.toString().trim();
@@ -8858,23 +8865,19 @@ function validateUserAccount(user) {
             }
           }
 
-          // Modified: Allows subjective questions to work even if they only have an image
-const isSubjective = (!option1 && !option2 && !option3 && !option4) && (question || imageUrl);
+          // 2. Logic: It's only subjective if ALL text options AND ALL image options are empty
+          const hasNoTextOptions = !option1 && !option2 && !option3 && !option4;
+          const hasNoImageOptions = !optImg1 && !optImg2 && !optImg3 && !optImg4;
+          
+          const isSubjective = hasNoTextOptions && hasNoImageOptions && (question || imageUrl);
 
           const options = [];
           const optionImages = [];
-          
-          if (!isSubjective) {
-            // Unconditionally push all 4 options to maintain the correct index A, B, C, D
-            options.push(option1, option2, option3, option4);
 
-            // Unconditionally push all 4 image slots
-            optionImages.push(
-              row.c[9]?.v?.toString().trim() || '',
-              row.c[10]?.v?.toString().trim() || '',
-              row.c[11]?.v?.toString().trim() || '',
-              row.c[12]?.v?.toString().trim() || ''
-            );
+          if (!isSubjective) {
+            // This ensures MCQs (with text or images) load correctly
+            options.push(option1, option2, option3, option4);
+            optionImages.push(optImg1, optImg2, optImg3, optImg4);
           }
           let correctIndex = 0;
           if (!isSubjective) {
