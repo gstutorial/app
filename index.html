@@ -7539,6 +7539,8 @@ function validateUserAccount(user) {
       accountConfigErrorEl.style.display = "none";
       subscriptionExpiredEl.style.display = "none";
 
+      resetQuizState(); // NEW: Guarantees the quiz container is completely wiped clean before loading
+
       loadChapters();
       isReviewMode = false;
       isIncorrectReviewMode = false;
@@ -7547,7 +7549,6 @@ function validateUserAccount(user) {
       updateAdminControls();
       resetInactivityTimer();
     }
-
         // ========== PYQ / PDF LOGIC ==========
     async function showPyqContainer(subjectName) {
       subjectSelectionEl.style.display = "none";
