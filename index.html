@@ -4631,7 +4631,7 @@ body.light-mode .pdf-name {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwTgZ_M-oCBYGTKpxOLXKE9em7tESjtCz9kudPW82GpPeTkJVPx-G4E9V3rDs-dmuQuEg/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdYl51781-_kTLkj5_QauF36V5VXbQ-3Ro93tVvR8h5LSp7NPuB7VRdsLnxr58sRxy/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzo50E6h1iWegFMb2qubeW4Z4aHfe-Ul88-koCkbqEJ9Hw0vDqtcYb-lPygkWDTrsyG/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -10644,17 +10644,15 @@ function validateUserAccount(user) {
 
                 window[callbackName] = function(response) {
                     if (!isDone) {
-                        isDone = true;
-                        clearTimeout(timeoutTimer);
-                        script.remove();
-                        delete window[callbackName];
+                        isDone = true; clearTimeout(timeoutTimer); script.remove(); delete window[callbackName];
                         
-                        // THE SILENT ASSASSIN: If Google explicitly says false, KILL SESSION
-                        if (response && response.success === false) {
-                            console.error("Background Security: Fake/Revoked token detected! Kicking out.");
+                        // FIX: Only kick them if the script ran perfectly (success: true) AND explicitly rejected the token (valid: false)
+                        if (response && response.success === true && response.valid === false) {
+                            console.error("Security Sweep: Fake token detected! Terminating session.");
                             clearInterval(backgroundSecurityInterval);
                             logout(); 
                         }
+                        // If response.success === false, it means Google Sheets just had a temporary glitch. Do nothing!
                     }
                 };
 
@@ -10712,15 +10710,17 @@ function validateUserAccount(user) {
 
                   window[callbackName] = function(response) {
                       if (!isDone) {
-                          isDone = true;
-                          clearTimeout(timeoutTimer);
-                          script.remove();
-                          delete window[callbackName];
+                          isDone = true; clearTimeout(timeoutTimer); script.remove(); delete window[callbackName];
                           
                           if (response && response.success === true) {
-                              resolve({ networkFailed: false, explicitlyFake: false }); // Valid Token
+                              if (response.valid === true) {
+                                  resolve({ networkFailed: false, explicitlyFake: false }); // Perfect Token
+                              } else {
+                                  resolve({ networkFailed: false, explicitlyFake: true });  // Hacker Fake Token
+                              }
                           } else {
-                              resolve({ networkFailed: false, explicitlyFake: true });  // Fake Token
+                              // FIX: Google Sheets crashed or timed out. Treat it as a network drop to allow Offline Tolerance!
+                              resolve({ networkFailed: true, explicitlyFake: false }); 
                           }
                       }
                   };
