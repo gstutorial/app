@@ -7517,6 +7517,8 @@ function validateUserAccount(user) {
       accountConfigErrorEl.style.display = "none";
       subscriptionExpiredEl.style.display = "none";
 
+      resetQuizState(); // NEW: Cleans up any running quiz/reattempt when you back out
+      
       loadSubjects();
       isReviewMode = false;
       isIncorrectReviewMode = false;
@@ -8154,21 +8156,27 @@ function validateUserAccount(user) {
       if (backButtonListenerAdded) return;
       backButtonListenerAdded = true;
 
-      // 1. Fix: Double trap the hardware back button for better mobile browser support
-      window.history.pushState({ isAppTrap: true }, "");
-      window.history.pushState({ isAppTrap: true }, "");
-      
+      // 1. FIX: Bulletproof Hash-Based Back Button Trap
+      // By using a URL hash (#app), mobile browsers treat edge-swipes as legitimate navigation 
+      // and will not throttle or ignore the back button trap.
+      const basePath = window.location.pathname + window.location.search;
+      window.history.pushState(null, null, basePath);
+      window.history.pushState(null, null, basePath + '#app');
+
       window.addEventListener('popstate', function(event) {
         if (allowAppExit) return;
         
-        // Push state again immediately so the NEXT back button press is also trapped
-        window.history.pushState({ isAppTrap: true }, ""); 
-        
-        handleAppBackNavigation(); // This calls your flawless E->D->B->A->Popup logic
+        // If the hash is gone, the user performed a native edge-swipe back
+        if (window.location.hash !== '#app') {
+          // Push the #app state again immediately to trap the NEXT swipe
+          window.history.pushState(null, null, basePath + '#app');
+          handleAppBackNavigation(); 
+        }
       });
 
       // 2. Fix: Better Mobile Swipe Gesture (Allows Swiping Left or Right to go back)
       let touchStartX = 0;
+      // ... KEEP THE REST OF THE TOUCH EVENT LISTENERS EXACTLY AS THEY ARE ...
       let touchStartY = 0;
       
       document.addEventListener('touchstart', function(e) {
