@@ -5304,81 +5304,73 @@ body.light-mode .pdf-name {
       }
     }
 
-    // ========== AUTHENTICATION FUNCTION (BULLETPROOF) ==========
+    // ========== 1. PERFECT MANUAL LOGIN (HYBRID FETCH + JSONP) ==========
     async function authenticateWithAppsScript(username, password) {
-      const authUrl = `${AUTH_APPS_SCRIPT_URL}?action=authenticate&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&_t=${Date.now()}`;
-      
-      const performAuth = () => {
+      const callbackName = 'authCb_' + Date.now() + Math.floor(Math.random() * 1000);
+      const authUrl = `${AUTH_APPS_SCRIPT_URL}?action=authenticate&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&callback=${callbackName}&_t=${Date.now()}`;
+
+      // ATTEMPT 1: Super-Fetch (Bypasses Android WebView <script> blockers)
+      try {
+        const fetchResponse = await fetch(authUrl);
+        if (fetchResponse.ok) {
+           const textData = await fetchResponse.text();
+           
+           // Google Apps Script returns JSONP text: authCb_123({"success":true...})
+           // We extract just the JSON part to parse it manually
+           const startIndex = textData.indexOf('(') + 1;
+           const endIndex = textData.lastIndexOf(')');
+           
+           if (startIndex > 0 && endIndex > startIndex) {
+               const jsonString = textData.substring(startIndex, endIndex);
+               const data = JSON.parse(jsonString);
+               return data.success ? data : { success: false, error: data.error || 'Invalid credentials' };
+           }
+        }
+      } catch (fetchErr) {
+        console.warn("Fetch blocked by CORS. Falling back to classic JSONP...");
+      }
+
+      // ATTEMPT 2: Classic JSONP Fallback (Injected into body, not head)
+      const performAuthJSONP = () => {
         return new Promise((resolve) => {
-          const callbackName = 'authCb_' + Date.now() + Math.floor(Math.random() * 1000);
           const script = document.createElement('script');
           let isDone = false;
-          
+
           const timeoutTimer = setTimeout(() => {
-            if (!isDone) {
-              isDone = true;
-              script.remove();
-              delete window[callbackName];
-              resolve({ networkFailed: true, error: 'timeout' });
-            }
-          }, 15000); // 15-second patience window
-          
+            if (!isDone) { isDone = true; script.remove(); delete window[callbackName]; resolve({ networkFailed: true, error: 'timeout' }); }
+          }, 15000);
+
           window[callbackName] = function(data) {
-            if (!isDone) {
-              isDone = true;
-              clearTimeout(timeoutTimer);
-              script.remove();
-              delete window[callbackName];
-              resolve({ networkFailed: false, data: data });
-            }
+            if (!isDone) { isDone = true; clearTimeout(timeoutTimer); script.remove(); delete window[callbackName]; resolve({ networkFailed: false, data: data }); }
           };
-          
+
           script.onerror = function() {
-            if (!isDone) {
-              isDone = true;
-              clearTimeout(timeoutTimer);
-              script.remove();
-              delete window[callbackName];
-              // Catches instant ad-blocker or mobile network drops
-              resolve({ networkFailed: true, error: 'network_error' });
-            }
+            if (!isDone) { isDone = true; clearTimeout(timeoutTimer); script.remove(); delete window[callbackName]; resolve({ networkFailed: true, error: 'script_blocked' }); }
           };
-          
-          script.src = `${authUrl}&callback=${callbackName}`;
-          // Use head instead of body to prevent mobile CSP DOM injection errors
-          document.head.appendChild(script); 
+
+          script.src = authUrl;
+          document.body.appendChild(script); // Body is much safer for Android wrappers
         });
       };
 
       try {
-        let result = await performAuth();
-        
-        // RETRY LOGIC: If connection drops prematurely, automatically try ONE more time.
+        let result = await performAuthJSONP();
+
+        // 3. Retry Logic if Network Fails
         if (result.networkFailed) {
-            console.warn(`Auth hit a snag (${result.error}). Retrying in 2 seconds...`);
+            console.warn(`JSONP snag (${result.error}). Retrying in 2 seconds...`);
             await new Promise(r => setTimeout(r, 2000));
-            result = await performAuth();
+            result = await performAuthJSONP();
         }
 
         if (!result.networkFailed) {
-            if (result.data && result.data.success) {
-                return result.data; // Server confirmed good login
-            } else {
-                return { success: false, error: result.data?.error || 'Invalid username or password' };
-            }
+            if (result.data && result.data.success) { return result.data; }
+            else { return { success: false, error: result.data?.error || 'Invalid username or password' }; }
         } else {
-            return { success: false, error: 'Server unreachable. Please check your internet connection or turn off your ad-blocker.' };
+            return { success: false, error: 'Server unreachable. Ensure internet is active and your Google Apps Script is published as "Anyone".' };
         }
-
-      } catch (error) {
-        console.error('Authentication exception:', error);
-        return {
-          success: false,
-          error: 'An unexpected internal error occurred. Please refresh the page and try again.'
-        };
-      }
+      } catch (error) { return { success: false, error: 'Unexpected error occurred.' }; }
     }
-
     // ========== HELPER FUNCTIONS ==========
     function formatDisplayDate(val) {
       if (!val) return "Not available";
