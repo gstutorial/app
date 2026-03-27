@@ -5304,58 +5304,77 @@ body.light-mode .pdf-name {
       }
     }
 
-    // ========== AUTHENTICATION FUNCTION ==========
+    // ========== AUTHENTICATION FUNCTION (BULLETPROOF) ==========
     async function authenticateWithAppsScript(username, password) {
-      try {
-        return new Promise((resolve, reject) => {
-          const callbackName = 'authCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-          
+      const authUrl = `${AUTH_APPS_SCRIPT_URL}?action=authenticate&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&_t=${Date.now()}`;
+      
+      const performAuth = () => {
+        return new Promise((resolve) => {
+          const callbackName = 'authCb_' + Date.now() + Math.floor(Math.random() * 1000);
           const script = document.createElement('script');
+          let isDone = false;
+          
+          const timeoutTimer = setTimeout(() => {
+            if (!isDone) {
+              isDone = true;
+              script.remove();
+              delete window[callbackName];
+              resolve({ networkFailed: true, error: 'timeout' });
+            }
+          }, 15000); // 15-second patience window
           
           window[callbackName] = function(data) {
-            delete window[callbackName];
-            document.body.removeChild(script);
-            
-            if (data && data.success) {
-              resolve(data);
-            } else {
-              resolve({ 
-                success: false, 
-                error: data?.error || 'Invalid username or password' 
-              });
+            if (!isDone) {
+              isDone = true;
+              clearTimeout(timeoutTimer);
+              script.remove();
+              delete window[callbackName];
+              resolve({ networkFailed: false, data: data });
             }
           };
           
           script.onerror = function() {
-            delete window[callbackName];
-            document.body.removeChild(script);
-            resolve({ 
-              success: false, 
-              error: 'Network error. Please check your connection.' 
-            });
+            if (!isDone) {
+              isDone = true;
+              clearTimeout(timeoutTimer);
+              script.remove();
+              delete window[callbackName];
+              // Catches instant ad-blocker or mobile network drops
+              resolve({ networkFailed: true, error: 'network_error' });
+            }
           };
           
-          const url = `${AUTH_APPS_SCRIPT_URL}?action=authenticate&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&_t=${Date.now()}&callback=${callbackName}`;
-          script.src = url;
-          document.body.appendChild(script);
-          
-          setTimeout(() => {
-            if (window[callbackName]) {
-              delete window[callbackName];
-              document.body.removeChild(script);
-              resolve({ 
-                success: false, 
-                error: 'Request timeout. Please try again.' 
-              });
-            }
-          }, 10000);
+          script.src = `${authUrl}&callback=${callbackName}`;
+          // Use head instead of body to prevent mobile CSP DOM injection errors
+          document.head.appendChild(script); 
         });
+      };
+
+      try {
+        let result = await performAuth();
+        
+        // RETRY LOGIC: If connection drops prematurely, automatically try ONE more time.
+        if (result.networkFailed) {
+            console.warn(`Auth hit a snag (${result.error}). Retrying in 2 seconds...`);
+            await new Promise(r => setTimeout(r, 2000));
+            result = await performAuth();
+        }
+
+        if (!result.networkFailed) {
+            if (result.data && result.data.success) {
+                return result.data; // Server confirmed good login
+            } else {
+                return { success: false, error: result.data?.error || 'Invalid username or password' };
+            }
+        } else {
+            return { success: false, error: 'Server unreachable. Please check your internet connection or turn off your ad-blocker.' };
+        }
 
       } catch (error) {
-        console.error('Authentication error:', error);
+        console.error('Authentication exception:', error);
         return {
           success: false,
-          error: 'Cannot connect to authentication server. Please try again later.'
+          error: 'An unexpected internal error occurred. Please refresh the page and try again.'
         };
       }
     }
@@ -10598,9 +10617,74 @@ function validateUserAccount(user) {
     
     setTheme(localStorage.getItem('theme') || 'dark');
 
-    
-  // ========== INITIALIZATION (SECURE VERSION) ==========
-   async function initializeApp() {
+    // ========== BACKGROUND SECURITY MONITOR ==========
+    let backgroundSecurityInterval = null;
+
+    function startBackgroundSecuritySweep() {
+        if (backgroundSecurityInterval) clearInterval(backgroundSecurityInterval);
+
+        // Run the sweep every 60 seconds (60000 ms)
+        backgroundSecurityInterval = setInterval(() => {
+            const savedSession = localStorage.getItem('gs_tutorial_session');
+            if (!savedSession) {
+                clearInterval(backgroundSecurityInterval);
+                return;
+            }
+
+            try {
+                const sessionData = JSON.parse(savedSession);
+                const user = sessionData.user;
+                if (!user || !user.username || !user.token) return;
+
+                const verifyUrl = `${MASTER_CONFIG_APPS_SCRIPT_URL}?action=verifyToken&username=${encodeURIComponent(user.username)}&token=${encodeURIComponent(user.token)}&_t=${Date.now()}`;
+                
+                const callbackName = 'bgVerifyCb_' + Date.now() + Math.floor(Math.random() * 1000);
+                const script = document.createElement('script');
+                let isDone = false;
+
+                const timeoutTimer = setTimeout(() => {
+                    if (!isDone) {
+                        isDone = true;
+                        script.remove();
+                        delete window[callbackName];
+                    }
+                }, 10000);
+
+                window[callbackName] = function(response) {
+                    if (!isDone) {
+                        isDone = true;
+                        clearTimeout(timeoutTimer);
+                        script.remove();
+                        delete window[callbackName];
+                        
+                        // THE SILENT ASSASSIN: If Google explicitly says false, KILL SESSION
+                        if (response && response.success === false) {
+                            console.error("Background Security: Fake/Revoked token detected! Kicking out.");
+                            clearInterval(backgroundSecurityInterval);
+                            logout(); 
+                        }
+                    }
+                };
+
+                script.onerror = function() {
+                    if (!isDone) {
+                        isDone = true;
+                        clearTimeout(timeoutTimer);
+                        script.remove();
+                        delete window[callbackName];
+                    }
+                };
+
+                script.src = `${verifyUrl}&callback=${callbackName}`;
+                document.head.appendChild(script);
+
+            } catch (e) {
+                console.error("Background Monitor Error:", e);
+            }
+        }, 60000);
+    }
+ // ========== INITIALIZATION (SECURE & OFFLINE TOLERANT) ==========
+    async function initializeApp() {
       // Activate the back button router
       setupMobileBackButton();
 
@@ -10616,43 +10700,80 @@ function validateUserAccount(user) {
           const sessionData = JSON.parse(savedSession);
           const user = sessionData.user;
 
-          // 2. THE SECURITY HANDSHAKE
-          // Ask the server to verify the token before letting the user in
+          // 2. ROBUST SECURITY HANDSHAKE (With Retries & Offline Tolerance)
+          const verifyUrl = `${MASTER_CONFIG_APPS_SCRIPT_URL}?action=verifyToken&username=${encodeURIComponent(user.username)}&token=${encodeURIComponent(user.token)}&_t=${Date.now()}`;
           
-          const verifyUrl = `${MASTER_CONFIG_APPS_SCRIPT_URL}?action=verifyToken&username=${encodeURIComponent(user.username)}&token=${encodeURIComponent(user.token)}&callback=handleTokenVerification`;
-          const isTokenValid = await new Promise((resolve) => {
-            window.handleTokenVerification = function(response) {
-              // Only let them in if Google explicitly says TRUE
-              resolve(response && response.success === true);
-            };
+          const performVerification = () => {
+              return new Promise((resolve) => {
+                  const callbackName = 'initVerifyCb_' + Date.now() + Math.floor(Math.random() * 1000);
+                  const script = document.createElement('script');
+                  let isDone = false;
 
-            const script = document.createElement('script');
-            script.src = verifyUrl;
-            
-            // STRICT SECURITY: If Google doesn't answer in 15 seconds, lock them out.
-            setTimeout(() => {
-              console.error("Server timeout. Enforcing security lockout.");
-              resolve(false); 
-            }, 15000); 
+                  const timeoutTimer = setTimeout(() => {
+                      if (!isDone) {
+                          isDone = true;
+                          script.remove();
+                          delete window[callbackName];
+                          resolve({ networkFailed: true, explicitlyFake: false });
+                      }
+                  }, 10000);
 
-            // STRICT SECURITY: If their internet drops completely, lock them out.
-            script.onerror = () => {
-              console.error("Network error. Enforcing security lockout.");
-              resolve(false);
-            };
-            
-            document.head.appendChild(script);
-          });
+                  window[callbackName] = function(response) {
+                      if (!isDone) {
+                          isDone = true;
+                          clearTimeout(timeoutTimer);
+                          script.remove();
+                          delete window[callbackName];
+                          
+                          if (response && response.success === true) {
+                              resolve({ networkFailed: false, explicitlyFake: false }); // Valid Token
+                          } else {
+                              resolve({ networkFailed: false, explicitlyFake: true });  // Fake Token
+                          }
+                      }
+                  };
 
-          if (isTokenValid) {
-            // Token is real! Log the user in normally
-            currentUser = user;
-            login(currentUser, true);
-          } else {
-            // TOKEN IS FAKE OR EXPIRED - CLEAR EVERYTHING
-            console.error("Security Alert: Invalid session detected. Clearing storage.");
-            logout(); // This clears the fake localStorage data
+                  script.onerror = function() {
+                      if (!isDone) {
+                          isDone = true;
+                          clearTimeout(timeoutTimer);
+                          script.remove();
+                          delete window[callbackName];
+                          resolve({ networkFailed: true, explicitlyFake: false }); // Network Drop
+                      }
+                  };
+
+                  script.src = `${verifyUrl}&callback=${callbackName}`;
+                  document.head.appendChild(script);
+              });
+          };
+
+          let verifyResult = await performVerification();
+
+          // RETRY LOGIC: If network dropped prematurely, try ONE more time.
+          if (verifyResult.networkFailed) {
+              console.warn("Verification dropped. Retrying in 2 seconds...");
+              await new Promise(r => setTimeout(r, 2000));
+              verifyResult = await performVerification();
           }
+
+          // 3. ENFORCE SECURITY
+          if (verifyResult.explicitlyFake) {
+              // Google confirmed the token is invalid.
+              console.error("Security Alert: Invalid session detected. Clearing storage.");
+              logout(); 
+          } else {
+              // Either token is valid, or the network is dead (Offline Tolerance)
+              if (verifyResult.networkFailed) {
+                  console.warn("Server unreachable. Enabling Offline Tolerance.");
+              }
+              currentUser = user;
+              login(currentUser, true);
+              
+              // TRIGGER THE BACKGROUND ASSASSIN
+              startBackgroundSecuritySweep();
+          }
+
         } catch (e) {
           console.error("Session Corrupted:", e);
           logout();
@@ -10672,7 +10793,6 @@ function validateUserAccount(user) {
       resetFailedAttempts();
     }
 
-        
     // Start the app and load configs
     window.addEventListener('DOMContentLoaded', initializeApp);
   </script>
