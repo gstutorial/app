@@ -4919,6 +4919,18 @@ if (isAdmin() || isEditor()) {
       if (bottomBackToFoldersBtn) {
           bottomBackToFoldersBtn.style.display = window.currentVideoCategory ? 'flex' : 'none';
       }
+      // --- NEW: Auto-select the current category in the Admin Add Video form ---
+      const uploadSelect = document.getElementById('new-video-category-select');
+      if (uploadSelect) {
+          if (window.currentVideoCategory) {
+              uploadSelect.value = window.currentVideoCategory;
+          } else {
+              uploadSelect.value = ""; // Reset to Main Folder
+          }
+          // Make sure the "Create New Category" text box stays hidden
+          document.getElementById('new-video-category-new').style.display = 'none';
+      }
+      // --- END NEW CODE ---
       
       if (!window.currentVideoArray || window.currentVideoArray.length === 0) {
           container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 20px;">No videos available yet.</div>';
