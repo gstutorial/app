@@ -4170,53 +4170,7 @@ body.light-mode .pdf-name {
         <div class="screen-subtitle" id="pyq-subtitle">Download PDF files</div>
       </div>
 
-      <div class="quiz-container" id="video-container" style="display: none;">
-      <div class="screen-header">
-        <div class="screen-title" id="video-title">Video Lectures</div>
-        <div class="screen-subtitle" id="video-subtitle">Watch and Learn</div>
-      </div>
 
-      <div id="admin-video-upload" class="admin-add-question" style="display: none; text-align: left; padding: 12px;">
-        <div id="admin-video-upload-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
-          <h4 style="margin:0; color:#ef4444; display: flex; align-items: center; gap: 8px;">
-            <span id="admin-video-toggle-icon" style="transition: transform 0.3s ease; display: inline-block;">▼</span> 
-            Admin Panel (Add Video)
-          </h4>
-        </div>
-
-        <div id="admin-video-upload-content" style="display: none; margin-top: 15px; border-top: 1px solid rgba(75, 85, 99, 0.4); padding-top: 15px;">
-          
-          <div class="form-group" style="margin-bottom: 10px;">
-            <input type="text" id="new-video-name" class="form-input" placeholder="Enter Video Title">
-          </div>
-
-          <div class="form-group" style="margin-bottom: 10px;">
-            <input type="text" id="new-video-url" class="form-input" placeholder="Paste YouTube Link (e.g., https://youtu.be/...)">
-          </div>
-
-          <div class="form-group" style="margin-bottom: 10px;">
-            <select id="new-video-category-select" class="form-input" onchange="document.getElementById('new-video-category-new').style.display = this.value === 'NEW' ? 'block' : 'none'">
-              <option value="">-- No Category (Main Folder) --</option>
-              <option value="NEW" style="font-weight:bold; color:#ef4444;">➕ Create New Category...</option>
-            </select>
-            <input type="text" id="new-video-category-new" class="form-input" style="display:none; margin-top:10px;" placeholder="Type new category name...">
-          </div>
-          
-          <button id="submit-video-btn" class="btn-success" style="margin-top: 10px; background: linear-gradient(to right, #ef4444, #dc2626);">Add Video</button>
-        </div>
-      </div>
-
-      <div id="video-list-container" style="margin-top: 20px;"></div>
-
-      <div style="display: flex; margin-top: 20px; gap: 8px; width: 100%;">
-        <button class="back-btn" onclick="navigateToSubjects()" style="margin-top: 0; flex: 1; justify-content: center; min-width: 0; padding: 8px 4px;">
-          ← Back to Subjects
-        </button>
-        <button class="back-btn" id="back-to-video-folders-btn" style="display: none; margin-top: 0; flex: 1; justify-content: center; min-width: 0; padding: 8px 4px;" onclick="window.currentVideoCategory = null; window.renderVideoView();">
-          ← Back to Folders
-        </button>
-      </div>
-    </div>
       <!-- Admin Upload & Sort Section -->
     <div id="admin-pdf-upload" class="admin-add-question" style="display: none; text-align: left; padding: 12px;">
         
@@ -4283,6 +4237,55 @@ body.light-mode .pdf-name {
         </button>
       </div>
     </div>
+
+      <div class="quiz-container" id="video-container" style="display: none;">
+      <div class="screen-header">
+        <div class="screen-title" id="video-title">Video Lectures</div>
+        <div class="screen-subtitle" id="video-subtitle">Watch and Learn</div>
+      </div>
+
+      <div id="admin-video-upload" class="admin-add-question" style="display: none; text-align: left; padding: 12px;">
+        <div id="admin-video-upload-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+          <h4 style="margin:0; color:#ef4444; display: flex; align-items: center; gap: 8px;">
+            <span id="admin-video-toggle-icon" style="transition: transform 0.3s ease; display: inline-block;">▼</span> 
+            Admin Panel (Add Video)
+          </h4>
+        </div>
+
+        <div id="admin-video-upload-content" style="display: none; margin-top: 15px; border-top: 1px solid rgba(75, 85, 99, 0.4); padding-top: 15px;">
+          
+          <div class="form-group" style="margin-bottom: 10px;">
+            <input type="text" id="new-video-name" class="form-input" placeholder="Enter Video Title">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 10px;">
+            <input type="text" id="new-video-url" class="form-input" placeholder="Paste YouTube Link (e.g., https://youtu.be/...)">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 10px;">
+            <select id="new-video-category-select" class="form-input" onchange="document.getElementById('new-video-category-new').style.display = this.value === 'NEW' ? 'block' : 'none'">
+              <option value="">-- No Category (Main Folder) --</option>
+              <option value="NEW" style="font-weight:bold; color:#ef4444;">➕ Create New Category...</option>
+            </select>
+            <input type="text" id="new-video-category-new" class="form-input" style="display:none; margin-top:10px;" placeholder="Type new category name...">
+          </div>
+          
+          <button id="submit-video-btn" class="btn-success" style="margin-top: 10px; background: linear-gradient(to right, #ef4444, #dc2626);">Add Video</button>
+        </div>
+      </div>
+
+      <div id="video-list-container" style="margin-top: 20px;"></div>
+
+      <div style="display: flex; margin-top: 20px; gap: 8px; width: 100%;">
+        <button class="back-btn" onclick="navigateToSubjects()" style="margin-top: 0; flex: 1; justify-content: center; min-width: 0; padding: 8px 4px;">
+          ← Back to Subjects
+        </button>
+        <button class="back-btn" id="back-to-video-folders-btn" style="display: none; margin-top: 0; flex: 1; justify-content: center; min-width: 0; padding: 8px 4px;" onclick="window.currentVideoCategory = null; window.renderVideoView();">
+          ← Back to Folders
+        </button>
+      </div>
+    </div>
+    
     <!-- Quiz Container -->
     <div class="quiz-container" id="quiz-container">
       <!-- Path Display - Fixed navigation -->
@@ -11331,12 +11334,7 @@ if (isScreenVisible('video-container')) {
       <img id="cropper-image" style="display: block; max-width: 100%;">
     </div>
 
-<div id="video-player-modal">
-    <div class="video-wrapper">
-      <button class="close-video-btn" onclick="closeVideoPlayer()">&times;</button>
-      <iframe id="youtube-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-    </div>
-  </div>
+
    
     <div style="display: flex; gap: 15px; height: 80px; flex-shrink: 0; align-items: center; justify-content: center; width: 100%; background: #0f172a; border-top: 1px solid #334155;">
       <button id="cancel-crop-btn" style="padding: 12px 24px; border-radius: 8px; border: none; background: #ef4444; color: white; font-weight: bold; font-size: 1rem; cursor: pointer;">Cancel</button>
@@ -11402,6 +11400,19 @@ if (isScreenVisible('video-container')) {
   <div id="toast-notification" style="display:none; position:fixed; bottom:40px; left:50%; transform:translateX(-50%); background:#1e293b; color:#e5e7eb; padding:16px 32px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.6); z-index:999999; font-weight:600; text-align:center; transition: opacity 0.3s ease; font-size: 1.05rem; border-left: 6px solid #3b82f6; border-right: 1px solid #334155; border-top: 1px solid #334155; border-bottom: 1px solid #334155; min-width: 300px;">
     <span id="toast-message">Message</span>
   </div>
+    </div>
+
+  <div id="video-player-modal">
+    <div class="video-wrapper">
+      <button class="close-video-btn" onclick="closeVideoPlayer()">&times;</button>
+      <iframe id="youtube-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    </div>
+  </div>
+  <div id="force-logout-popup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:99999; justify-content:center; align-items:center;">
+    </div>
+
+  <script>
+    // Your JavaScript starts here
   <!-- NO SERVICE WORKER REGISTRATION - Completely disabled -->
 </body>
 </html>
