@@ -4552,19 +4552,24 @@ body.light-mode .video-card {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  background: #000;
+  background: transparent; /* Removed the black background */
+  overflow: hidden; /* CRITICAL: This crops anything outside the box */
+  border-bottom: 1px solid rgba(75, 85, 99, 0.3); /* Adds a clean line above the text */
 }
 
 .video-thumbnail {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block; /* Removes default inline spacing */
+  transform: scale(1.18); /* Zooms in 18% to perfectly push YouTube's black bars off-screen */
   opacity: 0.9;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.3s ease;
 }
 
 .video-card:hover .video-thumbnail {
   opacity: 1;
+  transform: scale(1.23); /* Adds a premium feeling zoom-in effect when the user taps/hovers */
 }
 
 .play-icon-overlay {
