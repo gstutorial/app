@@ -4591,19 +4591,26 @@ body.light-mode .video-card {
 }
 
 .video-info {
-  padding: 12px;
-  flex: 1;
+  padding: 10px 12px;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center; /* Perfect vertical alignment */
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.95); /* Matches the dark theme */
 }
 
 .video-title {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  color: #e5e7eb;
-  line-height: 1.4;
-  margin-right: 10px;
+  color: #f8fafc;
+  line-height: 1.3;
+  margin: 0;
+  flex: 1; /* Pushes buttons exactly to the right */
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Truncates long titles to 2 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 body.light-mode .video-title {
@@ -4823,6 +4830,31 @@ body.light-mode .video-title {
         document.getElementById('video-player-modal').style.display = 'none';
         document.getElementById('youtube-iframe').src = ""; // Stops playback
     }
+    // Listen for YouTube native fullscreen clicks
+    document.addEventListener('fullscreenchange', handleVideoFullscreen);
+    document.addEventListener('webkitfullscreenchange', handleVideoFullscreen); // Safari/iOS support
+
+    function handleVideoFullscreen() {
+        const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+        
+        if (isFullscreen) {
+            // The user clicked the expand button inside the video!
+            // Force the phone to rotate to landscape
+            try {
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('landscape').catch(err => console.log("Rotation locked by device"));
+                }
+            } catch (e) { console.log(e); }
+        } else {
+            // The user minimized the video! 
+            // Unlock the screen so it can go back to portrait
+            try {
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
+                }
+            } catch (e) { console.log(e); }
+        }
+    }
 
     // ========== SHOW VIDEO UI ==========
     async function showVideoContainer(subjectName) {
@@ -5023,11 +5055,11 @@ if (isAdmin() || isEditor()) {
         const safeCategory = (video.category || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
         actionButtons = `
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            <button title="Edit Video" onclick="event.stopPropagation(); window.openEditVideoModal(${sheetRowIndex}, '${safeName}', '${safeCategory}')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); border-radius:8px; cursor:pointer; padding:6px; transition:0.2s;">
+          <div style="display:flex; flex-direction:row; gap:8px; align-items:center; flex-shrink:0;">
+            <button title="Edit Video" onclick="event.stopPropagation(); window.openEditVideoModal(${sheetRowIndex}, '${safeName}', '${safeCategory}')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); border-radius:6px; cursor:pointer; padding:6px 8px; transition:0.2s; display:flex; align-items:center; justify-content:center;">
               <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#3b82f6" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
             </button>
-            <button title="Delete Video" onclick="event.stopPropagation(); deleteVideoItem(${sheetRowIndex})" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:8px; cursor:pointer; padding:6px; transition:0.2s;">
+            <button title="Delete Video" onclick="event.stopPropagation(); deleteVideoItem(${sheetRowIndex})" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer; padding:6px 8px; transition:0.2s; display:flex; align-items:center; justify-content:center;">
               <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#ef4444" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
             </button>
           </div>
@@ -5049,9 +5081,13 @@ if (isAdmin() || isEditor()) {
       `;
       
       card.addEventListener('click', function(e) {
-        if(e.target.closest('button')) return; // Ignore if clicked delete
-        document.getElementById('youtube-iframe').src = embedUrl;
-        document.getElementById('video-player-modal').style.display = 'flex';
+        if(e.target.closest('button')) return; // Ignore if clicked edit/delete
+        
+        const iframe = document.getElementById('youtube-iframe');
+        iframe.src = embedUrl;
+        
+        const modal = document.getElementById('video-player-modal');
+        modal.style.display = 'flex';
       });
 
       container.appendChild(card);
