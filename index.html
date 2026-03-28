@@ -4170,6 +4170,53 @@ body.light-mode .pdf-name {
         <div class="screen-subtitle" id="pyq-subtitle">Download PDF files</div>
       </div>
 
+      <div class="quiz-container" id="video-container" style="display: none;">
+      <div class="screen-header">
+        <div class="screen-title" id="video-title">Video Lectures</div>
+        <div class="screen-subtitle" id="video-subtitle">Watch and Learn</div>
+      </div>
+
+      <div id="admin-video-upload" class="admin-add-question" style="display: none; text-align: left; padding: 12px;">
+        <div id="admin-video-upload-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+          <h4 style="margin:0; color:#ef4444; display: flex; align-items: center; gap: 8px;">
+            <span id="admin-video-toggle-icon" style="transition: transform 0.3s ease; display: inline-block;">▼</span> 
+            Admin Panel (Add Video)
+          </h4>
+        </div>
+
+        <div id="admin-video-upload-content" style="display: none; margin-top: 15px; border-top: 1px solid rgba(75, 85, 99, 0.4); padding-top: 15px;">
+          
+          <div class="form-group" style="margin-bottom: 10px;">
+            <input type="text" id="new-video-name" class="form-input" placeholder="Enter Video Title">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 10px;">
+            <input type="text" id="new-video-url" class="form-input" placeholder="Paste YouTube Link (e.g., https://youtu.be/...)">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 10px;">
+            <select id="new-video-category-select" class="form-input" onchange="document.getElementById('new-video-category-new').style.display = this.value === 'NEW' ? 'block' : 'none'">
+              <option value="">-- No Category (Main Folder) --</option>
+              <option value="NEW" style="font-weight:bold; color:#ef4444;">➕ Create New Category...</option>
+            </select>
+            <input type="text" id="new-video-category-new" class="form-input" style="display:none; margin-top:10px;" placeholder="Type new category name...">
+          </div>
+          
+          <button id="submit-video-btn" class="btn-success" style="margin-top: 10px; background: linear-gradient(to right, #ef4444, #dc2626);">Add Video</button>
+        </div>
+      </div>
+
+      <div id="video-list-container" style="margin-top: 20px;"></div>
+
+      <div style="display: flex; margin-top: 20px; gap: 8px; width: 100%;">
+        <button class="back-btn" onclick="navigateToSubjects()" style="margin-top: 0; flex: 1; justify-content: center; min-width: 0; padding: 8px 4px;">
+          ← Back to Subjects
+        </button>
+        <button class="back-btn" id="back-to-video-folders-btn" style="display: none; margin-top: 0; flex: 1; justify-content: center; min-width: 0; padding: 8px 4px;" onclick="window.currentVideoCategory = null; window.renderVideoView();">
+          ← Back to Folders
+        </button>
+      </div>
+    </div>
       <!-- Admin Upload & Sort Section -->
     <div id="admin-pdf-upload" class="admin-add-question" style="display: none; text-align: left; padding: 12px;">
         
@@ -4468,6 +4515,142 @@ body.light-mode .pdf-name {
           body.light-mode .icon-upload-btn:hover {
               background: #d1d5db !important;
           }
+/* =====Youtube VIDEO FEATURE STYLES ===== */
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 15px;
+}
+
+.video-card {
+  background: rgba(15, 23, 42, 0.7);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+body.light-mode .video-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.video-card:hover {
+  transform: translateY(-4px);
+  border-color: #ef4444; /* YouTube Red */
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.2);
+}
+
+.video-thumbnail-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.video-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.9;
+  transition: opacity 0.2s;
+}
+
+.video-card:hover .video-thumbnail {
+  opacity: 1;
+}
+
+.play-icon-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  background: rgba(239, 68, 68, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.play-icon-overlay::after {
+  content: '';
+  margin-left: 4px;
+  border-style: solid;
+  border-width: 10px 0 10px 16px;
+  border-color: transparent transparent transparent white;
+}
+
+.video-info {
+  padding: 12px;
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.video-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  line-height: 1.4;
+  margin-right: 10px;
+}
+
+body.light-mode .video-title {
+  color: #1f2937;
+}
+
+/* Video Player Modal */
+#video-player-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 10005;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-wrapper {
+  width: 95%;
+  max-width: 1000px;
+  aspect-ratio: 16 / 9;
+  position: relative;
+}
+
+.video-wrapper iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+}
+
+.close-video-btn {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: transparent;
+  color: white;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.close-video-btn:hover {
+  color: #ef4444;
+}
+
+         
         </style>
 
         <div id="mcq-options-section">
@@ -4625,13 +4808,319 @@ body.light-mode .pdf-name {
   </div>
 
   <script>
+
+// ========== YOUTUBE HELPER ==========
+    function getYouTubeId(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    function closeVideoPlayer() {
+        document.getElementById('video-player-modal').style.display = 'none';
+        document.getElementById('youtube-iframe').src = ""; // Stops playback
+    }
+
+    // ========== SHOW VIDEO UI ==========
+    async function showVideoContainer(subjectName) {
+      subjectSelectionEl.style.display = "none";
+      quizContainerEl.style.display = "none";
+      pyqContainerEl.style.display = "none";
+      document.getElementById("video-container").style.display = "block";
+      
+      document.getElementById("video-title").textContent = subjectName;
+
+      const adminUploadDiv = document.getElementById("admin-video-upload");
+      if (isAdmin() || isEditor()) {
+        adminUploadDiv.style.display = "block";
+        setupVideoUpload();
+      } else {
+        adminUploadDiv.style.display = "none";
+      }
+
+      await loadVideoList();
+    }
+
+    // ========== LOAD VIDEO LIST ==========
+    async function loadVideoList() {
+      const container = document.getElementById("video-list-container");
+      container.innerHTML = `<div class="loading-container"><div class="loading-spinner" style="border-top-color:#ef4444"></div><div class="loading-text">Loading Videos...</div></div>`;
+
+      try {
+        const allData = await loadAllConfigAtOnce();
+        const key = `${currentClass}_${currentSubject.toLowerCase()}`;
+        if (!allData.config[key]) throw new Error("No configuration found for this subject");
+
+        const sheetId = allData.config[key].sheetId;
+        const firstChapterKey = Object.keys(allData.config[key].chapters)[0]; 
+        const gid = allData.config[key].chapters[firstChapterKey];
+
+        const apiUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&headers=0&gid=${gid}&_t=${Date.now()}`;
+        const response = await fetch(apiUrl);
+        const dataText = await response.text();
+        const jsonData = JSON.parse(dataText.substring(47).slice(0, -2));
+        const rows = jsonData.table.rows;
+
+        let videoArray = [];
+        let categoriesList = new Set();
+        
+        for (let i = 1; i < rows.length; i++) { 
+          const row = rows[i];
+          if (!row || !row.c) continue;
+          
+          const vName = row.c[0] ? (row.c[0].v ? row.c[0].v.toString().trim() : '') : '';
+          let vUrl = row.c[1] ? (row.c[1].v ? row.c[1].v.toString().trim() : '') : '';
+          let category = row.c[2] ? (row.c[2].v ? row.c[2].v.toString().trim() : '') : '';
+
+          if (vName && vUrl && getYouTubeId(vUrl)) {
+            videoArray.push({ index: i, name: vName, url: vUrl, category: category });
+            if (category) categoriesList.add(category);
+          }
+        }
+
+        if (isAdmin() || isEditor()) {
+            const uploadSelect = document.getElementById('new-video-category-select');
+            let optionsHTML = `<option value="">-- No Category (Main Folder) --</option>`;
+            Array.from(categoriesList).sort().forEach(c => { optionsHTML += `<option value="${c}">${c}</option>`; });
+            optionsHTML += `<option value="NEW" style="font-weight:bold; color:#ef4444;">➕ Create New Category...</option>`;
+            if (uploadSelect) {
+                let currentVal = uploadSelect.value;
+                uploadSelect.innerHTML = optionsHTML;
+                if(categoriesList.has(currentVal)) uploadSelect.value = currentVal;
+            }
+        }
+
+        window.currentVideoArray = videoArray.reverse(); // Newest first
+        window.currentVideoContext = { sheetId, gid };
+        window.currentVideoCategory = null; 
+        
+        renderVideoView();
+
+      } catch (error) {
+        container.innerHTML = `<div style="color: #ef4444; text-align: center;">Error loading videos: ${error.message}</div>`;
+      }
+    }
+
+    // ========== RENDER VIDEO VIEW ==========
+    window.renderVideoView = function() {
+      const container = document.getElementById("video-list-container");
+      container.innerHTML = "";
+      
+      const bottomBackToFoldersBtn = document.getElementById('back-to-video-folders-btn');
+      if (bottomBackToFoldersBtn) {
+          bottomBackToFoldersBtn.style.display = window.currentVideoCategory ? 'flex' : 'none';
+      }
+      
+      if (!window.currentVideoArray || window.currentVideoArray.length === 0) {
+          container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 20px;">No videos available yet.</div>';
+          return;
+      }
+
+      let sortedVideos = [...window.currentVideoArray];
+
+      if (window.currentVideoCategory) {
+        const header = document.createElement('h3');
+        header.style.cssText = "color: #ef4444; margin-bottom: 15px;";
+        header.innerHTML = `📁 ${window.currentVideoCategory}`;
+        container.appendChild(header);
+
+        const categoryVideos = sortedVideos.filter(p => p.category === window.currentVideoCategory);
+        
+        const grid = document.createElement('div');
+        grid.className = 'video-grid';
+        categoryVideos.forEach(video => renderSingleVideo(video, grid));
+        container.appendChild(grid);
+        
+      } else {
+        const categorized = {};
+        const uncategorized = [];
+        
+        sortedVideos.forEach(v => {
+           if (v.category) {
+               if (!categorized[v.category]) categorized[v.category] = [];
+               categorized[v.category].push(v);
+           } else uncategorized.push(v);
+        });
+        
+        let folderNames = Object.keys(categorized).sort();
+        
+        if (folderNames.length > 0) {
+           const folderGrid = document.createElement('div');
+           folderGrid.style.display = 'grid';
+           folderGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(130px, 1fr))';
+           folderGrid.style.gap = '12px';
+           folderGrid.style.marginBottom = '20px';
+           
+           folderNames.forEach(folderName => {
+               const folderEl = document.createElement('div');
+               folderEl.className = 'pdf-item'; // Reuse PDF folder style
+               folderEl.style.cssText = `
+                 flex-direction: column; align-items: center; justify-content: center; 
+                 padding: 20px 10px; text-align: center; cursor: pointer;
+                 background: rgba(15, 23, 42, 0.7); border-radius: 12px;
+                 border: 1px solid rgba(75, 85, 99, 0.5); transition: all 0.2s;
+               `;
+               folderEl.innerHTML = `
+                  <div style="font-size: 2.5rem; margin-bottom: 8px;">📁</div>
+                  <div class="pdf-name" style="text-align:center;">${folderName}</div>
+                  <div style="font-size: 0.8rem; color: #9ca3af; margin-top: 5px;">${categorized[folderName].length} video(s)</div>
+               `;
+               folderEl.onclick = () => { 
+                  window.currentVideoCategory = folderName; 
+                  window.renderVideoView(); 
+               };
+               folderGrid.appendChild(folderEl);
+           });
+           container.appendChild(folderGrid);
+        }
+        
+        if (uncategorized.length > 0) {
+           if (folderNames.length > 0) {
+               const separator = document.createElement('div');
+               separator.innerHTML = '<h4 style="color:#fca5a5; margin-bottom:12px; border-bottom:1px solid rgba(252,165,165,0.2); padding-bottom:5px;">Other Videos</h4>';
+               container.appendChild(separator);
+           }
+           const grid = document.createElement('div');
+           grid.className = 'video-grid';
+           uncategorized.forEach(video => renderSingleVideo(video, grid));
+           container.appendChild(grid);
+        }
+      }
+    };
+
+    function renderSingleVideo(video, container) {
+      const videoId = getYouTubeId(video.url);
+      if (!videoId) return;
+
+      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+
+      let actionButtons = '';
+      if (isAdmin() || isEditor()) {
+        const sheetRowIndex = video.index + 1; 
+        actionButtons = `
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button title="Delete Video" onclick="event.stopPropagation(); deleteVideoItem(${sheetRowIndex})" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:8px; cursor:pointer; padding:6px; transition:0.2s;">
+              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#ef4444" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            </button>
+          </div>
+        `;
+      }
+
+      const card = document.createElement('div');
+      card.className = 'video-card';
+      
+      card.innerHTML = `
+        <div class="video-thumbnail-wrapper">
+          <img src="${thumbnailUrl}" class="video-thumbnail" alt="Thumbnail">
+          <div class="play-icon-overlay"></div>
+        </div>
+        <div class="video-info">
+          <div class="video-title">${video.name}</div>
+          ${actionButtons}
+        </div>
+      `;
+      
+      card.addEventListener('click', function(e) {
+        if(e.target.closest('button')) return; // Ignore if clicked delete
+        document.getElementById('youtube-iframe').src = embedUrl;
+        document.getElementById('video-player-modal').style.display = 'flex';
+      });
+
+      container.appendChild(card);
+    }
+
+    // ========== ADMIN ACTIONS FOR VIDEOS ==========
+    function setupVideoUpload() {
+      const header = document.getElementById("admin-video-upload-header");
+      const content = document.getElementById("admin-video-upload-content");
+      const icon = document.getElementById("admin-video-toggle-icon");
+      const submitBtn = document.getElementById("submit-video-btn");
+      
+      header.onclick = function() {
+        if (content.style.display === "none") {
+          content.style.display = "block";
+          icon.style.transform = "rotate(180deg)";
+        } else {
+          content.style.display = "none";
+          icon.style.transform = "rotate(0deg)";
+        }
+      };
+
+      submitBtn.onclick = async () => {
+        if (isEditor() && !canAdd()) { window.showEditorPopup('Add'); return; }
+
+        const nameInput = document.getElementById("new-video-name").value.trim();
+        const urlInput = document.getElementById("new-video-url").value.trim();
+        const selectElement = document.getElementById("new-video-category-select");
+        const customInput = document.getElementById("new-video-category-new");
+        
+        if (!nameInput || !urlInput) { alert("Please provide both Title and YouTube Link."); return; }
+        if (!getYouTubeId(urlInput)) { alert("Please enter a valid YouTube link."); return; }
+
+        let finalCategory = "";
+        if (selectElement) {
+           finalCategory = selectElement.value === 'NEW' ? customInput.value.trim() : selectElement.value;
+        }
+
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = "Saving..."; submitBtn.disabled = true;
+
+        try {
+          // WE REUSE your updatePdfName / general AppScript logic by sending a JSONP request 
+          // to append a row. (See Step 5 for the Apps Script requirement).
+          let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=addSheetRow';
+          url += '&sheetId=' + window.currentVideoContext.sheetId;
+          url += '&gid=' + window.currentVideoContext.gid;
+          url += '&col1=' + encodeURIComponent(nameInput);
+          url += '&col2=' + encodeURIComponent(urlInput);
+          url += '&col3=' + encodeURIComponent(finalCategory);
+          url += '&username=' + encodeURIComponent(currentUser.username);
+          url += '&token=' + encodeURIComponent(currentUser.token);
+          url += '&_t=' + Date.now();
+
+          const response = await jsonpRequest(url, 'addVideoCb');
+          
+          if (response && response.success) {
+            document.getElementById("new-video-name").value = "";
+            document.getElementById("new-video-url").value = "";
+            if(customInput) customInput.style.display = 'none';
+            loadVideoList();
+          } else {
+            throw new Error(response.error);
+          }
+        } catch (err) {
+          alert("Failed to save: " + err);
+        } finally {
+          submitBtn.textContent = originalText; submitBtn.disabled = false;
+        }
+      };
+    }
+
+    window.deleteVideoItem = async function(rowIndex) {
+      if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; }
+      
+      window.showCustomConfirm(
+        "Delete Video", "Are you sure you want to remove this video?", "Delete", 
+        async () => {
+          showPDFOverlay("Deleting Video...");
+          try {
+            let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=deletePdf&sheetId=' + window.currentVideoContext.sheetId + '&gid=' + window.currentVideoContext.gid + '&rowIndex=' + rowIndex + '&username=' + encodeURIComponent(currentUser.username) + '&token=' + encodeURIComponent(currentUser.token) + '&_t=' + Date.now();
+            const data = await jsonpRequest(url, 'deleteVidCb');
+            hidePDFOverlay();
+            if (data && data.success) loadVideoList(); 
+            else window.showCustomAlert("Error", "Error deleting: " + (data.error || "Unknown"));
+          } catch(e) { hidePDFOverlay(); window.showCustomAlert("Error", "Network error: " + e); }
+        }
+      );
+    };
     
     // ========== FORCE CACHE BUSTING ==========
     const version = Date.now();
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbySDLk0ETQrEYJ2xwvV403Eaxe0Iq_JSwvX6J-HO9XV5ixH9xiCYHxlVZAx_39dADABmQ/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5xwsIgIn4goUOmlGatoZa8WDxHP5cklhfCrSvM9jebkSa3lU7VHDAHx5_VTAD5WjI/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwxziWyawMp6W_fvpDzb6ukjH51CswCPeRhvzqU3EwCUSLIujdISgvD7gIVH-wFtV3y/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -6525,22 +7014,19 @@ function openQuestionEditor(index) {
         `;
 
        card.addEventListener("click", () => {
-          // --- FIX: Trial Restriction (First Subject Only) ---
           if (currentUser.role === 'Trial' && index > 0) {
             window.showTrialPopup();
-            return; // Stops them from opening it
+            return; 
           }
          
-          // ------------------------------
           currentSubject = subject.name;
-          // ... rest of the existing code ...
-          
-          // Cleaner approach: store it in a variable first
           const lowerName = subject.name.toLowerCase();
           
-          // Intercept if the subject is "Previous Year Questions", "PYQ", or "Download"
+          // Route based on subject keywords
           if (lowerName.includes('previous year') || lowerName.includes('question answer') || lowerName.includes('download')) {
             showPyqContainer(currentSubject);
+          } else if (lowerName.includes('video') || lowerName.includes('lecture') || lowerName.includes('youtube')) {
+            showVideoContainer(currentSubject);
           } else {
             showQuizContainer(currentSubject);
           }
@@ -8088,6 +8574,24 @@ function validateUserAccount(user) {
     }
 
     function handleAppBackNavigation() {
+// Find handleAppBackNavigation() and add this near the top:
+const videoModal = document.getElementById('video-player-modal');
+if (videoModal && isScreenVisible('video-player-modal')) { 
+    closeVideoPlayer(); 
+    return; 
+}
+
+// Add this to handle routing out of the video container
+if (isScreenVisible('video-container')) {
+    if (window.currentVideoCategory) {
+        window.currentVideoCategory = null;
+        if (typeof renderVideoView === 'function') renderVideoView();
+    } else {
+        if (typeof navigateToSubjects === 'function') navigateToSubjects();
+    }
+    return;
+}
+    
         // 1. Trap Back Button for the Cropper Modal
         const cropperModalEl = document.getElementById('cropper-modal');
         if (cropperModalEl && isScreenVisible('cropper-modal')) { 
@@ -10826,7 +11330,14 @@ function validateUserAccount(user) {
     <div style="width: 100%; flex: 1; min-height: 0; position: relative; overflow: hidden; background: #111;">
       <img id="cropper-image" style="display: block; max-width: 100%;">
     </div>
-    
+
+<div id="video-player-modal">
+    <div class="video-wrapper">
+      <button class="close-video-btn" onclick="closeVideoPlayer()">&times;</button>
+      <iframe id="youtube-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    </div>
+  </div>
+   
     <div style="display: flex; gap: 15px; height: 80px; flex-shrink: 0; align-items: center; justify-content: center; width: 100%; background: #0f172a; border-top: 1px solid #334155;">
       <button id="cancel-crop-btn" style="padding: 12px 24px; border-radius: 8px; border: none; background: #ef4444; color: white; font-weight: bold; font-size: 1rem; cursor: pointer;">Cancel</button>
       <button id="save-crop-btn" style="padding: 12px 24px; border-radius: 8px; border: none; background: #22c55e; color: white; font-weight: bold; font-size: 1rem; cursor: pointer;">Crop & Save</button>
