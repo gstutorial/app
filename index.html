@@ -5901,6 +5901,7 @@ body.light-mode .video-title {
       if (subjectLower.includes('english')) return '📖';
       if (subjectLower.includes('social')) return '🌍';
       if (subjectLower.includes('previous year') || subjectLower.includes('question answer') || subjectLower.includes('download')) return '📄';
+      if (subjectLower.includes('video') || subjectLower.includes('lecture') || subjectLower.includes('youtube')) return '▶️';
       return '📚';
     }
 
@@ -8005,15 +8006,18 @@ function validateUserAccount(user) {
       pyqContainerEl.style.display = "none";
       accountConfigErrorEl.style.display = "none";
       subscriptionExpiredEl.style.display = "none";
+      document.getElementById("video-container").style.display = "none"; // <-- ADD THIS LINE
+      
       resetQuizState();
       isReviewMode = false;
+      // ... rest of function ...
       isIncorrectReviewMode = false;
       isReattemptMode = false;
       isQuizActive = false;
       resetInactivityTimer();
     }
 
-    function showSubjectSelection(className) {
+function showSubjectSelection(className) {
       currentClass = className;
       currentClassDisplayEl.textContent = className === 'JE' ? 'Junior Engineer' : `Class ${className}`;
       pathClassLink.textContent = currentClassDisplayEl.textContent;
@@ -8024,10 +8028,12 @@ function validateUserAccount(user) {
       pyqContainerEl.style.display = "none";
       accountConfigErrorEl.style.display = "none";
       subscriptionExpiredEl.style.display = "none";
+      document.getElementById("video-container").style.display = "none"; // <-- ADD THIS LINE
 
       resetQuizState(); // NEW: Cleans up any running quiz/reattempt when you back out
       
       loadSubjects();
+      // ... rest of function ...
       isReviewMode = false;
       isIncorrectReviewMode = false;
       isReattemptMode = false;
