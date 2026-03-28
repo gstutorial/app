@@ -4527,16 +4527,15 @@ body.light-mode .pdf-name {
 }
 
 .video-card {
-  background: rgba(15, 23, 42, 0.7);
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(75, 85, 99, 0.5);
+  background: rgba(15, 23, 42, 0.8); /* Slightly darker background */
+  border-radius: 16px; /* Outer rounded corners */
+  padding: 10px; /* THIS IS THE MAGIC! Pushes the thumbnail inward */
+  border: 1px solid rgba(75, 85, 99, 0.5); /* Outer border */
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
 }
-
 body.light-mode .video-card {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
@@ -4552,9 +4551,10 @@ body.light-mode .video-card {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  background: transparent; /* Removed the black background */
-  overflow: hidden; /* CRITICAL: This crops anything outside the box */
-  border-bottom: 1px solid rgba(75, 85, 99, 0.3); /* Adds a clean line above the text */
+  background: transparent;
+  overflow: hidden;
+  border-radius: 10px; /* Inner rounded corners */
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Thin inside border */
 }
 
 .video-thumbnail {
@@ -4577,31 +4577,37 @@ body.light-mode .video-card {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 50px;
-  height: 50px;
-  background: rgba(239, 68, 68, 0.9);
-  border-radius: 50%;
+  width: 64px;
+  height: 44px; /* Rectangle instead of circle */
+  background: rgba(239, 68, 68, 0.95); /* YouTube Red */
+  border-radius: 12px; /* Rounded rectangle edges */
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+  transition: transform 0.2s ease, background 0.2s;
 }
 
 .play-icon-overlay::after {
   content: '';
   margin-left: 4px;
   border-style: solid;
-  border-width: 10px 0 10px 16px;
+  border-width: 9px 0 9px 15px; /* The white play triangle */
   border-color: transparent transparent transparent white;
 }
 
+/* Add this to make the play button pop when they touch the card */
+.video-card:hover .play-icon-overlay {
+  transform: translate(-50%, -50%) scale(1.1);
+  background: #ff0000; 
+}
+
 .video-info {
-  padding: 10px 12px;
+  padding: 12px 4px 2px 4px; /* Perfectly aligns text below the inset thumbnail */
   display: flex;
   justify-content: space-between;
-  align-items: center; /* Perfect vertical alignment */
+  align-items: center; 
   gap: 12px;
-  background: rgba(15, 23, 42, 0.95); /* Matches the dark theme */
 }
 
 .video-title {
