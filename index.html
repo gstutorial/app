@@ -4881,15 +4881,21 @@ body.light-mode .video-title {
           }
         }
 
-        if (isAdmin() || isEditor()) {
+if (isAdmin() || isEditor()) {
             const uploadSelect = document.getElementById('new-video-category-select');
+            const editSelect = document.getElementById('edit-video-category-select'); // NEW
+            
             let optionsHTML = `<option value="">-- No Category (Main Folder) --</option>`;
             Array.from(categoriesList).sort().forEach(c => { optionsHTML += `<option value="${c}">${c}</option>`; });
             optionsHTML += `<option value="NEW" style="font-weight:bold; color:#ef4444;">➕ Create New Category...</option>`;
+            
             if (uploadSelect) {
                 let currentVal = uploadSelect.value;
                 uploadSelect.innerHTML = optionsHTML;
                 if(categoriesList.has(currentVal)) uploadSelect.value = currentVal;
+            }
+            if (editSelect) {
+                editSelect.innerHTML = optionsHTML;
             }
         }
 
@@ -5001,8 +5007,14 @@ body.light-mode .video-title {
       let actionButtons = '';
       if (isAdmin() || isEditor()) {
         const sheetRowIndex = video.index + 1; 
+        const safeName = video.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const safeCategory = (video.category || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+
         actionButtons = `
           <div style="display:flex; flex-direction:column; gap:8px;">
+            <button title="Edit Video" onclick="event.stopPropagation(); window.openEditVideoModal(${sheetRowIndex}, '${safeName}', '${safeCategory}')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); border-radius:8px; cursor:pointer; padding:6px; transition:0.2s;">
+              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#3b82f6" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+            </button>
             <button title="Delete Video" onclick="event.stopPropagation(); deleteVideoItem(${sheetRowIndex})" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:8px; cursor:pointer; padding:6px; transition:0.2s;">
               <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#ef4444" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
             </button>
@@ -5116,6 +5128,69 @@ body.light-mode .video-title {
           } catch(e) { hidePDFOverlay(); window.showCustomAlert("Error", "Network error: " + e); }
         }
       );
+    };
+    // ========== EDIT VIDEO ACTIONS ==========
+    window.openEditVideoModal = function(rowIndex, currentName, currentCategory) {
+      if (isEditor() && !canEdit()) { window.showEditorPopup('Edit'); return; }
+    
+      document.getElementById('edit-video-row-index').value = rowIndex;
+      document.getElementById('edit-video-name').value = currentName;
+      
+      const select = document.getElementById('edit-video-category-select');
+      const customInput = document.getElementById('edit-video-category-new');
+      
+      // Check if category exists in dropdown
+      let hasCategory = false;
+      for(let i=0; i<select.options.length; i++) {
+          if(select.options[i].value === currentCategory) { hasCategory = true; break; }
+      }
+      
+      if(currentCategory && !hasCategory) {
+          select.value = 'NEW';
+          customInput.value = currentCategory;
+          customInput.style.display = 'block';
+      } else {
+          select.value = currentCategory || "";
+          customInput.style.display = 'none';
+          customInput.value = "";
+      }
+      
+      document.getElementById('edit-video-modal').style.display = 'flex';
+    };
+
+    window.saveVideoEditDetails = async function() {
+      const rowIndex = document.getElementById('edit-video-row-index').value;
+      const newName = document.getElementById('edit-video-name').value;
+      const selectVal = document.getElementById('edit-video-category-select').value;
+      const newCategory = selectVal === 'NEW' ? document.getElementById('edit-video-category-new').value : selectVal;
+      
+      if (!newName || newName.trim() === "") { alert("Video Title cannot be empty."); return; }
+      if (selectVal === 'NEW' && newCategory.trim() === "") { alert("Please type a new category name."); return; }
+
+      document.getElementById('edit-video-modal').style.display = 'none';
+      showPDFOverlay("Updating Video details...");
+      
+      try {
+        // We reuse updatePdfName because it generically updates Column A (Name) and Column C (Category)
+        let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=updatePdfName';
+        url += '&sheetId=' + window.currentVideoContext.sheetId;
+        url += '&gid=' + window.currentVideoContext.gid;
+        url += '&rowIndex=' + rowIndex;
+        url += '&newName=' + encodeURIComponent(newName.trim());
+        url += '&newCategory=' + encodeURIComponent(newCategory.trim()); 
+        url += '&username=' + encodeURIComponent(currentUser.username);
+        url += '&role=' + encodeURIComponent(currentUser.role);
+        url += '&token=' + encodeURIComponent(currentUser.token);
+        url += '&_t=' + Date.now();
+        
+        const data = await jsonpRequest(url, 'updateVidCb');
+        hidePDFOverlay();
+        
+        if (data && data.success) loadVideoList(); 
+        else alert("Error updating Video: " + (data.error || "Unknown error"));
+      } catch(e) {
+        hidePDFOverlay(); alert("Network error: " + e);
+      }
     };
     
     // ========== FORCE CACHE BUSTING ==========
@@ -11332,6 +11407,32 @@ if (isScreenVisible('video-container')) {
       <div style="display: flex; gap: 10px; justify-content: flex-end;">
         <button onclick="document.getElementById('edit-pdf-modal').style.display='none'" style="padding: 10px 15px; border-radius: 8px; border: none; background: #64748b; color: white; cursor: pointer;">Cancel</button>
         <button onclick="savePdfEditDetails()" style="padding: 10px 15px; border-radius: 8px; border: none; background: #3b82f6; color: white; cursor: pointer;">Save Changes</button>
+      </div>
+    </div>
+  </div>
+  <div id="edit-video-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center;">
+    <div class="modal-content" style="background: var(--bg-color, #1e293b); padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; border: 1px solid #3b82f6;">
+      <h3 style="margin-bottom: 15px; color: #3b82f6;">✏️ Edit Video Details</h3>
+      
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label style="font-size: 0.9rem; margin-bottom: 5px; display: block;">Video Title</label>
+        <input type="text" id="edit-video-name" class="form-input">
+      </div>
+      
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label style="font-size: 0.9rem; margin-bottom: 5px; display: block;">Category / Folder</label>
+        <select id="edit-video-category-select" class="form-input" onchange="document.getElementById('edit-video-category-new').style.display = this.value === 'NEW' ? 'block' : 'none'">
+          <option value="">-- No Category (Main Folder) --</option>
+          <option value="NEW" style="font-weight:bold; color:#3b82f6;">➕ Create New Category...</option>
+        </select>
+        <input type="text" id="edit-video-category-new" class="form-input" style="display:none; margin-top:10px;" placeholder="Type new category name...">
+      </div>
+      
+      <input type="hidden" id="edit-video-row-index">
+      
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button onclick="document.getElementById('edit-video-modal').style.display='none'" style="padding: 10px 15px; border-radius: 8px; border: none; background: #64748b; color: white; cursor: pointer;">Cancel</button>
+        <button onclick="saveVideoEditDetails()" style="padding: 10px 15px; border-radius: 8px; border: none; background: #3b82f6; color: white; cursor: pointer;">Save Changes</button>
       </div>
     </div>
   </div>
