@@ -4268,10 +4268,15 @@ body.light-mode .pdf-name {
               <option value="NEW" style="font-weight:bold; color:#ef4444;">➕ Create New Category...</option>
             </select>
             <input type="text" id="new-video-category-new" class="form-input" style="display:none; margin-top:10px;" placeholder="Type new category name...">
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button id="fetch-title-btn" type="button" onclick="fetchYouTubeTitle()" style="padding: 10px; background: #475569; color: white; border: none; border-radius: 8px; cursor: pointer; flex: 1; font-weight: 600; transition: background 0.2s;">
+              🔍 Fetch Title
+            </button>
+            <button id="submit-video-btn" class="btn-success" style="margin-top: 0; background: linear-gradient(to right, #ef4444, #dc2626); flex: 1;">
+              ➕ Add Video
+            </button>
           </div>
-          
-          <button id="submit-video-btn" class="btn-success" style="margin-top: 10px; background: linear-gradient(to right, #ef4444, #dc2626);">Add Video</button>
-        </div>
+
       </div>
 
       <div id="video-list-container" style="margin-top: 20px;"></div>
