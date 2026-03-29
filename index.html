@@ -6150,7 +6150,7 @@ if (isAdmin() || isEditor()) {
       if (subjectLower.includes('elect')) return '⚡';
       if (subjectLower.includes('english')) return '📖';
       if (subjectLower.includes('social')) return '🌍';
-      if (subjectLower.includes('previous year') || subjectLower.includes('question answer') || subjectLower.includes('download')) return '📄';
+      if (subjectLower.includes('previous year') || subjectLower.includes('question answer') || subjectLower.includes('pdf')) return '📄';
       if (subjectLower.includes('video') || subjectLower.includes('lecture') || subjectLower.includes('youtube')) return '▶️';
       return '📚';
     }
@@ -6164,7 +6164,7 @@ if (isAdmin() || isEditor()) {
       if (subjectLower.includes('bio')) return 'Biology - Life processes, Cells';
       if (subjectLower.includes('mech')) return 'Mechanical Engineering - Machines';
       if (subjectLower.includes('elect')) return 'Electrical Engineering - Circuits';
-      if (subjectLower.includes('previous year') || subjectLower.includes('question answer') || subjectLower.includes('download')) return 'Download PDF resources';
+      if (subjectLower.includes('previous year') || subjectLower.includes('question answer') || subjectLower.includes('pdf')) return 'Download PDF resources';
       return 'Interactive Learning';
     }
 
@@ -7277,7 +7277,7 @@ function openQuestionEditor(index) {
           const lowerName = subject.name.toLowerCase();
           
           // Route based on subject keywords
-          if (lowerName.includes('previous year') || lowerName.includes('question answer') || lowerName.includes('download')) {
+          if (lowerName.includes('previous year') || lowerName.includes('question answer') || lowerName.includes('pdf')) {
             showPyqContainer(currentSubject);
           } else if (lowerName.includes('video') || lowerName.includes('lecture') || lowerName.includes('youtube')) {
             showVideoContainer(currentSubject);
