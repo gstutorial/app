@@ -4219,7 +4219,10 @@ body.light-mode .pdf-name {
             <div class="upload-status" id="pdf-upload-status"></div>
           </div>
           
-          <button id="submit-pdf-btn" class="btn-success" style="margin-top: 10px;" disabled>Upload & Save</button>
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button type="button" id="clear-pdf-btn" class="btn-success" style="background: linear-gradient(to right, #ef4444, #dc2626); flex: 1;" onclick="clearPdfAdminPanel()">🗑️ Clear</button>
+            <button id="submit-pdf-btn" class="btn-success" style="flex: 2;" disabled>Upload & Save</button>
+          </div>
         </div>
       </div>
 
@@ -4268,15 +4271,17 @@ body.light-mode .pdf-name {
               <option value="NEW" style="font-weight:bold; color:#ef4444;">➕ Create New Category...</option>
             </select>
             <input type="text" id="new-video-category-new" class="form-input" style="display:none; margin-top:10px;" placeholder="Type new category name...">
-          </div> <div style="display: flex; gap: 10px; margin-top: 15px;">
-            <button id="fetch-title-btn" type="button" class="btn-success" onclick="fetchYouTubeTitle()" style="margin-top: 0; background: linear-gradient(to right, #10b981, #059669); flex: 1;">
+         <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button id="fetch-title-btn" type="button" class="btn-success" onclick="fetchYouTubeTitle()" style="margin-top: 0; background: linear-gradient(to right, #f59e0b, #d97706); flex: 1;">
               🔍 Fetch Title
             </button>
-
-            <button id="submit-video-btn" class="btn-success" style="margin-top: 0; background: linear-gradient(to right, #ef4444, #dc2626); flex: 1;">
-              ➕ Add Video
+            <button id="clear-video-btn" type="button" class="btn-success" onclick="clearVideoAdminPanel()" style="margin-top: 0; background: linear-gradient(to right, #ef4444, #dc2626); flex: 1;">
+              🗑️ Clear
             </button>
           </div>
+          <button id="submit-video-btn" class="btn-success" style="margin-top: 10px; background: linear-gradient(to right, #10b981, #059669); width: 100%;">
+            ➕ Add Video
+          </button>
 
         </div> </div> <div id="video-list-container" style="margin-top: 20px;"></div>
 
@@ -4832,8 +4837,61 @@ body.light-mode .video-title {
       </div>
     </div>
   </div>
-
+ 
   <script>
+    // ========== ADMIN PANEL CLEAR HELPERS ==========
+window.clearPdfAdminPanel = function() {
+    document.getElementById("new-pdf-name").value = "";
+    
+    // Reset file input and visual upload area
+    const fileInput = document.getElementById("pdf-file-input");
+    if (fileInput) fileInput.value = "";
+    
+    const uploadArea = document.getElementById("upload-pdf-area");
+    if (uploadArea) {
+        const textEl = uploadArea.querySelector(".upload-text");
+        if (textEl) textEl.textContent = "Click to select PDF";
+    }
+
+    // Reset Dropdown
+    const categorySelect = document.getElementById("new-pdf-category-select");
+    if (categorySelect) categorySelect.value = window.currentPdfCategory || "";
+    
+    const categoryNew = document.getElementById("new-pdf-category-new");
+    if (categoryNew) {
+        categoryNew.value = "";
+        categoryNew.style.display = "none";
+    }
+
+    // Reset Buttons and Status
+    const submitBtn = document.getElementById("submit-pdf-btn");
+    if (submitBtn) submitBtn.disabled = true;
+    
+    const progress = document.getElementById("pdf-upload-progress");
+    if (progress) progress.style.display = "none";
+    
+    const bar = document.getElementById("pdf-progress-bar");
+    if (bar) bar.style.width = "0%";
+    
+    const status = document.getElementById("pdf-upload-status");
+    if (status) status.textContent = "";
+};
+
+window.clearVideoAdminPanel = function() {
+    document.getElementById("new-video-name").value = "";
+    document.getElementById("new-video-url").value = "";
+    
+    // Reset Dropdown
+    const categorySelect = document.getElementById("new-video-category-select");
+    if (categorySelect) categorySelect.value = window.currentVideoCategory || "";
+    
+    const categoryNew = document.getElementById("new-video-category-new");
+    if (categoryNew) {
+        categoryNew.value = "";
+        categoryNew.style.display = "none";
+    }
+};
+    
 
 // ========== YOUTUBE HELPER ==========
     function getYouTubeId(url) {
@@ -8782,6 +8840,7 @@ if (videoModal && isScreenVisible('video-player-modal')) {
 
 // Add this to handle routing out of the video container
 if (isScreenVisible('video-container')) {
+    if (typeof clearVideoAdminPanel === 'function') clearVideoAdminPanel(); // Clears on back/swipe
     if (window.currentVideoCategory) {
         window.currentVideoCategory = null;
         if (typeof renderVideoView === 'function') renderVideoView();
@@ -8809,8 +8868,10 @@ if (isScreenVisible('video-container')) {
         const qModal = document.getElementById('question-editor-modal');
         if (qModal && isScreenVisible('question-editor-modal')) { qModal.style.display = 'none'; return; }
 
-        // PDF Inner Folder View
+       
+     // PDF Inner Folder View
         if (isScreenVisible('pyq-container') && window.currentPdfCategory) {
+            if (typeof clearPdfAdminPanel === 'function') clearPdfAdminPanel(); // Clears on back/swipe
             window.currentPdfCategory = null;
             
             // NEW: Reset the upload dropdown visually when backing out of a folder
@@ -8822,6 +8883,7 @@ if (isScreenVisible('video-container')) {
         }
         // PDF Main Folder View -> Back to Subjects
         if (isScreenVisible('pyq-container')) {
+            if (typeof clearPdfAdminPanel === 'function') clearPdfAdminPanel(); // Clears on back/swipe
             if (typeof navigateToSubjects === 'function') navigateToSubjects();
             return;
         }
