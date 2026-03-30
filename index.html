@@ -6368,7 +6368,7 @@ if (isAdmin() || isEditor()) {
                 errorListHTML = `
                     <li><strong>Invalid Role:</strong> Your role is set to "${user.role}" which is not recognized.</li>
                     <li>Valid roles are: <strong>Admin, Teacher, User, Student</strong>.</li>
-                    <li>Please contact the administrator to update your role in the Google Sheet.</li>
+                    <li>Please contact the administrator to update your role.</li>
                 `;
                 break;
                 
@@ -6376,13 +6376,13 @@ if (isAdmin() || isEditor()) {
                 if (user.role === 'Student') {
                     errorListHTML = `
                         <li><strong>No Class Assigned:</strong> As a <strong>Student</strong>, you need to be assigned to a specific class.</li>
-                        <li>Your account currently has <strong>no class</strong> assigned in the Google Sheet.</li>
+                        <li>Your account currently has <strong>no class</strong> assigned.</li>
                         <li>Please ask the administrator to assign you to a class.</li>
                     `;
                 } else if (user.role === 'Teacher' || user.role === 'User') {
                     errorListHTML = `
                         <li><strong>No Classes Assigned:</strong> As a <strong>${user.role}</strong>, you need to be assigned to one or more classes.</li>
-                        <li>Your account currently has <strong>no classes</strong> assigned in the Google Sheet.</li>
+                        <li>Your account currently has <strong>no classes</strong> assigned.</li>
                         <li>Please ask the administrator to assign you to at least one class.</li>
                     `;
                 }
