@@ -5368,7 +5368,7 @@ if (isAdmin() || isEditor()) {
     const version = Date.now();
     
     // ========== APPS SCRIPT CONFIGURATION ==========
-    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyzjhTxypapru_73mDsRngHqQxj72PTh_A1D9ovFQGP-At-pJOPNZaIjhKjayVNJcT4Wg/exec';
+    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwWSI_64jOzqTnx_Zf9S_-AdAx2hTwuc1nTLF8mg86zZ2CNgZYAE7wTqxQF09gC6ITew/exec';
     const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwxziWyawMp6W_fvpDzb6ukjH51CswCPeRhvzqU3EwCUSLIujdISgvD7gIVH-wFtV3y/exec';
 
     // ========== CACHE CONFIGURATION ==========
@@ -11145,8 +11145,14 @@ if (isScreenVisible('video-container')) {
     window.restartQuiz = restartQuiz;
 
     // ========== EVENT LISTENERS ==========
+    // Variable to hold the countdown timer so we can stop it when needed
+    let lockoutTimerInterval = null;
+
     loginFormEl.addEventListener("submit", async function(e) {
       e.preventDefault();
+
+      // Clear any existing timer if they try to submit again
+      if (lockoutTimerInterval) clearInterval(lockoutTimerInterval);
 
       const username = usernameEl.value.trim();
       const password = passwordEl.value.trim();
@@ -11159,8 +11165,7 @@ if (isScreenVisible('video-container')) {
 
       loginErrorEl.style.display = "none";
       
-      // Add loading animation to login button
-      const originalText = loginBtnEl.textContent;
+      const originalText = "Login"; // Keep the original text safe
       loginBtnEl.classList.add('saving');
       loginBtnEl.innerHTML = 'Loading...';
       loginBtnEl.disabled = true;
@@ -11170,19 +11175,60 @@ if (isScreenVisible('video-container')) {
       if (result?.success) {
         const user = result.user;
         login(user, false);
+        
+        // Remove loading state on success
+        loginBtnEl.classList.remove('saving');
+        loginBtnEl.innerHTML = originalText;
+        loginBtnEl.disabled = false;
+        
       } else {
-        // ALWAYS show the exact message from the new Apps Script 
-        // This handles the real 15-minute lockouts and attempt countdowns directly!
-        loginErrorEl.textContent = result?.error || 'Invalid username or password';
-        loginErrorEl.style.display = "block";
+        // --- LIVE COUNTDOWN LOGIC ---
+        if (result?.isLocked && result?.remainingSeconds) {
+          
+          let timeLeft = result.remainingSeconds;
+          loginBtnEl.classList.remove('saving'); // Remove the spinner
+          
+          // Function to update the text every second
+          const updateCountdownUI = () => {
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            const timeString = `${mins}:${secs.toString().padStart(2, '0')}`;
+            
+            loginErrorEl.textContent = `Account locked. Try again in ${timeString}`;
+            loginErrorEl.style.display = "block";
+            loginBtnEl.innerHTML = `Locked (${timeString})`;
+            loginBtnEl.disabled = true; // Keep button disabled
+          };
+
+          // Run immediately once, then start the 1-second interval
+          updateCountdownUI();
+          
+          lockoutTimerInterval = setInterval(() => {
+            timeLeft--;
+            if (timeLeft <= 0) {
+              // Timer finished! Unlock the UI.
+              clearInterval(lockoutTimerInterval);
+              loginErrorEl.textContent = "Lockout expired. You can try logging in now.";
+              loginErrorEl.style.color = "#10b981"; // Make text green to indicate success
+              loginBtnEl.innerHTML = originalText;
+              loginBtnEl.disabled = false;
+            } else {
+              updateCountdownUI();
+            }
+          }, 1000);
+
+        } else {
+          // Normal error (like wrong password, 3 attempts left)
+          loginErrorEl.textContent = result?.error || 'Invalid username or password';
+          loginErrorEl.style.display = "block";
+          
+          // Reset the button so they can try again
+          loginBtnEl.classList.remove('saving');
+          loginBtnEl.innerHTML = originalText;
+          loginBtnEl.disabled = false;
+        }
       }
-
-      // Remove loading animation
-      loginBtnEl.classList.remove('saving');
-      loginBtnEl.innerHTML = originalText;
-      loginBtnEl.disabled = false;
     });
-
     passwordToggleEl.addEventListener("click", togglePasswordVisibility);
     
     backToClassesBtn.addEventListener("click", function(e) {
