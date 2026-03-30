@@ -11141,7 +11141,7 @@ if (isScreenVisible('video-container')) {
     window.restartQuiz = restartQuiz;
 
     // ========== EVENT LISTENERS ==========
-    // Variable to hold the countdown timer so we can stop it when needed
+   // Variable to hold the countdown timer so we can stop it when needed
     let lockoutTimerInterval = null;
 
     loginFormEl.addEventListener("submit", async function(e) {
@@ -11190,8 +11190,12 @@ if (isScreenVisible('video-container')) {
             const secs = timeLeft % 60;
             const timeString = `${mins}:${secs.toString().padStart(2, '0')}`;
             
-            loginErrorEl.textContent = `Account locked. Try again in ${timeString}`;
+            // FIX: Explicitly set the warning text and force it to display!
+            loginErrorEl.innerHTML = `Too many failed attempts.<br>Account locked. Try again in <b>${timeString}</b>`;
             loginErrorEl.style.display = "block";
+            loginErrorEl.style.color = "#ef4444"; // Force red text
+            loginErrorEl.style.marginBottom = "15px"; // Give it space above the button
+            
             loginBtnEl.innerHTML = `Locked (${timeString})`;
             loginBtnEl.disabled = true; // Keep button disabled
           };
@@ -11217,6 +11221,7 @@ if (isScreenVisible('video-container')) {
           // Normal error (like wrong password, 3 attempts left)
           loginErrorEl.textContent = result?.error || 'Invalid username or password';
           loginErrorEl.style.display = "block";
+          loginErrorEl.style.color = "#ef4444"; // reset to red if it was green
           
           // Reset the button so they can try again
           loginBtnEl.classList.remove('saving');
