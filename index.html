@@ -5368,7 +5368,7 @@ if (isAdmin() || isEditor()) {
     const version = Date.now();
     
     // ========== APPS SCRIPT CONFIGURATION ==========
-    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbySDLk0ETQrEYJ2xwvV403Eaxe0Iq_JSwvX6J-HO9XV5ixH9xiCYHxlVZAx_39dADABmQ/exec';
+    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyzjhTxypapru_73mDsRngHqQxj72PTh_A1D9ovFQGP-At-pJOPNZaIjhKjayVNJcT4Wg/exec';
     const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwxziWyawMp6W_fvpDzb6ukjH51CswCPeRhvzqU3EwCUSLIujdISgvD7gIVH-wFtV3y/exec';
 
     // ========== CACHE CONFIGURATION ==========
@@ -11148,12 +11148,6 @@ if (isScreenVisible('video-container')) {
     loginFormEl.addEventListener("submit", async function(e) {
       e.preventDefault();
 
-      if (isOnCooldown) {
-        loginErrorEl.textContent = "Please wait for cooldown.";
-        loginErrorEl.style.display = "block";
-        return;
-      }
-
       const username = usernameEl.value.trim();
       const password = passwordEl.value.trim();
 
@@ -11174,18 +11168,12 @@ if (isScreenVisible('video-container')) {
       const result = await authenticateWithAppsScript(username, password);
 
       if (result?.success) {
-        resetFailedAttempts();
         const user = result.user;
-
-        // NEW LOGIC: Just pass the user straight to login().
-        // The updated login() and validateUserAccount() functions handle everything now!
         login(user, false);
-        
       } else {
-        recordFailedAttempt();
-        loginErrorEl.textContent = failedAttempts >= MAX_ATTEMPTS ? 
-          `Too many attempts. Wait ${COOLDOWN_TIME}s.` : 
-          (result?.error || 'Invalid username or password');
+        // ALWAYS show the exact message from the new Apps Script 
+        // This handles the real 15-minute lockouts and attempt countdowns directly!
+        loginErrorEl.textContent = result?.error || 'Invalid username or password';
         loginErrorEl.style.display = "block";
       }
 
