@@ -6043,80 +6043,76 @@ if (isAdmin() || isEditor()) {
     }
 
     // ========== AUTHENTICATION FUNCTION (BULLETPROOF) ==========
-    async function authenticateWithAppsScript(username, password) {
-      const authUrl = `${AUTH_APPS_SCRIPT_URL}?action=authenticate&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&_t=${Date.now()}`;
+async function authenticateWithAppsScript(username, password) {
+  const authUrl = `${AUTH_APPS_SCRIPT_URL}?action=authenticate&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&_t=${Date.now()}`;
+  
+  const performAuth = () => {
+    return new Promise((resolve) => {
+      const callbackName = 'authCb_' + Date.now() + Math.floor(Math.random() * 1000);
+      const script = document.createElement('script');
+      let isDone = false;
       
-      const performAuth = () => {
-        return new Promise((resolve) => {
-          const callbackName = 'authCb_' + Date.now() + Math.floor(Math.random() * 1000);
-          const script = document.createElement('script');
-          let isDone = false;
-          
-          const timeoutTimer = setTimeout(() => {
-            if (!isDone) {
-              isDone = true;
-              script.remove();
-              delete window[callbackName];
-              resolve({ networkFailed: true, error: 'timeout' });
-            }
-          }, 15000); // 15-second patience window
-          
-          window[callbackName] = function(data) {
-            if (!isDone) {
-              isDone = true;
-              clearTimeout(timeoutTimer);
-              script.remove();
-              delete window[callbackName];
-              resolve({ networkFailed: false, data: data });
-            }
-          };
-          
-          script.onerror = function() {
-            if (!isDone) {
-              isDone = true;
-              clearTimeout(timeoutTimer);
-              script.remove();
-              delete window[callbackName];
-              // Catches instant ad-blocker or mobile network drops
-              resolve({ networkFailed: true, error: 'network_error' });
-            }
-          };
-          
-          script.src = `${authUrl}&callback=${callbackName}`;
-          // Use head instead of body to prevent mobile CSP DOM injection errors
-          document.head.appendChild(script); 
-        });
+      const timeoutTimer = setTimeout(() => {
+        if (!isDone) {
+          isDone = true;
+          script.remove();
+          delete window[callbackName];
+          resolve({ networkFailed: true, error: 'timeout' });
+        }
+      }, 15000); // 15-second patience window
+
+      window[callbackName] = function(data) {
+        if (!isDone) {
+          isDone = true;
+          clearTimeout(timeoutTimer);
+          script.remove();
+          delete window[callbackName];
+          // WE PASS THE ENTIRE DATA OBJECT BACK HERE
+          resolve({ networkFailed: false, data: data }); 
+        }
       };
 
-      try {
-        let result = await performAuth();
-        
-        // RETRY LOGIC: If connection drops prematurely, automatically try ONE more time.
-        if (result.networkFailed) {
-            console.warn(`Auth hit a snag (${result.error}). Retrying in 2 seconds...`);
-            await new Promise(r => setTimeout(r, 2000));
-            result = await performAuth();
+      script.onerror = function() {
+        if (!isDone) {
+          isDone = true;
+          clearTimeout(timeoutTimer);
+          script.remove();
+          delete window[callbackName];
+          resolve({ networkFailed: true, error: 'network_error' });
         }
+      };
 
-        if (!result.networkFailed) {
-            if (result.data && result.data.success) {
-                return result.data; // Server confirmed good login
-            } else {
-                return { success: false, error: result.data?.error || 'Invalid username or password' };
-            }
-        } else {
-            return { success: false, error: 'Server unreachable. Please check your internet connection or turn off your ad-blocker.' };
-        }
+      script.src = `${authUrl}&callback=${callbackName}`;
+      document.head.appendChild(script);
+    });
+  };
 
-      } catch (error) {
-        console.error('Authentication exception:', error);
-        return {
-          success: false,
-          error: 'An unexpected internal error occurred. Please refresh the page and try again.'
-        };
-      }
+  try {
+    let result = await performAuth();
+    
+    // RETRY LOGIC: If connection drops prematurely, automatically try ONE more time.
+    if (result.networkFailed) {
+      console.warn(`Auth hit a snag (${result.error}). Retrying in 2 seconds...`);
+      await new Promise(r => setTimeout(r, 2000));
+      result = await performAuth();
     }
 
+    if (!result.networkFailed) {
+      // FIX IS HERE: Return the exact data the server sends back, including the lockout countdown!
+      if (result.data) {
+        return result.data; 
+      } else {
+        return { success: false, error: 'Invalid username or password' };
+      }
+    } else {
+      return { success: false, error: 'Server unreachable. Please check your internet connection or turn off your ad-blocker.' };
+    }
+    
+  } catch (error) {
+    console.error('Authentication exception:', error);
+    return { success: false, error: 'An unexpected internal error occurred. Please refresh the page and try again.' };
+  }
+}
     // ========== HELPER FUNCTIONS ==========
     function formatDisplayDate(val) {
       if (!val) return "Not available";
