@@ -3985,25 +3985,22 @@ body.light-mode .pdf-name {
         font-size: 0.75rem;
       }
     }
-
 /* ========================================== */
-    /* REDUCE TOP SPACING ON MOBILE ONLY          */
+    /* REDUCE TOP GREY AREA ON MOBILE (EXCEPT LOGIN) */
     /* ========================================== */
     @media (max-width: 767px) {
-      /* Targets the main container immediately after your top navigation */
-      .top-nav + div, 
-      #header + div, 
-      .main-content, 
-      #main-content,
-      .container {
-        padding-top: 15px !important; 
-        margin-top: 10px !important;
+      /* * This targets your main app screens (Class, Subject, Quiz) 
+       * but strictly PREVENTS any changes to the login screen.
+       */
+      body > div:not(#login-container):not(#pwa-install-prompt):not(#video-player-modal):not(#force-logout-popup) {
+        margin-top: 60px !important; /* Pulls the screen up right beneath the header */
+        padding-top: 10px !important; /* Reduces the inner top gap */
       }
 
-      /* If the gap is caused by the Welcome text itself */
+      /* Target the welcome text specifically to tighten that gap */
       .welcome-section, 
-      #dashboard h2,
-      .dashboard-header {
+      .dashboard-header,
+      #dashboard h2 {
         margin-top: 5px !important;
         padding-top: 5px !important;
       }
