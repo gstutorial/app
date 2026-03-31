@@ -3985,6 +3985,30 @@ body.light-mode .pdf-name {
         font-size: 0.75rem;
       }
     }
+
+/* ========================================== */
+    /* REDUCE TOP SPACING ON MOBILE ONLY          */
+    /* ========================================== */
+    @media (max-width: 767px) {
+      /* Targets the main container immediately after your top navigation */
+      .top-nav + div, 
+      #header + div, 
+      .main-content, 
+      #main-content,
+      .container {
+        padding-top: 15px !important; 
+        margin-top: 10px !important;
+      }
+
+      /* If the gap is caused by the Welcome text itself */
+      .welcome-section, 
+      #dashboard h2,
+      .dashboard-header {
+        margin-top: 5px !important;
+        padding-top: 5px !important;
+      }
+    }
+    
   </style>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
