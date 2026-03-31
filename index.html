@@ -1492,7 +1492,8 @@ body.light-mode .pdf-name {
     /* ===== INSTALLED APP FIX (CENTERS ON MOBILE) ===== */
     @media (display-mode: standalone) {
       #login-container {
-        padding: 0; /* Removes the 80px gap once installed so it centers perfectly */
+        padding: 0; /* Removes the 80px gap */
+        height: 100vh; /* Locks to exact screen height, preventing the downward shift on refresh */
       }
     }
 
