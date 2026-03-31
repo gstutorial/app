@@ -1484,11 +1484,17 @@ body.light-mode .pdf-name {
       align-items: center;
       z-index: 990;
       margin: 0;
-      /* Left and Right padding set to 0 to restore original width, bottom kept at 100px to push it up */
-      padding: 0 0 100px 0; 
+      padding: 0 0 100px 0; /* Keeps it pushed up on mobile */
       box-sizing: border-box;
+      overflow-y: auto; /* Safety net: allows scroll ONLY if screen is too tiny to fit the form */
     }
 
+    /* ===== LAPTOP/DESKTOP FIX ===== */
+    @media (min-width: 768px) {
+      #login-container {
+        padding: 20px; /* Removes the 100px bottom padding on laptops so the full form shows */
+      }
+    }
     body.light-mode #login-container {
       background: radial-gradient(circle at 50% 50%, #ffffff 0%, #f3f4f6 100%);
     }
