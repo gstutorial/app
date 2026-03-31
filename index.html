@@ -11728,19 +11728,18 @@ if (isScreenVisible('video-container')) {
   <div id="force-logout-popup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:99999; justify-content:center; align-items:center;">
     </div>
 
-<div id="pwa-install-prompt" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; border: 1px solid #3b82f6; border-radius: 12px; padding: 15px 20px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 999999; align-items: center; justify-content: space-between; gap: 15px;">
+<div id="pwa-install-prompt" style="display: none; position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); background: #1e293b; border: 1px solid #3b82f6; border-radius: 12px; padding: 12px 10px; width: 96%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 999999; align-items: center; justify-content: space-between; gap: 8px;">
     
-    <div style="display: flex; align-items: center; gap: 12px;">
-      <img src="icon-192.png" alt="Logo" style="width: 40px; height: 40px; border-radius: 8px;">
-      <div style="display: flex; flex-direction: column;">
-        <span style="color: #e5e7eb; font-weight: 600; font-size: 1rem;">Install G.S.Tutorial</span>
-        <span style="color: #9ca3af; font-size: 0.8rem;">Add to home screen</span>
+    <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
+      <img src="icon-192.png" alt="Logo" style="width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0;">
+      <div style="display: flex; flex-direction: column; overflow: hidden;">
+        <span style="color: #e5e7eb; font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Install G.S. Tutorial</span>
+        <span style="color: #9ca3af; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Add to home screen</span>
       </div>
     </div>
 
-    <div style="display: flex; gap: 10px; align-items: center;">
-      <button id="pwa-install-btn" style="background: linear-gradient(to right, #3b82f6, #2563eb); color: white; border: none; border-radius: 8px; padding: 0 20px; height: 38px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); display: flex; justify-content: center; align-items: center; text-align: center;">Install</button>
-      
+    <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
+      <button id="pwa-install-btn" style="background: linear-gradient(to right, #3b82f6, #2563eb); color: white; border: none; border-radius: 8px; padding: 0 16px; height: 38px; font-weight: 600; font-size: 0.9rem; cursor: pointer; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); display: flex; justify-content: center; align-items: center;">Install</button>
       <button id="pwa-close-btn" style="background: #ef4444; color: white; border: none; border-radius: 8px; width: 38px; height: 38px; display: flex; justify-content: center; align-items: center; font-size: 1.4rem; cursor: pointer; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);">&times;</button>
     </div>
     
