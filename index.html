@@ -1492,11 +1492,16 @@ body.light-mode .pdf-name {
     /* ===== LAPTOP/DESKTOP FIX ===== */
     @media (min-width: 768px) {
       #login-container {
-        padding: 20px; /* Removes the 100px bottom padding on laptops so the full form shows */
+        padding: 10px; /* Removes the heavy mobile bottom padding */
+        align-items: flex-start; /* Safety fix: Prevents the browser from hiding the bottom of the form */
       }
-    }
-    body.light-mode #login-container {
-      background: radial-gradient(circle at 50% 50%, #ffffff 0%, #f3f4f6 100%);
+      
+      /* Target the white login box directly and shrink it */
+      #login-container > div {
+        margin: auto; /* Centers it perfectly on the screen */
+        transform: scale(0.90); /* Shrinks the ENTIRE form proportionately to 85% of its normal size */
+        transform-origin: center center;
+      }
     }
     
     .login-box {
