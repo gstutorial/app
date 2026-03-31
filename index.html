@@ -3946,6 +3946,28 @@ body.light-mode .pdf-name {
       }
     }
   </style>
+
+<style>
+    /* ========================================== */
+    /* LOCK LOGIN SCREEN (PREVENT SCROLL)         */
+    /* ========================================== */
+    #auth-screen.active {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;          /* Fallback for older browsers */
+      height: 100dvh;        /* Dynamic Viewport Height prevents mobile address bar scroll */
+      overflow: hidden;      /* Kills all scrolling */
+      display: flex !important;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #0f172a;
+      z-index: 9999;         /* Keeps it on top, but below your PWA banner */
+    }
+  </style>
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 </head>
