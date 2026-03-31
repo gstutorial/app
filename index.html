@@ -3986,23 +3986,36 @@ body.light-mode .pdf-name {
       }
     }
 /* ========================================== */
-    /* REDUCE TOP GREY AREA ON MOBILE (EXCEPT LOGIN) */
+    /* FIXED HEADER & TIGHT CONTENT ON MOBILE     */
     /* ========================================== */
     @media (max-width: 767px) {
-      /* * This targets your main app screens (Class, Subject, Quiz) 
-       * but strictly PREVENTS any changes to the login screen.
-       */
-      body > div:not(#login-container):not(#pwa-install-prompt):not(#video-player-modal):not(#force-logout-popup) {
-        margin-top: 60px !important; /* Pulls the screen up right beneath the header */
-        padding-top: 10px !important; /* Reduces the inner top gap */
+      /* 1. Ensure the top header stays pinned at the absolute top */
+      .top-nav, header, [style*="position: fixed; top: 0"] {
+        top: 0 !important;
+        position: fixed !important;
+        width: 100% !important;
+        z-index: 1000 !important;
       }
 
-      /* Target the welcome text specifically to tighten that gap */
-      .welcome-section, 
-      .dashboard-header,
-      #dashboard h2 {
-        margin-top: 5px !important;
+      /* 2. Pull only the scrollable content area up */
+      /* This targets the dashboard/main area specifically */
+      #dashboard, .main-container, .content-wrapper {
+        margin-top: 60px !important; /* Adjust this number if your header is taller/shorter */
         padding-top: 5px !important;
+      }
+
+      /* 3. Tighten the gap for the welcome text and headers */
+      .welcome-section, 
+      .dashboard-header, 
+      h2[style*="margin-top"] {
+        margin-top: 0 !important;
+        padding-top: 5px !important;
+      }
+      
+      /* 4. Ensure grid items (Class/Subject) use the space well */
+      .grid-container, .card-grid {
+        gap: 10px !important;
+        padding: 10px !important;
       }
     }
     
