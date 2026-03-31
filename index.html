@@ -1471,20 +1471,22 @@ body.light-mode .pdf-name {
       gap: 20px;
     }
 
-    /* ===== FIXED LOGIN SCREEN (NO SCROLL) ===== */
+   /* ===== FIXED LOGIN SCREEN (NO SCROLL) ===== */
     #login-container {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
-      height: 100dvh; /* Dynamic height locks to mobile viewport */
+      height: 100dvh;
       background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 990; /* Keeps it above other elements but below PWA banner */
+      z-index: 990;
       margin: 0;
-      padding: 20px;
+      /* Added extra padding to the bottom (120px) to push the form up, and box-sizing so it doesn't break the height */
+      padding: 20px 20px 120px 20px; 
+      box-sizing: border-box;
     }
 
     body.light-mode #login-container {
