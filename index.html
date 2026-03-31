@@ -1471,7 +1471,7 @@ body.light-mode .pdf-name {
       gap: 20px;
     }
 
-   /* ===== FIXED LOGIN SCREEN (NO SCROLL) ===== */
+  /* ===== FIXED LOGIN SCREEN (NO SCROLL) ===== */
     #login-container {
       position: fixed;
       top: 0;
@@ -1491,9 +1491,16 @@ body.light-mode .pdf-name {
 
     /* ===== INSTALLED APP FIX (CENTERS ON MOBILE) ===== */
     @media (display-mode: standalone) {
+      /* Stop the bouncy "pull-to-refresh" effect so it feels like a native app */
+      body, html {
+        overscroll-behavior-y: none; 
+      }
+      
       #login-container {
-        padding: 0; /* Removes the 80px gap */
-        height: 100vh; /* Locks to exact screen height, preventing the downward shift on refresh */
+        padding: 0; /* Removes the 100px gap */
+        height: auto; /* Turns off the buggy vh calculation */
+        top: 0;
+        bottom: 0; /* Pins the form exactly to the top and bottom edges */
       }
     }
 
