@@ -11728,8 +11728,82 @@ if (isScreenVisible('video-container')) {
   <div id="force-logout-popup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:99999; justify-content:center; align-items:center;">
     </div>
 
+<div id="pwa-install-prompt" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; border: 1px solid #3b82f6; border-radius: 12px; padding: 15px 20px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 999999; align-items: center; justify-content: space-between; gap: 15px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <img src="icon-192.png" alt="Logo" style="width: 40px; height: 40px; border-radius: 8px;">
+      <div style="display: flex; flex-direction: column;">
+        <span style="color: #e5e7eb; font-weight: 600; font-size: 1rem;">Install G.S. Tutorial</span>
+        <span style="color: #9ca3af; font-size: 0.8rem;">Add to home screen for quick access</span>
+      </div>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button id="pwa-close-btn" style="background: transparent; color: #9ca3af; border: none; font-size: 1.5rem; cursor: pointer; padding: 0 5px;">&times;</button>
+      <button id="pwa-install-btn" style="background: linear-gradient(to right, #3b82f6, #2563eb); color: white; border: none; border-radius: 8px; padding: 8px 15px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);">Install</button>
+    </div>
+  </div>
+
   <script>
-    // Your JavaScript starts here
-  <!-- NO SERVICE WORKER REGISTRATION - Completely disabled -->
+    // ==========================================
+    // PWA INSTALL LOGIC (NO CACHING)
+    // ==========================================
+    
+    // 1. Register the Network-Only Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(reg => console.log('Network-only SW registered successfully'))
+          .catch(err => console.log('SW registration failed', err));
+      });
+    }
+
+    // 2. Handle the Install Prompt automatically
+    let deferredPrompt;
+    const installPromptEl = document.getElementById('pwa-install-prompt');
+    const installBtn = document.getElementById('pwa-install-btn');
+    const closeBtn = document.getElementById('pwa-close-btn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent the browser's default mini-infobar from appearing
+      e.preventDefault();
+      // Save the event so it can be triggered later
+      deferredPrompt = e;
+      
+      // Automatically show our custom HTML popup
+      if (installPromptEl) {
+        installPromptEl.style.display = 'flex';
+      }
+    });
+
+    // 3. User clicks Install on our banner
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        installPromptEl.style.display = 'none';
+        
+        if (deferredPrompt) {
+          // Trigger the NATIVE browser installation prompt
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          console.log(`User response to native prompt: ${outcome}`);
+          deferredPrompt = null;
+        }
+      });
+    }
+
+    // 4. User clicks X on our banner
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        installPromptEl.style.display = 'none';
+      });
+    }
+
+    // 5. Hide everything if installed successfully
+    window.addEventListener('appinstalled', () => {
+      if (installPromptEl) {
+        installPromptEl.style.display = 'none';
+      }
+      deferredPrompt = null;
+      console.log('App was successfully installed to home screen!');
+    });
+  </script>
 </body>
 </html>
