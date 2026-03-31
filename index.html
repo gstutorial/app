@@ -3985,40 +3985,7 @@ body.light-mode .pdf-name {
         font-size: 0.75rem;
       }
     }
-/* ========================================== */
-    /* FIXED HEADER & TIGHT CONTENT ON MOBILE     */
-    /* ========================================== */
-    @media (max-width: 767px) {
-      /* 1. Ensure the top header stays pinned at the absolute top */
-      .top-nav, header, [style*="position: fixed; top: 0"] {
-        top: 0 !important;
-        position: fixed !important;
-        width: 100% !important;
-        z-index: 1000 !important;
-      }
 
-      /* 2. Pull only the scrollable content area up */
-      /* This targets the dashboard/main area specifically */
-      #dashboard, .main-container, .content-wrapper {
-        margin-top: 60px !important; /* Adjust this number if your header is taller/shorter */
-        padding-top: 5px !important;
-      }
-
-      /* 3. Tighten the gap for the welcome text and headers */
-      .welcome-section, 
-      .dashboard-header, 
-      h2[style*="margin-top"] {
-        margin-top: 0 !important;
-        padding-top: 5px !important;
-      }
-      
-      /* 4. Ensure grid items (Class/Subject) use the space well */
-      .grid-container, .card-grid {
-        gap: 10px !important;
-        padding: 10px !important;
-      }
-    }
-    
   </style>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
