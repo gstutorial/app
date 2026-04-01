@@ -219,7 +219,7 @@ const LOGO_CONFIG = {
 
 // Admin Notification Settings (can be overridden by user role)
 const ADMIN_CONFIG = {
-    NOTIFY_ON_LOGIN: false,      // Whether to notify admin on user login
+    NOTIFY_ON_LOGIN: true,      // Whether to notify admin on user login
     NOTIFY_ON_QUIZ_RESULT: false, // Whether to notify admin on quiz completion
     NOTIFY_ON_SUBSCRIPTION_EXPIRY: true,
     NOTIFY_ON_ERROR: true,
