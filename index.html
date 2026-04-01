@@ -4047,7 +4047,7 @@ body.light-mode .pdf-name {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 </head>
 <body>
-  
+ 
   <!-- Image Preloading Overlay -->
   <div id="preload-overlay" class="preload-indicator">
     <div style="font-size: 1.5rem; color: #60a5fa; margin-bottom: 20px;">Loading Images...</div>
@@ -4145,43 +4145,43 @@ body.light-mode .pdf-name {
     </div>
   </div>
   <div class="menu-overlay" id="menuOverlay"></div>
-  
-<div class="main-content">
-    <div id="login-container">
-      <div class="login-box" style="position: relative;">
-        
-        <button id="force-refresh-btn" onclick="forceAppRefresh()" style="position: absolute; top: 15px; right: 15px; background: transparent; border: 1px solid rgba(59, 130, 246, 0.5); color: #60a5fa; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; transition: all 0.2s ease; padding: 0;" title="Force Update App">
-          <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="23 4 23 10 17 10"></polyline>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-          </svg>
-        </button>
-        <div class="login-header">
-          <img src="logo.png" alt="G. S. Tutorial Logo" class="logo-login">
-          <div class="login-title">G. S. Tutorial Login</div>
-          <div class="login-subtitle">Created by Gobind Sharma</div>
-        </div>
-        
-        <form id="login-form" class="login-form">
-          <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" id="username" class="form-input" placeholder="Enter your username" required autocomplete="username">
-          </div>
-          
-          <div class="form-group">
-            <label for="password">Password</label>
-            <div class="password-input-wrapper">
-              <input type="password" id="password" class="form-input" placeholder="Enter your password" required autocomplete="current-password">
-              <button type="button" class="password-toggle" id="password-toggle" aria-label="Show password">👁️</button>
-            </div>
-            <div id="attempt-counter" class="attempt-counter" style="display: none;">
-              Attempts remaining: <span id="attempts-remaining">3</span>
-            </div>
-            <div id="cooldown-message" class="cooldown-message" style="display: none;">
-              Too many failed attempts. Please wait <span id="cooldown-timer">30</span> seconds.
-            </div>
-          </div>
+
+ <div class="main-content">
+    <div id="login-container">
+      <div class="login-box" style="position: relative;">
+        
+        <button id="force-refresh-btn" onclick="forceAppRefresh()" style="position: absolute; top: 15px; right: 15px; background: transparent; border: 1px solid rgba(59, 130, 246, 0.5); color: #60a5fa; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; transition: all 0.2s ease; padding: 0;" title="Force Update App">
+          <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+        </button>
+        <div class="login-header">
+          <img src="logo.png" alt="G. S. Tutorial Logo" class="logo-login">
+          <div class="login-title">G. S. Tutorial Login</div>
+          <div class="login-subtitle">Created by Gobind Sharma</div>
+        </div>
+        
+        <form id="login-form" class="login-form">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" class="form-input" placeholder="Enter your username" required autocomplete="username">
+          </div>
           
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="password-input-wrapper">
+              <input type="password" id="password" class="form-input" placeholder="Enter your password" required autocomplete="current-password">
+              <button type="button" class="password-toggle" id="password-toggle" aria-label="Show password">👁️</button>
+            </div>
+            <div id="attempt-counter" class="attempt-counter" style="display: none;">
+              Attempts remaining: <span id="attempts-remaining">3</span>
+            </div>
+            <div id="cooldown-message" class="cooldown-message" style="display: none;">
+              Too many failed attempts. Please wait <span id="cooldown-timer">30</span> seconds.
+            </div>
+          </div>
+                   
           <div id="login-error" class="login-error"></div>
           
           <button type="submit" class="login-btn" id="login-btn">Login</button>
@@ -5494,7 +5494,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyrgS4n97FpZ4KqnakRYEptUapquPEUi6chvRvdBBfJ7UdClb-RcBSzAEEV1nbbgqWlXA/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxx06U1kYajeD38MH25ZpeE2rIu7IQ5vIfh29BNpu2_1HB60ts85a0OkCk0RC8zLE2M/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNcl1-_YD6coQ8OPaY1t_wrPpC6sNN2UCGCsIS4WL124JcQAkz2jKLXcyhJbCka0aj/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -7873,7 +7873,11 @@ function validateUserAccount(user) {
       }, 400); 
     }
 
-       
+    // ========== LOGIN FUNCTION ==========
+    async function login(user, isRestore = false) {
+      const validation = validateUserAccount(user);
+      // ... rest of your login code ...
+    
 // ========== LOGIN FUNCTION ==========
     // 🚨 ADDED "async" HERE
     async function login(user, isRestore = false) {
