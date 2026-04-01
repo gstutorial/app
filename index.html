@@ -4047,12 +4047,7 @@ body.light-mode .pdf-name {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 </head>
 <body>
-  <button id="force-refresh-btn" onclick="forceAppRefresh()" style="position: fixed; top: 15px; right: 15px; background: rgba(30, 41, 59, 0.9); border: 1px solid #3b82f6; color: #60a5fa; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: transform 0.2s ease;" title="Force Update App">
-    <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="23 4 23 10 17 10"></polyline>
-      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-    </svg>
-  </button>
+  
   <!-- Image Preloading Overlay -->
   <div id="preload-overlay" class="preload-indicator">
     <div style="font-size: 1.5rem; color: #60a5fa; margin-bottom: 20px;">Loading Images...</div>
@@ -4151,11 +4146,16 @@ body.light-mode .pdf-name {
   </div>
   <div class="menu-overlay" id="menuOverlay"></div>
 
-  <!-- Main Content Area -->
-  <div class="main-content">
-    <!-- Login Container -->
+<div class="main-content">
     <div id="login-container">
-      <div class="login-box">
+      <div class="login-box" style="position: relative;">
+        
+        <button id="force-refresh-btn" onclick="forceAppRefresh()" style="position: absolute; top: 15px; right: 15px; background: transparent; border: 1px solid rgba(59, 130, 246, 0.5); color: #60a5fa; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; transition: all 0.2s ease; padding: 0;" title="Force Update App">
+          <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+        </button>
         <div class="login-header">
           <img src="logo.png" alt="G. S. Tutorial Logo" class="logo-login">
           <div class="login-title">G. S. Tutorial Login</div>
@@ -4181,6 +4181,7 @@ body.light-mode .pdf-name {
               Too many failed attempts. Please wait <span id="cooldown-timer">30</span> seconds.
             </div>
           </div>
+         
           
           <div id="login-error" class="login-error"></div>
           
