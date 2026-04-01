@@ -4047,6 +4047,12 @@ body.light-mode .pdf-name {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 </head>
 <body>
+  <button id="force-refresh-btn" onclick="forceAppRefresh()" style="position: fixed; top: 15px; right: 15px; background: rgba(30, 41, 59, 0.9); border: 1px solid #3b82f6; color: #60a5fa; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: transform 0.2s ease;" title="Force Update App">
+    <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="23 4 23 10 17 10"></polyline>
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+    </svg>
+  </button>
   <!-- Image Preloading Overlay -->
   <div id="preload-overlay" class="preload-indicator">
     <div style="font-size: 1.5rem; color: #60a5fa; margin-bottom: 20px;">Loading Images...</div>
@@ -7836,7 +7842,42 @@ function validateUserAccount(user) {
 
   return { valid: false, error: 'unknown' };
 }
-   
+
+// ========== FORCE APP UPDATE / REFRESH ==========
+    function forceAppRefresh() {
+      // 1. Spin the icon for visual feedback
+      const icon = document.getElementById('refresh-icon');
+      if (icon) icon.style.transform = 'rotate(180deg)';
+      icon.style.transition = 'transform 0.5s ease';
+
+      // 2. Clear all Cache Storage
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (let name of names) caches.delete(name);
+        });
+      }
+
+      // 3. Unregister the Service Worker so it installs fresh
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (let registration of registrations) {
+            registration.unregister();
+          }
+        });
+      }
+
+      // 4. Force a hard reload by appending a unique timestamp to the URL
+      setTimeout(() => {
+        const currentUrl = window.location.href.split('?')[0];
+        window.location.replace(currentUrl + '?v=' + new Date().getTime());
+      }, 400); 
+    }
+
+    // ========== LOGIN FUNCTION ==========
+    async function login(user, isRestore = false) {
+      const validation = validateUserAccount(user);
+      // ... rest of your login code ...
+    
 // ========== LOGIN FUNCTION ==========
     // 🚨 ADDED "async" HERE
     async function login(user, isRestore = false) {
@@ -7863,6 +7904,7 @@ function validateUserAccount(user) {
       accountConfigErrorEl.style.display = "none";
       subscriptionExpiredEl.style.display = "none";
       classSelectionEl.style.display = "block";
+      document.getElementById('force-refresh-btn').style.display = "none";
 
       const roleDisplay = user.role === 'Admin' ? 'Admin' : (user.role === 'Student' ? 'Student' : user.role);
       greetingMessageEl.innerHTML = `Welcome, <span>${user.name}</span> (${roleDisplay})`;
@@ -7925,6 +7967,7 @@ function validateUserAccount(user) {
       accountConfigErrorEl.style.display = "none";
       subscriptionExpiredEl.style.display = "none";
       loginContainerEl.style.display = "flex";
+      document.getElementById('force-refresh-btn').style.display = "flex";
 
       loginFormEl.reset();
       passwordEl.type = 'password';
