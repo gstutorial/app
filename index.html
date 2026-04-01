@@ -4147,8 +4147,26 @@ body.light-mode .pdf-name {
   <div class="menu-overlay" id="menuOverlay"></div>
 
 <div class="main-content">
+    
     <div id="login-container">
       <div class="login-box" style="position: relative;">
+        
+        <style>
+          #force-refresh-btn {
+            -webkit-tap-highlight-color: transparent; /* Removes mobile blue square tap highlight */
+            outline: none; /* Removes desktop focus outline */
+          }
+          #force-refresh-btn:focus, #force-refresh-btn:active {
+            outline: none;
+            background: rgba(59, 130, 246, 0.1) !important; /* Gentle rounded background */
+          }
+          @keyframes spinFast {
+            100% { transform: rotate(360deg); }
+          }
+          .spin-anim {
+            animation: spinFast 0.8s linear infinite !important;
+          }
+        </style>
         
         <button id="force-refresh-btn" onclick="forceAppRefresh()" style="position: absolute; top: 15px; right: 15px; background: transparent; border: 1px solid rgba(59, 130, 246, 0.5); color: #60a5fa; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; transition: all 0.2s ease; padding: 0;" title="Force Update App">
           <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -4181,6 +4199,13 @@ body.light-mode .pdf-name {
               Too many failed attempts. Please wait <span id="cooldown-timer">30</span> seconds.
             </div>
           </div>
+
+          <button type="submit" id="login-btn" class="submit-btn" style="width: 100%; margin-top: 15px;">Login</button>
+        </form>
+
+      </div>
+    </div>
+  </div>
          
           
           <div id="login-error" class="login-error"></div>
