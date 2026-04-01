@@ -5564,7 +5564,7 @@ if (isAdmin() || isEditor()) {
     const COOLDOWN_TIME = 30;
     let isOnCooldown = false;
     let cooldownTimer = null;
-    
+    let classLoadFailCount = 0;
     // Navigation variables
     let currentClass = "";
     let currentSubject = "";
@@ -7381,63 +7381,76 @@ async function showPlansPopup() {
 }
     
     // ========== LOAD CLASSES ==========
-    async function loadClasses() {
-      try {
-        classGridEl.innerHTML = `
-          <div class="loading-container">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Loading classes...</div>
-            <div class="loading-subtext">Please wait</div>
-          </div>
-        `;
+async function loadClasses() {
+  try {
+    classGridEl.innerHTML = `
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading classes...</div>
+        <div class="loading-subtext">Please wait</div>
+      </div>
+    `;
 
-        // This call MUST now send the token internally (check your loadAllConfigAtOnce)
-        const allData = await loadAllConfigAtOnce();
-        
-        // 1. IMPROVED ERROR CHECKING
-        // If the server rejected the token, allData will be null or have an error
-        if (!allData || !allData.success) {
-           const errorMsg = (allData && allData.error) ? allData.error : "No classes data found";
-           throw new Error(errorMsg);
-        }
-
-        let availableClasses = allData.classes || [];
-
-        // 2. ROLE-BASED FILTERING
-        // Ensuring we only show classes assigned to the student
-        if (currentUser && currentUser.role !== 'Admin') {
-          const assignedClasses = currentUser.validatedAssignedClasses || [];
-          availableClasses = availableClasses.filter(cls => 
-            assignedClasses.some(assigned => assigned.toString().trim() === cls.id.toString().trim())
-          );
-        }
-
-        if (availableClasses.length === 0) {
-           classGridEl.innerHTML = `<div class="no-data">No classes assigned to your account.</div>`;
-           return;
-        }
-
-        renderClassGrid(availableClasses);
-
-      } catch (error) {
-        console.error("Error in loadClasses:", error);
-        
-        // 3. SECURITY REDIRECT
-        // If the error is an Unauthorized error, the session is fake/expired
-        if (error.message.includes("Unauthorized")) {
-          alert("Your session has expired. Please log in again.");
-          logout();
-          return;
-        }
-
-        classGridEl.innerHTML = `
-          <div style="text-align: center; padding: 40px; color: #fca5a5;">
-            <div style="font-size: 1.2rem; margin-bottom: 10px;">Error: ${error.message}</div>
-            <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Retry</button>
-          </div>
-        `;
-      }
+    // This call MUST now send the token internally
+    const allData = await loadAllConfigAtOnce();
+    
+    // 1. IMPROVED ERROR CHECKING
+    if (!allData || !allData.success) {
+       const errorMsg = (allData && allData.error) ? allData.error : "No classes data found";
+       throw new Error(errorMsg);
     }
+
+    let availableClasses = allData.classes || [];
+
+    // 2. ROLE-BASED FILTERING
+    if (currentUser && currentUser.role !== 'Admin') {
+      const assignedClasses = currentUser.validatedAssignedClasses || [];
+      availableClasses = availableClasses.filter(cls => 
+        assignedClasses.some(assigned => assigned.toString().trim() === cls.id.toString().trim())
+      );
+    }
+
+    if (availableClasses.length === 0) {
+       classGridEl.innerHTML = `<div class="no-data">No classes assigned to your account.</div>`;
+       return;
+    }
+
+    // SUCCESS: Reset the failure counter!
+    classLoadFailCount = 0; 
+    renderClassGrid(availableClasses);
+
+  } catch (error) {
+    console.error("Error in loadClasses:", error);
+    
+    // 3. SECURITY REDIRECT
+    if (error.message.includes("Unauthorized")) {
+      alert("Your session has expired. Please log in again.");
+      logout();
+      return;
+    }
+
+    // FAILURE: Increment the counter
+    classLoadFailCount++; 
+
+    // 4. DYNAMIC BUTTON LOGIC (Retry vs Relogin)
+    let actionButtonHtml = '';
+    
+    if (classLoadFailCount >= 2) {
+      // After 2 fails, force them to relogin for security/fresh state
+      actionButtonHtml = `<button onclick="logout()" style="margin-top: 20px; padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Relogin</button>`;
+    } else {
+      // First fail, simulate clicking the header refresh button (soft refresh)
+      actionButtonHtml = `<button onclick="document.getElementById('refreshAppBtn').click()" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Retry</button>`;
+    }
+
+    classGridEl.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: #fca5a5;">
+        <div style="font-size: 1.2rem; margin-bottom: 10px;">Error: ${error.message}</div>
+        ${actionButtonHtml}
+      </div>
+    `;
+  }
+}
     function renderClassGrid(classes) {
       classGridEl.innerHTML = "";
 
