@@ -7307,7 +7307,7 @@ async function showPlansPopup() {
   
   try {
     // Fetch directly from the provided Google Sheet GID
-    const url = `https://docs.google.com/spreadsheets/d/1G6tTHT56T6FmqOwOvVFVPoVqoSs-TSBz_-SiW9imQvk/gviz/tq?tqx=out:json&headers=1&gid=1256023162&_t=${Date.now()}`;
+    const url = `https://docs.google.com/spreadsheets/d/1L06C6NsTDLtAUYIBNyDrZ0DnThg3Ige_Bo0lAYsXE4k/gviz/tq?tqx=out:json&headers=1&gid=275970711_t=${Date.now()}`;
     const response = await fetch(url);
     const dataText = await response.text();
     const jsonData = JSON.parse(dataText.substring(47).slice(0, -2));
