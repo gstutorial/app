@@ -7324,7 +7324,11 @@ async function showPlansPopup() {
       if (!row || !row.c) continue;
       
       const duration = row.c[0] ? (row.c[0].v ? row.c[0].v.toString() : '') : '';
-      const price = row.c[1] ? (row.c[1].v ? row.c[1].v.toString() : '') : '';
+      // Get the price and add the Rupee symbol if it doesn't already have one
+      let price = row.c[1] ? (row.c[1].v ? row.c[1].v.toString() : '') : '';
+      if (price && !price.includes('₹')) {
+        price = '₹ ' + price;
+      }
       
       if(duration) {
         const usernameStr = currentUser ? currentUser.username : 'Guest';
