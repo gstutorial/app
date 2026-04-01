@@ -1575,15 +1575,35 @@ body.light-mode .pdf-name {
     }
     
     .login-box {
-      background: #020617;
-      border-radius: 18px;
-      padding: 30px;
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      width: 100%;
-      max-width: 420px;
-      position: relative;
-    }
+  background: #020617;
+  border-radius: 18px;
+  padding: 30px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  width: 100%;
+  max-width: 420px;
+  position: relative; /* Add this line! */
+}
+
+/* --- PASTE THIS NEW CODE HERE, STILL INSIDE THE <style> TAGS --- */
+
+/* Fixes for the Force Refresh Button */
+#force-refresh-btn {
+  -webkit-tap-highlight-color: transparent; 
+  outline: none; 
+}
+
+/* Continuous spin animation */
+#force-refresh-btn.spinning svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* --------------------------------------------------------------- */
 
     body.light-mode .login-box {
       background: #ffffff;
@@ -4607,16 +4627,7 @@ body.light-mode .pdf-name {
           </div>
         </div>
        <style>
-         /* Fixes for the Force Refresh Button */
-#force-refresh-btn {
-  -webkit-tap-highlight-color: transparent; /* Removes the mobile square highlight */
-  outline: none; /* Removes desktop focus ring */
-}
-
-/* Continuous spin animation */
-#force-refresh-btn.spinning svg {
-  animation: spin 1s linear infinite;
-}
+       
           .option-text-input {
               display: block !important;
               width: 100% !important;
