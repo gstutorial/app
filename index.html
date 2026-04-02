@@ -8310,7 +8310,7 @@ async function registerBiometrics() {
         rp: { name: "G.S. Tutorial", id: rpId }, 
         user: { id: userId, name: currentUser.username, displayName: currentUser.username }, 
         pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }], 
-        authenticatorSelection: { userVerification: "required" },
+        authenticatorSelection: { residentKey: "preferred", userVerification: "preferred" },
         timeout: 60000 
       } 
     });
@@ -8386,7 +8386,7 @@ async function attemptFingerprintLogin() {
       publicKey: {
         challenge: challenge,
         rpId: rpId,
-        userVerification: "required",
+        userVerification: "preferred",
         timeout: 60000
       }
     });
