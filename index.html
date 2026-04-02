@@ -4160,6 +4160,14 @@ body.light-mode .pdf-name {
       <div class="current-user-name" id="sideUsername">Guest</div>
     </div>
 
+    <div onclick="openSettingsModal()" style="margin: 0 0 12px 0; padding: 12px 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: #e5e7eb; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s;">
+      ⚙️ Account Settings
+    </div>
+
+    <div onclick="openSettingsModal()" style="margin: 0 0 12px 0; padding: 12px 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: #e5e7eb; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s;">
+      ⚙️ Account Settings
+    </div>
+
     <div class="logout-side" id="sideLogoutBtn">
       🔓 Logout
     </div>
@@ -4208,6 +4216,10 @@ body.light-mode .pdf-name {
           <div id="login-error" class="login-error"></div>
           
           <button type="submit" class="login-btn" id="login-btn">Login</button>
+          
+          <button type="button" id="fingerprint-login-btn" onclick="attemptFingerprintLogin()" style="display: none; width: 100%; margin-top: 15px; padding: 12px; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+            👆 Login with Fingerprint
+          </button>
           
           <a href="https://wa.me/919706195457?text=Hello%20Admin,%20I%20need%20login%20credentials%20for%20G.S.%20Tutorial%20App.%20Please%20create%20username%20and%20password%20for%20me." 
              class="request-credentials-btn" target="_blank">
@@ -4981,6 +4993,33 @@ body.light-mode .video-title {
       <div class="modal-footer">
         <button id="editor-save-btn" class="btn-primary">Save Changes</button>
         <button id="editor-cancel-btn" class="btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <div id="settings-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <h2 style="font-size: 1.5rem; background: linear-gradient(90deg, #3b82f6 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Account Settings</h2>
+        <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+      </div>
+      
+      <div class="modal-body">
+        <h3 style="border-bottom: 1px solid rgba(148, 163, 184, 0.3); padding-bottom: 5px; color: #e5e7eb; font-size: 1.1rem; margin-top: 0;">Change Password</h3>
+        
+        <div class="editor-row">
+          <input type="password" id="old-pwd" placeholder="Current Password" style="width: 100%; padding: 12px 16px; margin-bottom: 10px; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: white; box-sizing: border-box; outline: none;">
+          <input type="password" id="new-pwd" placeholder="New Password" style="width: 100%; padding: 12px 16px; margin-bottom: 10px; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: white; box-sizing: border-box; outline: none;">
+          <input type="password" id="confirm-pwd" placeholder="Confirm New Password" style="width: 100%; padding: 12px 16px; margin-bottom: 15px; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: white; box-sizing: border-box; outline: none;">
+          <button onclick="submitPasswordChange()" class="btn-primary" style="width: 100%;">Update Password</button>
+        </div>
+
+        <h3 style="border-bottom: 1px solid rgba(148, 163, 184, 0.3); padding-bottom: 5px; color: #e5e7eb; font-size: 1.1rem; margin-top: 25px;">Biometric Login</h3>
+        <p style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 15px;">Register your device's fingerprint or FaceID for faster login.</p>
+        <button onclick="registerBiometrics()" class="btn-success" style="width: 100%; margin-bottom: 10px;">+ Register Fingerprint</button>
+      </div>
+
+      <div class="modal-footer" style="margin-top: 0; padding-top: 15px;">
+        <button onclick="closeSettingsModal()" class="btn-secondary" style="width: 100%;">Close</button>
       </div>
     </div>
   </div>
@@ -7990,10 +8029,7 @@ async function forceAppRefresh() {
       currentQuizSessionId = null;
       isQuizActive = false;
 
-      document.removeEventListener('mousemove', handleUserActivity);
-      document.removeEventListener('keypress', handleUserActivity);
-      document.removeEventListener('click', handleUserActivity);
-
+      
       resetQuizState();
       resetFailedAttempts();
 
@@ -8036,6 +8072,174 @@ function autoLogout() {
   }
 }
 
+    // SETTINGS & PASSWORD CHANGE LOGIC
+// ==========================================
+function openSettingsModal() {
+  // If you have a function to close the sidebar, call it here (e.g., toggleMenu() or closeMenu())
+  sideMenu.classList.remove('open');
+  menuOverlay.classList.remove('open');
+  
+  document.getElementById('settings-modal').style.display = 'flex';
+}
+
+function closeSettingsModal() {
+  document.getElementById('settings-modal').style.display = 'none';
+  document.getElementById('old-pwd').value = '';
+  document.getElementById('new-pwd').value = '';
+  document.getElementById('confirm-pwd').value = '';
+}
+
+async function submitPasswordChange() {
+  const oldPwd = document.getElementById('old-pwd').value;
+  const newPwd = document.getElementById('new-pwd').value;
+  const confirmPwd = document.getElementById('confirm-pwd').value;
+
+  if (!oldPwd || !newPwd || !confirmPwd) return alert("Please fill all password fields.");
+  if (newPwd !== confirmPwd) return alert("New passwords do not match.");
+  
+  const btn = document.querySelector('#settings-modal button');
+  const originalBtnText = btn.innerText;
+  btn.innerText = "Updating...";
+
+  try {
+    const url = `${AUTH_SCRIPT_URL}?action=changePassword&username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(sessionToken)}&oldPassword=${encodeURIComponent(oldPwd)}&newPassword=${encodeURIComponent(newPwd)}`;
+    
+    const script = document.createElement('script');
+    const callbackName = 'pwdCallback_' + Math.round(100000 * Math.random());
+    
+    window[callbackName] = function(data) {
+      if (data.success) {
+        alert("Success: " + data.message);
+        closeSettingsModal();
+      } else {
+        alert("Error: " + data.error);
+      }
+      btn.innerText = originalBtnText;
+      delete window[callbackName];
+      document.body.removeChild(script);
+    };
+
+    script.src = url + '&callback=' + callbackName;
+    document.body.appendChild(script);
+
+  } catch (err) {
+    alert("Network error.");
+    btn.innerText = originalBtnText;
+  }
+}
+
+// ==========================================
+// FINGERPRINT (WEBAUTHN) LOGIC
+// ==========================================
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.PublicKeyCredential && localStorage.getItem('fingerprintUser')) {
+    const btn = document.getElementById('fingerprint-login-btn');
+    if(btn) btn.style.display = 'block';
+  }
+});
+
+function bufferToBase64(buffer) {
+  return btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
+async function registerBiometrics() {
+  if (!window.PublicKeyCredential) return alert("Your device/browser does not support Biometric login.");
+  
+  try {
+    const challenge = new Uint8Array(32);
+    window.crypto.getRandomValues(challenge);
+    const userId = new Uint8Array(16);
+    window.crypto.getRandomValues(userId);
+
+    const credential = await navigator.credentials.create({
+      publicKey: {
+        challenge: challenge,
+        rp: { name: "G.S. Tutorial", id: window.location.hostname },
+        user: {
+          id: userId,
+          name: currentUser.username,
+          displayName: currentUser.username
+        },
+        pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+        authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+        timeout: 60000
+      }
+    });
+
+    const credentialIdStr = bufferToBase64(credential.rawId);
+
+    const url = `${AUTH_SCRIPT_URL}?action=registerFingerprint&username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(sessionToken)}&credentialId=${encodeURIComponent(credentialIdStr)}`;
+    
+    const script = document.createElement('script');
+    const callbackName = 'bioCallback_' + Math.round(100000 * Math.random());
+    
+    window[callbackName] = function(data) {
+      if (data.success) {
+        alert("Fingerprint registered successfully!");
+        localStorage.setItem('fingerprintUser', currentUser.username); 
+        closeSettingsModal();
+      } else {
+        alert("Failed to save fingerprint: " + data.error);
+      }
+      delete window[callbackName];
+      document.body.removeChild(script);
+    };
+
+    script.src = url + '&callback=' + callbackName;
+    document.body.appendChild(script);
+
+  } catch (err) {
+    console.error(err);
+    alert("Fingerprint registration cancelled or failed.");
+  }
+}
+
+async function attemptFingerprintLogin() {
+  const savedUser = localStorage.getItem('fingerprintUser');
+  if (!savedUser) return alert("No fingerprint registered on this device.");
+
+  const btn = document.getElementById('fingerprint-login-btn');
+  btn.innerText = "Verifying...";
+
+  try {
+    const challenge = new Uint8Array(32);
+    window.crypto.getRandomValues(challenge);
+
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge: challenge,
+        rpId: window.location.hostname,
+        userVerification: "required"
+      }
+    });
+
+    const credentialIdStr = bufferToBase64(assertion.rawId);
+    
+    const url = `${AUTH_SCRIPT_URL}?action=fingerprintLogin&username=${encodeURIComponent(savedUser)}&credentialId=${encodeURIComponent(credentialIdStr)}`;
+    
+    const script = document.createElement('script');
+    const callbackName = 'loginBioCb_' + Math.round(100000 * Math.random());
+    
+    window[callbackName] = function(data) {
+      if (data.success) {
+        login(data.user, data.token); 
+      } else {
+        alert("Login failed: " + data.error);
+      }
+      btn.innerText = "👆 Login with Fingerprint";
+      delete window[callbackName];
+      document.body.removeChild(script);
+    };
+
+    script.src = url + '&callback=' + callbackName;
+    document.body.appendChild(script);
+
+  } catch (err) {
+    console.error(err);
+    btn.innerText = "👆 Login with Fingerprint";
+  }
+}
+    
 function handleUserActivity() {
   if (currentUser) {
     lastActivityTimestamp = Date.now();
@@ -12271,5 +12475,22 @@ if (isScreenVisible('video-container')) {
       console.log('App was successfully installed to home screen!');
     });
   </script>
+  <div id="settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+  <div style="background: #1e293b; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; color: white; border: 1px solid #3b82f6; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+    <h2 style="margin-top: 0; margin-bottom: 20px; text-align: center; color: #60a5fa;">Account Settings</h2>
+    
+    <h3 style="border-bottom: 1px solid #334155; padding-bottom: 5px; font-size: 1.1rem;">Change Password</h3>
+    <input type="password" id="old-pwd" placeholder="Current Password" style="width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; outline: none;">
+    <input type="password" id="new-pwd" placeholder="New Password" style="width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; outline: none;">
+    <input type="password" id="confirm-pwd" placeholder="Confirm New Password" style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; outline: none;">
+    <button onclick="submitPasswordChange()" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 25px;">Update Password</button>
+
+    <h3 style="border-bottom: 1px solid #334155; padding-bottom: 5px; font-size: 1.1rem;">Biometric Login</h3>
+    <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px;">Register your device's fingerprint or FaceID for faster login.</p>
+    <button onclick="registerBiometrics()" style="width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 20px;">+ Register Fingerprint</button>
+
+    <button onclick="closeSettingsModal()" style="width: 100%; padding: 12px; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Close</button>
+  </div>
+</div>
 </body>
 </html>
