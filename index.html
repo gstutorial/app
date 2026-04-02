@@ -4227,9 +4227,17 @@ body.light-mode .pdf-name {
           
           <button type="submit" class="login-btn" id="login-btn">Login</button>
           
-          <button type="button" id="fingerprint-login-btn" onclick="attemptFingerprintLogin()" style="display: none; width: 100%; margin-top: 15px; padding: 12px; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-            👆 Login with Fingerprint
-          </button>
+          <div id="fingerprint-login-btn" style="display: none; text-align: center; margin-top: 20px;">
+  <p style="font-size: 0.9rem; color: #9ca3af; margin-bottom: 10px;">Or verify with</p>
+  
+  <div onclick="attemptFingerprintLogin()" style="position: relative; width: 65px; height: 65px; margin: 0 auto; cursor: pointer; background: #1f2937; border-radius: 50%; padding: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: transform 0.2s ease;">
+    
+    <img src="fingerprint.png" alt="Fingerprint" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;">
+    
+    <div id="fingerprint-spinner" style="display: none; position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+  
+  </div>
+</div>
           
           <a href="https://wa.me/919706195457?text=Hello%20Admin,%20I%20need%20login%20credentials%20for%20G.S.%20Tutorial%20App.%20Please%20create%20username%20and%20password%20for%20me." 
              class="request-credentials-btn" target="_blank">
@@ -8371,11 +8379,13 @@ async function attemptFingerprintLogin() {
   const savedUser = localStorage.getItem('fingerprintUser');
   if (!savedUser) return window.showToast("No fingerprint registered on this device.", "#ef4444");
 
-  const btn = document.getElementById('fingerprint-login-btn');
-  const originalText = btn.innerText;
-  btn.innerText = "Scanning...";
-  btn.style.opacity = "0.7";
-  btn.style.pointerEvents = "none";
+  const btnContainer = document.getElementById('fingerprint-login-btn');
+  const spinner = document.getElementById('fingerprint-spinner');
+  
+  // Start animation and disable clicking
+  btnContainer.style.pointerEvents = "none";
+  btnContainer.style.opacity = "0.7";
+  spinner.style.display = "block"; 
 
   try {
     const challenge = new Uint8Array(32);
@@ -8386,7 +8396,7 @@ async function attemptFingerprintLogin() {
       publicKey: {
         challenge: challenge,
         rpId: rpId,
-        userVerification: "preferred",
+        userVerification: "preferred", // Prevents Android from freezing
         timeout: 60000
       }
     });
@@ -8403,24 +8413,35 @@ async function attemptFingerprintLogin() {
       if (data.success) {
         window.showToast("✅ Fingerprint verified!");
         
-        // CRITICAL FIX: Pass data.token as the 4th parameter so the security hook allows the login!
-        login(data.user.username, data.user.role, data.user.assignedClasses, data.token);
+        // CRITICAL FIX: Structure the user object exactly as your app expects it
+        data.user.token = data.token; 
+        data.user.class = data.user.class || data.user.assignedClasses || "";
+        data.user.name = data.user.name || data.user.username; 
+        
+        // Pass the whole, corrected user object to the login function
+        login(data.user, false); 
         
       } else {
         window.showToast("Login failed: " + data.error, "#ef4444");
-        btn.innerText = originalText;
-        btn.style.opacity = "1";
-        btn.style.pointerEvents = "auto";
       }
+      
+      // Stop animation
+      btnContainer.style.pointerEvents = "auto";
+      btnContainer.style.opacity = "1";
+      spinner.style.display = "none";
+      
       delete window[callbackName];
       if (script.parentNode) document.body.removeChild(script);
     };
 
     script.onerror = function() {
       window.showToast("Network error. Try again.", "#ef4444");
-      btn.innerText = originalText;
-      btn.style.opacity = "1";
-      btn.style.pointerEvents = "auto";
+      
+      // Stop animation
+      btnContainer.style.pointerEvents = "auto";
+      btnContainer.style.opacity = "1";
+      spinner.style.display = "none";
+      
       delete window[callbackName];
       if (script.parentNode) document.body.removeChild(script);
     };
@@ -8431,9 +8452,11 @@ async function attemptFingerprintLogin() {
   } catch (err) {
     console.error("WebAuthn Login Error:", err);
     window.showToast("Fingerprint scan cancelled or failed.", "#ef4444");
-    btn.innerText = originalText;
-    btn.style.opacity = "1";
-    btn.style.pointerEvents = "auto";
+    
+    // Stop animation if cancelled
+    btnContainer.style.pointerEvents = "auto";
+    btnContainer.style.opacity = "1";
+    spinner.style.display = "none";
   }
 }
     
