@@ -8099,7 +8099,7 @@ async function submitPasswordChange() {
   btn.innerText = "Updating...";
 
   try {
-    const url = `${AUTH_SCRIPT_URL}?action=changePassword&username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(sessionToken)}&oldPassword=${encodeURIComponent(oldPwd)}&newPassword=${encodeURIComponent(newPwd)}`;
+    const url = `${AUTH_APPS_SCRIPT_URL}?action=changePassword&username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&oldPassword=${encodeURIComponent(oldPwd)}&newPassword=${encodeURIComponent(newPwd)}`;
     
     const script = document.createElement('script');
     const callbackName = 'pwdCallback_' + Math.round(100000 * Math.random());
@@ -8165,7 +8165,7 @@ async function registerBiometrics() {
 
     const credentialIdStr = bufferToBase64(credential.rawId);
 
-    const url = `${AUTH_SCRIPT_URL}?action=registerFingerprint&username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(sessionToken)}&credentialId=${encodeURIComponent(credentialIdStr)}`;
+    const url = `${AUTH_APPS_SCRIPT_URL}?action=registerFingerprint&username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&credentialId=${encodeURIComponent(credentialIdStr)}`;
     
     const script = document.createElement('script');
     const callbackName = 'bioCallback_' + Math.round(100000 * Math.random());
@@ -8212,7 +8212,7 @@ async function attemptFingerprintLogin() {
 
     const credentialIdStr = bufferToBase64(assertion.rawId);
     
-    const url = `${AUTH_SCRIPT_URL}?action=fingerprintLogin&username=${encodeURIComponent(savedUser)}&credentialId=${encodeURIComponent(credentialIdStr)}`;
+    const url = `${AUTH_APPS_SCRIPT_URL}?action=fingerprintLogin&username=${encodeURIComponent(savedUser)}&credentialId=${encodeURIComponent(credentialIdStr)}`;
     
     const script = document.createElement('script');
     const callbackName = 'loginBioCb_' + Math.round(100000 * Math.random());
