@@ -1397,6 +1397,33 @@ body.light-mode .pdf-name {
       0% { transform: translateY(-50%) rotate(0deg); }
       100% { transform: translateY(-50%) rotate(360deg); }
     }
+    /* (Keep your existing save-spin and login-spin code above here) */
+
+    /* ===== ADD THIS NEW ONE FOR THE GREEN FINGERPRINT BUTTON ===== */
+    .btn-success.saving {
+      position: relative;
+      padding-left: 40px !important;
+      pointer-events: none;
+    }
+
+    .btn-success.saving::before {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: success-spin 0.8s linear infinite;
+    }
+
+    @keyframes success-spin {
+      0% { transform: translateY(-50%) rotate(0deg); }
+      100% { transform: translateY(-50%) rotate(360deg); }
+    }
 
     .btn-secondary {
       background: #1f2937;
@@ -8236,6 +8263,16 @@ function bufferToBase64(buffer) {
   return btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
+// --- ADD THIS NEW FUNCTION BELOW IT ---
+function base64ToBuffer(base64) {
+  let b64 = base64.replace(/-/g, "+").replace(/_/g, "/");
+  while (b64.length % 4 !== 0) b64 += "=";
+  const bString = window.atob(b64);
+  const bytes = new Uint8Array(bString.length);
+  for (let i = 0; i < bString.length; i++) bytes[i] = bString.charCodeAt(i);
+  return bytes;
+}
+
 // ==========================================
 // NEW ACCOUNT SETTINGS FUNCTIONS
 // ==========================================
@@ -8294,12 +8331,13 @@ async function submitPasswordChange() {
 }
 
 async function registerBiometrics() {
-  // WebAuthn requires HTTPS connection - this catches local testing errors
   if (!window.PublicKeyCredential) return window.showToast("Biometric login is only supported in secure browsers.", "#ef4444");
   
   const btn = document.getElementById('register-bio-btn');
   const originalText = btn.innerText;
-  btn.innerText = "Scanning Fingerprint...";
+  
+  // TRIGGER THE CIRCULAR ANIMATION
+  btn.classList.add('saving'); 
   btn.style.opacity = "0.7";
   btn.style.pointerEvents = "none";
   
@@ -8311,14 +8349,13 @@ async function registerBiometrics() {
     
     const rpId = window.location.hostname || "localhost";
     
-    // Attempt device registration prompt
     const credential = await navigator.credentials.create({ 
       publicKey: { 
         challenge: challenge, 
         rp: { name: "G.S. Tutorial", id: rpId }, 
         user: { id: userId, name: currentUser.username, displayName: currentUser.username }, 
         pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }], 
-        authenticatorSelection: { residentKey: "preferred", userVerification: "preferred" },
+        authenticatorSelection: { residentKey: "preferred", userVerification: "preferred" }, 
         timeout: 60000 
       } 
     });
@@ -8334,55 +8371,68 @@ async function registerBiometrics() {
     window[callbackName] = function(data) {
       if (data.success) {
         window.showToast("✅ Fingerprint registered securely!");
-        localStorage.setItem('fingerprintUser', currentUser.username);
+        
+        let savedKeys = JSON.parse(localStorage.getItem('devicePasskeys') || '[]');
+        savedKeys = savedKeys.filter(k => k.username !== currentUser.username); 
+        savedKeys.push({ username: currentUser.username, id: credentialIdStr });
+        localStorage.setItem('devicePasskeys', JSON.stringify(savedKeys));
+
         closeFingerprintModal(); 
         const fpBtn = document.getElementById('fingerprint-login-btn');
         if(fpBtn) fpBtn.style.display = 'block'; 
       } else {
-        window.showToast("Failed to link fingerprint to account: " + data.error, "#ef4444");
+        window.showToast("Failed to link fingerprint: " + data.error, "#ef4444");
       }
-      delete window[callbackName];
-      if (script.parentNode) document.body.removeChild(script);
       
+      // STOP THE ANIMATION
+      btn.classList.remove('saving');
       btn.innerText = originalText;
       btn.style.opacity = "1";
       btn.style.pointerEvents = "auto";
+      
+      delete window[callbackName];
+      if (script.parentNode) document.body.removeChild(script);
     };
     
     script.onerror = function() {
       window.showToast("Network error during registration.", "#ef4444");
-      delete window[callbackName];
-      if (script.parentNode) document.body.removeChild(script);
+      
+      // STOP THE ANIMATION
+      btn.classList.remove('saving');
       btn.innerText = originalText;
       btn.style.opacity = "1";
       btn.style.pointerEvents = "auto";
+      
+      delete window[callbackName];
+      if (script.parentNode) document.body.removeChild(script);
     };
     
     script.src = url + '&callback=' + callbackName;
     document.body.appendChild(script);
     
   } catch (err) {
-    console.error("WebAuthn Error:", err);
-    // Explicitly handle "user cancelled prompt" gracefully
     let errorMsg = "Registration cancelled or device not supported.";
-    if (err.name === 'NotAllowedError') {
-      errorMsg = "Fingerprint request was denied or cancelled.";
-    }
-    
+    if (err.name === 'NotAllowedError') errorMsg = "Fingerprint request was denied or cancelled.";
     window.showToast(errorMsg, "#ef4444");
+    
+    // STOP THE ANIMATION
+    btn.classList.remove('saving');
     btn.innerText = originalText;
     btn.style.opacity = "1";
     btn.style.pointerEvents = "auto";
   }
 }
 async function attemptFingerprintLogin() {
-  const savedUser = localStorage.getItem('fingerprintUser');
-  if (!savedUser) return window.showToast("No fingerprint registered on this device.", "#ef4444");
+  let savedKeys = JSON.parse(localStorage.getItem('devicePasskeys') || '[]');
+  const oldFallback = localStorage.getItem('fingerprintUser'); // For backwards compatibility
+
+  if (savedKeys.length === 0 && !oldFallback) {
+    return window.showToast("No fingerprint registered on this device.", "#ef4444");
+  }
 
   const btnContainer = document.getElementById('fingerprint-login-btn');
   const spinner = document.getElementById('fingerprint-spinner');
   
-  // Start animation and disable clicking
   btnContainer.style.pointerEvents = "none";
   btnContainer.style.opacity = "0.7";
   spinner.style.display = "block"; 
@@ -8392,11 +8442,18 @@ async function attemptFingerprintLogin() {
     window.crypto.getRandomValues(challenge);
     const rpId = window.location.hostname || "localhost";
 
+    // --- NEW: BYPASS SELECTION BOX BY PROVIDING SPECIFIC CREDENTIALS ---
+    const allowed = savedKeys.map(key => ({
+      type: "public-key",
+      id: base64ToBuffer(key.id)
+    }));
+
     const assertion = await navigator.credentials.get({
       publicKey: {
         challenge: challenge,
         rpId: rpId,
-        userVerification: "preferred", // Prevents Android from freezing
+        allowCredentials: allowed.length > 0 ? allowed : undefined, // Skips selection prompt if length is 1!
+        userVerification: "preferred",
         timeout: 60000
       }
     });
@@ -8404,7 +8461,12 @@ async function attemptFingerprintLogin() {
     if (!assertion) throw new Error("No assertion returned");
 
     const credentialIdStr = bufferToBase64(assertion.rawId);
-    const url = `${AUTH_APPS_SCRIPT_URL}?action=fingerprintLogin&username=${encodeURIComponent(savedUser)}&credentialId=${encodeURIComponent(credentialIdStr)}`;
+    
+    // Find exactly which username this fingerprint belongs to
+    const matchedKey = savedKeys.find(k => k.id === credentialIdStr);
+    const loginUsername = matchedKey ? matchedKey.username : oldFallback;
+
+    const url = `${AUTH_APPS_SCRIPT_URL}?action=fingerprintLogin&username=${encodeURIComponent(loginUsername)}&credentialId=${encodeURIComponent(credentialIdStr)}`;
 
     const script = document.createElement('script');
     const callbackName = 'loginBioCb_' + Math.round(100000 * Math.random());
@@ -8412,20 +8474,12 @@ async function attemptFingerprintLogin() {
     window[callbackName] = function(data) {
       if (data.success) {
         window.showToast("✅ Fingerprint verified!");
-        
-        // CRITICAL FIX: Structure the user object exactly as your app expects it
         data.user.token = data.token; 
-        data.user.class = data.user.class || data.user.assignedClasses || "";
-        data.user.name = data.user.name || data.user.username; 
-        
-        // Pass the whole, corrected user object to the login function
         login(data.user, false); 
-        
       } else {
         window.showToast("Login failed: " + data.error, "#ef4444");
       }
       
-      // Stop animation
       btnContainer.style.pointerEvents = "auto";
       btnContainer.style.opacity = "1";
       spinner.style.display = "none";
@@ -8436,12 +8490,9 @@ async function attemptFingerprintLogin() {
 
     script.onerror = function() {
       window.showToast("Network error. Try again.", "#ef4444");
-      
-      // Stop animation
       btnContainer.style.pointerEvents = "auto";
       btnContainer.style.opacity = "1";
       spinner.style.display = "none";
-      
       delete window[callbackName];
       if (script.parentNode) document.body.removeChild(script);
     };
@@ -8450,10 +8501,7 @@ async function attemptFingerprintLogin() {
     document.body.appendChild(script);
 
   } catch (err) {
-    console.error("WebAuthn Login Error:", err);
     window.showToast("Fingerprint scan cancelled or failed.", "#ef4444");
-    
-    // Stop animation if cancelled
     btnContainer.style.pointerEvents = "auto";
     btnContainer.style.opacity = "1";
     spinner.style.display = "none";
