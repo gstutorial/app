@@ -7790,11 +7790,16 @@ async function loadClasses() {
     }
 
     // 3. BONUS: Instant check when they switch back to the app tab or wake their phone
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === 'visible') {
-        checkCurrentSessionNow();
-      }
-    });
+   document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === 'visible') {
+    checkCurrentSessionNow();
+    
+    // NEW: Instantly check if 10 minutes passed while the app was asleep/minimized
+    if (currentUser && (Date.now() - lastActivityTimestamp >= INACTIVITY_TIMEOUT)) {
+      autoLogout();
+    }
+  }
+});
 
     // 4. Button action for the popup
     window.executeForceLogout = function() {
@@ -7970,8 +7975,9 @@ async function forceAppRefresh() {
 
     // ========== LOGOUT FUNCTION ==========
     function logout() {
+      stopInactivityTracker();
       if (timerInterval) clearInterval(timerInterval);
-      if (inactivityTimer) clearTimeout(inactivityTimer);
+      
       if (cooldownTimer) clearInterval(cooldownTimer);
       if (sessionMonitorInterval) clearInterval(sessionMonitorInterval);
       imageCache.clear();
@@ -8015,23 +8021,64 @@ async function forceAppRefresh() {
       menuOverlay.classList.remove('open');
     }
 
-   function autoLogout() {
-      if (currentUser) {
-        window.showCustomAlert("Session Expired", "You have been automatically logged out due to 10 minutes of inactivity.", () => {
-          logout();
-        });
-      }
-    }
+   let lastActivityTimestamp = Date.now();
+let inactivityInterval = null;
 
-    function handleUserActivity() {
+function autoLogout() {
+  if (currentUser) {
+    // 1. Kick them to the login screen IMMEDIATELY to secure their data
+    logout(); 
+    
+    // 2. Show the popup over the login screen so no data is visible
+    window.showCustomAlert("Session Expired", "You have been automatically logged out due to 10 minutes of inactivity.", () => {
+       // Clicking OK just closes the alert (they are already securely logged out)
+    });
+  }
+}
+
+function handleUserActivity() {
+  if (currentUser) {
+    lastActivityTimestamp = Date.now();
+    
+    // Sync to local storage max once every 5 seconds to prevent performance lag
+    const now = Date.now();
+    if (now - (window.lastStorageSync || 0) > 5000) {
       updateLastActivity();
-      resetInactivityTimer();
+      window.lastStorageSync = now;
     }
+  }
+}
 
-    function resetInactivityTimer() {
-      if (inactivityTimer) clearTimeout(inactivityTimer);
-      if (currentUser) inactivityTimer = setTimeout(autoLogout, INACTIVITY_TIMEOUT);
+// Keep this alias so your existing navigation buttons don't break!
+function resetInactivityTimer() {
+  handleUserActivity();
+}
+
+function startInactivityTracker() {
+  lastActivityTimestamp = Date.now();
+  
+  // Track ALL interactions including mobile swipes (touchstart) and scrolls
+  const events = ['touchstart', 'mousedown', 'mousemove', 'keypress', 'scroll', 'click'];
+  events.forEach(event => {
+    document.addEventListener(event, handleUserActivity, { passive: true });
+  });
+
+  // Check the clock mathematically every 3 seconds (cannot be frozen by mobile browsers)
+  if (inactivityInterval) clearInterval(inactivityInterval);
+  inactivityInterval = setInterval(() => {
+    if (currentUser && (Date.now() - lastActivityTimestamp >= INACTIVITY_TIMEOUT)) {
+      autoLogout();
     }
+  }, 3000);
+}
+
+function stopInactivityTracker() {
+  if (inactivityInterval) clearInterval(inactivityInterval);
+  const events = ['touchstart', 'mousedown', 'mousemove', 'keypress', 'scroll', 'click'];
+  events.forEach(event => {
+    document.removeEventListener(event, handleUserActivity);
+  });
+}
 
     // ========== TELEGRAM NOTIFICATION FUNCTIONS ==========
     async function sendLoginNotification(user) {
@@ -8455,7 +8502,7 @@ async function forceAppRefresh() {
         navEl.classList.remove('expanded');
         navEl.classList.add('collapsed');
       }
-      resetInactivityTimer();
+      startInactivityTracker();
     }
 
     function updateQuestionNavigation() {
