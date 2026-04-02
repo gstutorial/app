@@ -4164,10 +4164,6 @@ body.light-mode .pdf-name {
       ⚙️ Account Settings
     </div>
 
-    <div onclick="openSettingsModal()" style="margin: 0 0 12px 0; padding: 12px 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: #e5e7eb; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s;">
-      ⚙️ Account Settings
-    </div>
-
     <div class="logout-side" id="sideLogoutBtn">
       🔓 Logout
     </div>
@@ -8074,6 +8070,7 @@ function autoLogout() {
 
     // SETTINGS & PASSWORD CHANGE LOGIC
 // ==========================================
+    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8nXx7C3BH0iV9bgaVvNRKCWwxkJkgacm62PKO6q_TiLIZ_8GPiOXb5cncp-zE1-0KAQ/exec';
 function openSettingsModal() {
   // If you have a function to close the sidebar, call it here (e.g., toggleMenu() or closeMenu())
   sideMenu.classList.remove('open');
