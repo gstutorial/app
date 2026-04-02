@@ -1552,10 +1552,15 @@ body.light-mode .pdf-name {
       }
       
       #login-container {
-        padding: 0; /* Removes the 100px gap */
-        height: auto; /* Turns off the buggy vh calculation */
+        padding: 0; 
+        height: auto; 
         top: 0;
-        bottom: 0; /* Pins the form exactly to the top and bottom edges */
+        bottom: 0; 
+      }
+      
+      /* Make sure force refresh button is ONLY visible in PWA */
+      #force-refresh-btn {
+        display: flex !important;
       }
     }
 
@@ -4167,12 +4172,12 @@ body.light-mode .pdf-name {
     <div id="login-container">
     <div class="login-box">
   
-  <button id="force-refresh-btn" onclick="forceAppRefresh()" style="position: absolute; top: 15px; right: 15px; background: rgba(30, 41, 59, 0.9); border: 1px solid #3b82f6; color: #60a5fa; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.5);" title="Force Update App">
-    <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="23 4 23 10 17 10"></polyline>
-      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-    </svg>
-  </button>
+ <button type="button" id="force-refresh-btn" onclick="forceAppRefresh()" style="position: absolute; top: 15px; right: 15px; background: rgba(30, 41, 59, 0.9); border: 1px solid #3b82f6; color: #60a5fa; border-radius: 50%; width: 40px; height: 40px; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.5);" title="Force Update App">
+  <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="23 4 23 10 17 10"></polyline>
+    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+  </svg>
+</button>
 
   <div class="login-header">
     <img src="logo.png" alt="G. S. Tutorial Logo" class="logo-login">
@@ -7875,32 +7880,35 @@ function validateUserAccount(user) {
   return { valid: false, error: 'unknown' };
 }
 
-function forceAppRefresh() {
+async function forceAppRefresh() {
   // 1. Trigger the continuous spin animation
   const btn = document.getElementById('force-refresh-btn');
   if (btn) btn.classList.add('spinning');
 
-  // 2. Clear Cache
-  if ('caches' in window) {
-    caches.keys().then(function(names) {
-      for (let name of names) caches.delete(name);
-    });
-  }
-
-  // 3. Unregister Service Worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(function(registrations) {
-      for (let registration of registrations) {
-        registration.unregister();
+  try {
+    // 2. WAIT for Cache to clear completely
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      for (let name of cacheNames) {
+        await caches.delete(name);
       }
-    });
+    }
+
+    // 3. WAIT for Service Worker to unregister completely
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (let reg of registrations) {
+        await reg.unregister();
+      }
+    }
+  } catch (err) {
+    console.error("Cache wipe error:", err);
   }
 
-  // 4. Reload page
+  // 4. Force a clean hard-reload from the server
   setTimeout(() => {
-    const currentUrl = window.location.href.split('?')[0];
-    window.location.replace(currentUrl + '?v=' + new Date().getTime());
-  }, 400); 
+    window.location.reload(true);
+  }, 300);
 }
 
        
