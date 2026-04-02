@@ -8310,7 +8310,7 @@ async function registerBiometrics() {
         rp: { name: "G.S. Tutorial", id: rpId }, 
         user: { id: userId, name: currentUser.username, displayName: currentUser.username }, 
         pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }], 
-        authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" }, 
+        authenticatorSelection: { userVerification: "required" },
         timeout: 60000 
       } 
     });
@@ -8369,47 +8369,71 @@ async function registerBiometrics() {
 }
 async function attemptFingerprintLogin() {
   const savedUser = localStorage.getItem('fingerprintUser');
-  if (!savedUser) return alert("No fingerprint registered on this device.");
+  if (!savedUser) return window.showToast("No fingerprint registered on this device.", "#ef4444");
 
   const btn = document.getElementById('fingerprint-login-btn');
-  btn.innerText = "Verifying...";
+  const originalText = btn.innerText;
+  btn.innerText = "Scanning...";
+  btn.style.opacity = "0.7";
+  btn.style.pointerEvents = "none";
 
   try {
     const challenge = new Uint8Array(32);
     window.crypto.getRandomValues(challenge);
+    const rpId = window.location.hostname || "localhost";
 
     const assertion = await navigator.credentials.get({
       publicKey: {
         challenge: challenge,
-        rpId: window.location.hostname,
-        userVerification: "required"
+        rpId: rpId,
+        userVerification: "required",
+        timeout: 60000
       }
     });
 
+    if (!assertion) throw new Error("No assertion returned");
+
     const credentialIdStr = bufferToBase64(assertion.rawId);
-    
     const url = `${AUTH_APPS_SCRIPT_URL}?action=fingerprintLogin&username=${encodeURIComponent(savedUser)}&credentialId=${encodeURIComponent(credentialIdStr)}`;
-    
+
     const script = document.createElement('script');
     const callbackName = 'loginBioCb_' + Math.round(100000 * Math.random());
-    
+
     window[callbackName] = function(data) {
       if (data.success) {
-        login(data.user, data.token); 
+        window.showToast("✅ Fingerprint verified!");
+        
+        // CRITICAL FIX: Pass data.token as the 4th parameter so the security hook allows the login!
+        login(data.user.username, data.user.role, data.user.assignedClasses, data.token);
+        
       } else {
-        alert("Login failed: " + data.error);
+        window.showToast("Login failed: " + data.error, "#ef4444");
+        btn.innerText = originalText;
+        btn.style.opacity = "1";
+        btn.style.pointerEvents = "auto";
       }
-      btn.innerText = "👆 Login with Fingerprint";
       delete window[callbackName];
-      document.body.removeChild(script);
+      if (script.parentNode) document.body.removeChild(script);
+    };
+
+    script.onerror = function() {
+      window.showToast("Network error. Try again.", "#ef4444");
+      btn.innerText = originalText;
+      btn.style.opacity = "1";
+      btn.style.pointerEvents = "auto";
+      delete window[callbackName];
+      if (script.parentNode) document.body.removeChild(script);
     };
 
     script.src = url + '&callback=' + callbackName;
     document.body.appendChild(script);
 
   } catch (err) {
-    console.error(err);
-    btn.innerText = "👆 Login with Fingerprint";
+    console.error("WebAuthn Login Error:", err);
+    window.showToast("Fingerprint scan cancelled or failed.", "#ef4444");
+    btn.innerText = originalText;
+    btn.style.opacity = "1";
+    btn.style.pointerEvents = "auto";
   }
 }
     
