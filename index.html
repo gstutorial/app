@@ -4145,29 +4145,21 @@ body.light-mode .pdf-name {
       </div>
     </div>
 
-    <div class="contact-item" onclick="showSubscriptionPopup()" style="margin-top: 10px; border-top: 1px solid rgba(148, 163, 184, 0.2); padding-top: 15px;">
+    <div class="contact-item" onclick="openProfileModal()" style="margin-top: 10px; border-top: 1px solid rgba(148, 163, 184, 0.2); padding-top: 15px;">
+      <span style="font-size: 1.2rem; margin-right: 12px; display: flex; align-items: center; justify-content: center; width: 22px;">👤</span>
+      <span style="font-size: 0.95rem;">Profile</span>
+    </div>
+    <div class="contact-item" onclick="openPasswordModal()">
+      <span style="font-size: 1.2rem; margin-right: 12px; display: flex; align-items: center; justify-content: center; width: 22px;">🔑</span>
+      <span style="font-size: 0.95rem;">Change Password</span>
+    </div>
+    <div class="contact-item" onclick="showSubscriptionPopup()">
       <span style="font-size: 1.2rem; margin-right: 12px; display: flex; align-items: center; justify-content: center; width: 22px;">💳</span>
       <span style="font-size: 0.95rem;">Subscription</span>
     </div>
     <div class="contact-item" onclick="showPlansPopup()">
       <span style="font-size: 1.2rem; margin-right: 12px; display: flex; align-items: center; justify-content: center; width: 22px;">📋</span>
       <span style="font-size: 0.95rem;">Plan</span>
-    </div>
-
-    <div class="side-dev" style="margin-top: 10px; border-top: 1px solid rgba(148, 163, 184, 0.2); padding-top: 10px;">
-      <div id="account-settings-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;" onclick="toggleAccountSettings()">
-        <h4 style="margin: 0; display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 1.2rem; margin-right: 4px; display: flex; align-items: center; justify-content: center; width: 22px;">⚙️</span>
-          <span style="font-size: 0.95rem;">Account Settings</span>
-        </h4>
-        <span id="account-settings-toggle-icon" style="color: #e5e7eb; transition: transform 0.3s ease;">▼</span>
-      </div>
-      <div id="account-settings-content" style="display: none; margin-top: 5px; margin-left: 35px;">
-        <div class="contact-item" onclick="openPasswordModal()" style="padding: 6px 0;">
-          <span style="font-size: 1.1rem; margin-right: 8px;">🔑</span><span style="font-size: 0.9rem;">Change Password</span>
-        </div>
-       
-      </div>
     </div>
     <div class="theme-toggle" id="themeToggle">
       <span>🌙 Dark / ☀️ Light</span>
@@ -5005,36 +4997,79 @@ body.light-mode .video-title {
       </div>
     </div>
   </div>
- <div id="password-modal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 400px; padding: 20px;">
-      <div class="modal-header" style="margin-bottom: 15px;">
-        <h2 style="font-size: 1.5rem; background: linear-gradient(90deg, #3b82f6 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Change Password</h2>
-        <button class="modal-close" onclick="closePasswordModal()">&times;</button>
+ <div id="profile-modal" class="modal" style="display: none;">
+  <div class="modal-content" style="max-width: 400px; padding: 20px;">
+    <div class="modal-header" style="margin-bottom: 15px;">
+      <h2 style="font-size: 1.5rem; background: linear-gradient(90deg, #3b82f6 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">My Profile</h2>
+      <button class="modal-close" onclick="closeProfileModal()">&times;</button>
+    </div>
+    <div class="modal-body" style="color: #e5e7eb; font-size: 0.95rem;">
+      <div id="profile-view-section">
+         <p style="margin: 8px 0; border-bottom: 1px solid rgba(75, 85, 99, 0.4); padding-bottom: 5px;"><strong>Name:</strong> <span id="profile-name-display" style="float: right; color: #93c5fd;"></span></p>
+         <p style="margin: 8px 0; border-bottom: 1px solid rgba(75, 85, 99, 0.4); padding-bottom: 5px;"><strong>Username:</strong> <span id="profile-username-display" style="float: right; color: #93c5fd;"></span></p>
+         <p style="margin: 8px 0; border-bottom: 1px solid rgba(75, 85, 99, 0.4); padding-bottom: 5px;"><strong>Mobile No:</strong> <span id="profile-mobile-display" style="float: right; color: #93c5fd;"></span></p>
+         <p style="margin: 8px 0; border-bottom: 1px solid rgba(75, 85, 99, 0.4); padding-bottom: 5px;"><strong>Role:</strong> <span id="profile-role-display" style="float: right; color: #93c5fd;"></span></p>
+         <p style="margin: 8px 0; border-bottom: 1px solid rgba(75, 85, 99, 0.4); padding-bottom: 5px;"><strong>Class:</strong> <span id="profile-class-display" style="float: right; color: #93c5fd;"></span></p>
+         <p style="margin: 8px 0; border-bottom: 1px solid rgba(75, 85, 99, 0.4); padding-bottom: 5px;"><strong>Joining Date:</strong> <span id="profile-join-display" style="float: right; color: #93c5fd;"></span></p>
+         <p style="margin: 8px 0; border-bottom: 1px solid rgba(75, 85, 99, 0.4); padding-bottom: 5px;"><strong>Plan Expiry:</strong> <span id="profile-expiry-display" style="float: right; color: #93c5fd;"></span></p>
+         <p id="profile-permission-container" style="margin: 8px 0; border-bottom: 1px solid rgba(75, 85, 99, 0.4); padding-bottom: 5px; display: none;"><strong>Permission:</strong> <span id="profile-permission-display" style="float: right; color: #93c5fd;"></span></p>
+         <button onclick="toggleProfileEdit()" class="btn-primary" style="width: 100%; margin-top: 15px;">Edit Profile</button>
       </div>
       
-      <div class="modal-body">
-        <div class="editor-row" style="margin-bottom: 0;">
-          <div class="password-input-wrapper" style="margin-bottom: 10px; position: relative;">
-            <input type="password" id="old-pwd" placeholder="Current Password" style="width: 100%; padding: 12px 16px; padding-right: 45px; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: white; box-sizing: border-box; outline: none;">
-            <button type="button" class="password-toggle" onclick="toggleSettingsPassword('old-pwd', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.2rem;">👁️</button>
-          </div>
-          <div class="password-input-wrapper" style="margin-bottom: 10px; position: relative;">
-            <input type="password" id="new-pwd" placeholder="New Password" style="width: 100%; padding: 12px 16px; padding-right: 45px; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: white; box-sizing: border-box; outline: none;" oninput="checkPasswordMatch()">
-            <button type="button" class="password-toggle" onclick="toggleSettingsPassword('new-pwd', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.2rem;">👁️</button>
-          </div>
-          <div class="password-input-wrapper" style="margin-bottom: 5px; position: relative;">
-            <input type="password" id="confirm-pwd" placeholder="Confirm New Password" style="width: 100%; padding: 12px 16px; padding-right: 45px; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: white; box-sizing: border-box; outline: none;" oninput="checkPasswordMatch()">
-            <button type="button" class="password-toggle" onclick="toggleSettingsPassword('confirm-pwd', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.2rem;">👁️</button>
-          </div>
-          
-          <div id="pwd-match-error" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 15px; display: none;">❌ Passwords do not match</div>
-          
-          <button id="update-pwd-btn" onclick="submitPasswordChange()" class="btn-primary" style="width: 100%;">Update Password</button>
-        </div>
+      <div id="profile-edit-section" style="display: none;">
+         <div class="editor-row" style="margin-bottom: 10px;">
+           <label style="margin-bottom: 4px; display: block; font-size: 0.85rem;">Name (Max 20 chars)</label>
+           <input type="text" id="edit-profile-name" maxlength="20" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: white; outline: none;">
+         </div>
+         <div class="editor-row" style="margin-bottom: 10px;">
+           <label style="margin-bottom: 4px; display: block; font-size: 0.85rem;">Username (Max 16 chars)</label>
+           <input type="text" id="edit-profile-username" maxlength="16" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: white; outline: none;">
+         </div>
+         <div class="editor-row" style="margin-bottom: 15px;">
+           <label style="margin-bottom: 4px; display: block; font-size: 0.85rem;">Mobile No (10 digits)</label>
+           <input type="text" id="edit-profile-mobile" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: white; outline: none;">
+         </div>
+         <div id="profile-edit-error" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 10px; display: none;"></div>
+         <div style="display: flex; gap: 10px;">
+           <button onclick="submitProfileEdit()" id="save-profile-btn" class="btn-primary" style="flex: 1;">Save</button>
+           <button onclick="toggleProfileEdit()" class="btn-secondary" style="flex: 1; padding: 12px 0;">Cancel</button>
+         </div>
       </div>
     </div>
   </div>
+</div>
 
+<div id="password-modal" class="modal" style="display: none;">
+  <div class="modal-content" style="max-width: 400px; padding: 20px;">
+    <div class="modal-header" style="margin-bottom: 15px;">
+      <h2 style="font-size: 1.5rem; background: linear-gradient(90deg, #3b82f6 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Change Password</h2>
+      <button class="modal-close" onclick="closePasswordModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="editor-row" style="margin-bottom: 0;">
+        <div class="password-input-wrapper" style="margin-bottom: 10px; position: relative;">
+          <input type="password" id="old-pwd" placeholder="Current Password" style="width: 100%; padding: 12px 16px; padding-right: 45px; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: white; box-sizing: border-box; outline: none;" oninput="document.getElementById('old-pwd-error').style.display='none'">
+          <button type="button" class="password-toggle" onclick="toggleSettingsPassword('old-pwd', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.2rem;">👁️</button>
+        </div>
+        <div id="old-pwd-error" style="color: #ef4444; font-size: 0.85rem; margin-top: -8px; margin-bottom: 10px; display: none;">❌ Incorrect current password</div>
+        
+        <div class="password-input-wrapper" style="margin-bottom: 10px; position: relative;">
+          <input type="password" id="new-pwd" placeholder="New Password" maxlength="16" style="width: 100%; padding: 12px 16px; padding-right: 45px; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: white; box-sizing: border-box; outline: none;" oninput="validateNewPassword()">
+          <button type="button" class="password-toggle" onclick="toggleSettingsPassword('new-pwd', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.2rem;">👁️</button>
+        </div>
+        <div id="new-pwd-error" style="color: #ef4444; font-size: 0.85rem; margin-top: -8px; margin-bottom: 10px; display: none;"></div>
+        
+        <div class="password-input-wrapper" style="margin-bottom: 5px; position: relative;">
+          <input type="password" id="confirm-pwd" placeholder="Confirm New Password" maxlength="16" style="width: 100%; padding: 12px 16px; padding-right: 45px; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: white; box-sizing: border-box; outline: none;" oninput="document.getElementById('pwd-match-error').style.display='none'">
+          <button type="button" class="password-toggle" onclick="toggleSettingsPassword('confirm-pwd', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.2rem;">👁️</button>
+        </div>
+        <div id="pwd-match-error" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 15px; display: none;">❌ Passwords do not match</div>
+        
+        <button id="update-pwd-btn" onclick="submitPasswordChange()" class="btn-primary" style="width: 100%;">Update Password</button>
+      </div>
+    </div>
+  </div>
+</div>
   
   <script>
     async function hashPassword(password) {
@@ -5574,7 +5609,7 @@ if (isAdmin() || isEditor()) {
     const version = Date.now();
     
     // ========== APPS SCRIPT CONFIGURATION ==========
-    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzp5HUP6PT5NsGzrYiWj6lYsxBcJhpvs6yyG0TMfTcizyee4wq_C56B75AT71c3_YY8mg/exec';
+    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYzv9ZvurA4sl8XbvVF-AkGR7u-uGEEBajJD6EPIskdLuEeN7uxIRpZYKPlIB63FiHKQ/exec';
     const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAHniq3ZVy5MrG6BGlkTfEhJDc-Qe5SjzywdAPWglUSCd4nBoO7EjltprXAJD3Wv76/exec';
 
     // ========== CACHE CONFIGURATION ==========
@@ -8191,23 +8226,118 @@ function checkPasswordMatch() {
   }
 }
 
-// Modal Toggle Functions
+// ========== PROFILE AND PASSWORD MODALS LOGIC ==========
+function openProfileModal() {
+  if (!currentUser) return;
+  document.getElementById('profile-name-display').textContent = currentUser.name || 'Not set';
+  document.getElementById('profile-username-display').textContent = currentUser.username || 'Not set';
+  document.getElementById('profile-mobile-display').textContent = currentUser.mobile || 'Not set';
+  document.getElementById('profile-role-display').textContent = currentUser.role || 'User';
+  document.getElementById('profile-class-display').textContent = currentUser.class || 'Not set';
+  document.getElementById('profile-join-display').textContent = formatDisplayDate(currentUser.joiningDate);
+  document.getElementById('profile-expiry-display').textContent = currentUser.lastDate ? formatDisplayDate(currentUser.lastDate) : 'Lifetime';
+  
+  if (currentUser.role === 'Editor') {
+    document.getElementById('profile-permission-container').style.display = 'block';
+    document.getElementById('profile-permission-display').textContent = currentUser.permission || 'Not set';
+  } else {
+    document.getElementById('profile-permission-container').style.display = 'none';
+  }
+  
+  document.getElementById('profile-view-section').style.display = 'block';
+  document.getElementById('profile-edit-section').style.display = 'none';
+  document.getElementById('profile-modal').style.display = 'flex';
+  if (sideMenu && sideMenu.classList.contains('open')) toggleMenu();
+}
+
+function closeProfileModal() {
+  document.getElementById('profile-modal').style.display = 'none';
+}
+
+function toggleProfileEdit() {
+  const viewSec = document.getElementById('profile-view-section');
+  const editSec = document.getElementById('profile-edit-section');
+  if (viewSec.style.display === 'none') {
+    viewSec.style.display = 'block';
+    editSec.style.display = 'none';
+  } else {
+    document.getElementById('edit-profile-name').value = currentUser.name || '';
+    document.getElementById('edit-profile-username').value = currentUser.username || '';
+    document.getElementById('edit-profile-mobile').value = currentUser.mobile || '';
+    document.getElementById('profile-edit-error').style.display = 'none';
+    viewSec.style.display = 'none';
+    editSec.style.display = 'block';
+  }
+}
+
+async function submitProfileEdit() {
+  const newName = document.getElementById('edit-profile-name').value.trim();
+  const newUsername = document.getElementById('edit-profile-username').value.trim();
+  const newMobile = document.getElementById('edit-profile-mobile').value.trim();
+  const errEl = document.getElementById('profile-edit-error');
+  
+  errEl.style.display = 'none';
+  if (newUsername.length > 16) { errEl.textContent = '❌ Username maximum 16 chars'; errEl.style.display = 'block'; return; }
+  if (newName.length > 20) { errEl.textContent = '❌ Name maximum 20 chars'; errEl.style.display = 'block'; return; }
+  if (newMobile.length > 0 && newMobile.length !== 10) { errEl.textContent = '❌ Mobile must be exactly 10 digits'; errEl.style.display = 'block'; return; }
+  
+  const btn = document.getElementById('save-profile-btn');
+  const oldText = btn.innerHTML;
+  btn.innerHTML = 'Saving...';
+  btn.disabled = true;
+  
+  try {
+    let url = AUTH_APPS_SCRIPT_URL + '?action=updateProfile' + 
+      '&currentUsername=' + encodeURIComponent(currentUser.username) + 
+      '&token=' + encodeURIComponent(currentUser.token) + 
+      '&newUsername=' + encodeURIComponent(newUsername) + 
+      '&newName=' + encodeURIComponent(newName) + 
+      '&newMobile=' + encodeURIComponent(newMobile) + 
+      '&_t=' + Date.now();
+      
+    const data = await jsonpRequest(url, 'profCb');
+    if (data && data.success) {
+      window.showToast("✅ Profile updated successfully!", "#22c55e");
+      
+      // If vital credentials changed, log them out. Otherwise, apply visually.
+      if (newUsername !== currentUser.username) {
+         window.showToast("Username changed. Logging out...", "#f59e0b");
+         setTimeout(() => { logout(); }, 2000);
+      } else {
+         currentUser.name = newName;
+         currentUser.mobile = newMobile;
+         saveSession(); // Update locale store
+         document.getElementById('sideUsername').textContent = currentUser.name;
+         closeProfileModal();
+      }
+    } else {
+      errEl.textContent = '❌ ' + (data.error || 'Failed to update');
+      errEl.style.display = 'block';
+    }
+  } catch(e) {
+    errEl.textContent = '❌ Network error';
+    errEl.style.display = 'block';
+  } finally {
+    btn.innerHTML = oldText;
+    btn.disabled = false;
+  }
+}
+
 function openPasswordModal() {
-  if (sideMenu.classList.contains('open')) toggleMenu(); // Closes sidebar automatically
-  document.getElementById('password-modal').style.display = 'flex';
   document.getElementById('old-pwd').value = '';
   document.getElementById('new-pwd').value = '';
   document.getElementById('confirm-pwd').value = '';
+  document.getElementById('old-pwd-error').style.display = 'none';
+  document.getElementById('new-pwd-error').style.display = 'none';
   document.getElementById('pwd-match-error').style.display = 'none';
-  document.getElementById('confirm-pwd').style.borderColor = '';
+  document.getElementById('password-modal').style.display = 'flex';
+  if (sideMenu && sideMenu.classList.contains('open')) toggleMenu();
 }
 
 function closePasswordModal() {
   document.getElementById('password-modal').style.display = 'none';
 }
 
-
-    // Paste this inside your <script> tags or .js file
 function toggleSettingsPassword(inputId, btn) {
   const input = document.getElementById(inputId);
   if (input.type === 'password') {
@@ -8218,79 +8348,84 @@ function toggleSettingsPassword(inputId, btn) {
     btn.textContent = '👁️';
   }
 }
-    function toggleAccordion(sectionId) {
-    const section = document.getElementById(sectionId);
-    const icon = document.getElementById(sectionId === 'pwd-section' ? 'pwd-icon' : 'bio-icon');
-    
-    if (section.style.display === 'none') {
-        section.style.display = 'block';
-        icon.style.transform = 'rotate(180deg)';
-    } else {
-        section.style.display = 'none';
-        icon.style.transform = 'rotate(0deg)';
-    }
+
+function validateNewPassword() {
+  const pwd = document.getElementById('new-pwd').value;
+  const errorEl = document.getElementById('new-pwd-error');
+  if (pwd.length === 0) {
+    errorEl.style.display = 'none';
+    return false;
+  }
+  if (pwd.length < 6) {
+    errorEl.textContent = '❌ Minimum 6 characters required';
+    errorEl.style.display = 'block';
+    return false;
+  }
+  // Checking for letter, number, and special character
+  if (!/[a-zA-Z]/.test(pwd) || !/[0-9]/.test(pwd) || !/[^a-zA-Z0-9]/.test(pwd)) {
+    errorEl.textContent = '❌ Must include letter, number, and special character';
+    errorEl.style.display = 'block';
+    return false;
+  }
+  errorEl.style.display = 'none';
+  return true;
 }
 
-
-// ==========================================
-// NEW ACCOUNT SETTINGS FUNCTIONS
-// ==========================================
+// Ensure you replace any old copy of submitPasswordChange with this.
 async function submitPasswordChange() {
   const oldPwd = document.getElementById('old-pwd').value;
   const newPwd = document.getElementById('new-pwd').value;
   const confirmPwd = document.getElementById('confirm-pwd').value;
-
-  if (!oldPwd || !newPwd || !confirmPwd) return window.showToast("Please fill all password fields.", "#ef4444");
   
-  // Real-time mismatch prevention
+  document.getElementById('old-pwd-error').style.display = 'none';
+  document.getElementById('pwd-match-error').style.display = 'none';
+  
+  if (!oldPwd || !newPwd || !confirmPwd) {
+    window.showToast("All fields are required", "#ef4444");
+    return;
+  }
+  if (!validateNewPassword()) return;
+  
   if (newPwd !== confirmPwd) {
     document.getElementById('pwd-match-error').style.display = 'block';
-    return window.showToast("New passwords do not match.", "#ef4444");
+    return;
   }
-
+  
   const btn = document.getElementById('update-pwd-btn');
-  const originalBtnText = btn.innerText;
-  btn.innerText = "Updating...";
-  btn.classList.add('saving'); 
+  const originalText = btn.innerHTML;
+  btn.innerHTML = 'Updating...';
+  btn.disabled = true;
   
   try {
     const hashedOld = await hashPassword(oldPwd);
-const hashedNew = await hashPassword(newPwd);
-const url = `${AUTH_APPS_SCRIPT_URL}?action=changePassword&username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&oldPassword=${encodeURIComponent(hashedOld)}&newPassword=${encodeURIComponent(hashedNew)}`;
-    const script = document.createElement('script');
-    const callbackName = 'pwdCallback_' + Math.round(100000 * Math.random());
+    const hashedNew = await hashPassword(newPwd);
     
-    window[callbackName] = function(data) {
-      if (data.success) {
-        window.showToast("✅ Password updated successfully!");
-        closePasswordModal(); 
+    let url = AUTH_APPS_SCRIPT_URL + '?action=changePassword' + 
+      '&username=' + encodeURIComponent(currentUser.username) + 
+      '&token=' + encodeURIComponent(currentUser.token) + 
+      '&oldPassword=' + encodeURIComponent(hashedOld) + 
+      '&newPassword=' + encodeURIComponent(hashedNew) + 
+      '&_t=' + Date.now();
+      
+    const data = await jsonpRequest(url, 'pwdCb');
+    
+    if (data && data.success) {
+      window.showToast("✅ Password changed successfully!");
+      closePasswordModal();
+    } else {
+      if (data.error === 'Incorrect current password') {
+         document.getElementById('old-pwd-error').style.display = 'block';
       } else {
-        window.showToast("Error: " + data.error, "#ef4444");
+         window.showToast(data.error || "Failed to change password", "#ef4444");
       }
-      btn.innerText = originalBtnText;
-      btn.classList.remove('saving');
-      delete window[callbackName];
-      if (script.parentNode) document.body.removeChild(script);
-    };
-    
-    script.onerror = function() {
-      window.showToast("Network error saving password.", "#ef4444");
-      btn.innerText = originalBtnText;
-      btn.classList.remove('saving');
-      delete window[callbackName];
-      if (script.parentNode) document.body.removeChild(script);
-    };
-    
-    script.src = url + '&callback=' + callbackName;
-    document.body.appendChild(script);
-  } catch (err) {
-    window.showToast("An unexpected error occurred.", "#ef4444");
-    btn.innerText = originalBtnText;
-    btn.classList.remove('saving');
+    }
+  } catch(e) {
+    window.showToast("Network error", "#ef4444");
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
   }
 }
-
-
     
 function handleUserActivity() {
   if (currentUser) {
