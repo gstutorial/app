@@ -1399,32 +1399,7 @@ body.light-mode .pdf-name {
     }
     /* (Keep your existing save-spin and login-spin code above here) */
 
-    /* ===== ADD THIS NEW ONE FOR THE GREEN FINGERPRINT BUTTON ===== */
-    .btn-success.saving {
-      position: relative;
-      padding-left: 40px !important;
-      pointer-events: none;
-    }
-
-    .btn-success.saving::before {
-      content: '';
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      border: 3px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      border-top-color: #ffffff;
-      animation: success-spin 0.8s linear infinite;
-    }
-
-    @keyframes success-spin {
-      0% { transform: translateY(-50%) rotate(0deg); }
-      100% { transform: translateY(-50%) rotate(360deg); }
-    }
-
+    
     .btn-secondary {
       background: #1f2937;
       color: #e5e7eb;
@@ -4191,9 +4166,7 @@ body.light-mode .pdf-name {
         <div class="contact-item" onclick="openPasswordModal()" style="padding: 6px 0;">
           <span style="font-size: 1.1rem; margin-right: 8px;">🔑</span><span style="font-size: 0.9rem;">Change Password</span>
         </div>
-        <div class="contact-item" onclick="openFingerprintModal()" style="padding: 6px 0;">
-          <span style="font-size: 1.1rem; margin-right: 8px;">👆</span><span style="font-size: 0.9rem;">Register Fingerprint</span>
-        </div>
+       
       </div>
     </div>
     <div class="theme-toggle" id="themeToggle">
@@ -4254,14 +4227,7 @@ body.light-mode .pdf-name {
           
           <button type="submit" class="login-btn" id="login-btn">Login</button>
           
-          <div id="fingerprint-login-btn" style="display: none; text-align: center; margin-top: 20px;">
-  <p style="font-size: 0.9rem; color: #9ca3af; margin-bottom: 10px;">Use Fingerprint to login</p>
-  
-  <div onclick="attemptFingerprintLogin()" style="position: relative; width: 65px; height: 65px; margin: 0 auto; cursor: pointer; background: #1f2937; border-radius: 50%; padding: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: transform 0.2s ease;">
-    
-    <img src="fingerprint.png" alt="Fingerprint" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;">
-    
-    <div id="fingerprint-spinner" style="display: none; position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+         
   
   </div>
 </div>
@@ -5071,20 +5037,7 @@ body.light-mode .video-title {
     </div>
   </div>
 
-  <div id="fingerprint-modal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 400px; padding: 20px;">
-      <div class="modal-header" style="margin-bottom: 15px;">
-        <h2 style="font-size: 1.5rem; background: linear-gradient(90deg, #3b82f6 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Biometric Login</h2>
-        <button class="modal-close" onclick="closeFingerprintModal()">&times;</button>
-      </div>
-      
-      <div class="modal-body" style="text-align: center;">
-        <div style="font-size: 3rem; margin-bottom: 15px;">👆</div>
-        <p style="font-size: 0.9rem; color: #9ca3af; margin-top: 0; margin-bottom: 20px;">Register your device's fingerprint or FaceID for faster and more secure login.</p>
-        <button id="register-bio-btn" onclick="registerBiometrics()" class="btn-success" style="width: 100%; border-radius: 10px;">+ Scan Fingerprint Now</button>
-      </div>
-    </div>
-  </div> 
+  
   <script>
     async function hashPassword(password) {
   const msgBuffer = new TextEncoder().encode(password);
@@ -5623,7 +5576,7 @@ if (isAdmin() || isEditor()) {
     const version = Date.now();
     
     // ========== APPS SCRIPT CONFIGURATION ==========
-    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwR7W-9UOR1KBrMYb_VlcVUP-tENEIVFURwZYD9WO-o8DiFpqBSfkfb46qq-wjYbQezFQ/exec';
+    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx-QTdIrtw3b-3loAnOaghEZRlch1mkDhOO-Svqonb_Jth7cbJWnoLL0n1l8cFJzwDM7g/exec';
     const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAHniq3ZVy5MrG6BGlkTfEhJDc-Qe5SjzywdAPWglUSCd4nBoO7EjltprXAJD3Wv76/exec';
 
     // ========== CACHE CONFIGURATION ==========
@@ -8255,14 +8208,7 @@ function closePasswordModal() {
   document.getElementById('password-modal').style.display = 'none';
 }
 
-function openFingerprintModal() {
-  if (sideMenu.classList.contains('open')) toggleMenu(); // Closes sidebar automatically
-  document.getElementById('fingerprint-modal').style.display = 'flex';
-}
 
-function closeFingerprintModal() {
-  document.getElementById('fingerprint-modal').style.display = 'none';
-}
     // Paste this inside your <script> tags or .js file
 function toggleSettingsPassword(inputId, btn) {
   const input = document.getElementById(inputId);
@@ -8287,29 +8233,6 @@ function toggleSettingsPassword(inputId, btn) {
     }
 }
 
-// ==========================================
-// FINGERPRINT (WEBAUTHN) LOGIC & HELPERS
-// ==========================================
-window.addEventListener('DOMContentLoaded', () => {
-  if (window.PublicKeyCredential && localStorage.getItem('fingerprintUser')) {
-    const btn = document.getElementById('fingerprint-login-btn');
-    if(btn) btn.style.display = 'block';
-  }
-});
-
-function bufferToBase64(buffer) {
-  return btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-}
-
-// --- ADD THIS NEW FUNCTION BELOW IT ---
-function base64ToBuffer(base64) {
-  let b64 = base64.replace(/-/g, "+").replace(/_/g, "/");
-  while (b64.length % 4 !== 0) b64 += "=";
-  const bString = window.atob(b64);
-  const bytes = new Uint8Array(bString.length);
-  for (let i = 0; i < bString.length; i++) bytes[i] = bString.charCodeAt(i);
-  return bytes;
-}
 
 // ==========================================
 // NEW ACCOUNT SETTINGS FUNCTIONS
@@ -8369,183 +8292,7 @@ const url = `${AUTH_APPS_SCRIPT_URL}?action=changePassword&username=${encodeURIC
   }
 }
 
-async function registerBiometrics() {
-  if (!window.PublicKeyCredential) return window.showToast("Biometric login is only supported in secure browsers.", "#ef4444");
-  
-  const btn = document.getElementById('register-bio-btn');
-  const originalText = btn.innerText;
-  
-  // TRIGGER THE CIRCULAR ANIMATION
-  btn.classList.add('saving'); 
-  btn.style.opacity = "0.7";
-  btn.style.pointerEvents = "none";
-  
-  try {
-    const challenge = new Uint8Array(32); 
-    window.crypto.getRandomValues(challenge);
-    const userId = new Uint8Array(16); 
-    window.crypto.getRandomValues(userId);
-    
-    const rpId = window.location.hostname || "localhost";
-    
-    const credential = await navigator.credentials.create({ 
-      publicKey: { 
-        challenge: challenge, 
-        rp: { name: "G.S. Tutorial", id: rpId }, 
-        user: { id: userId, name: currentUser.username, displayName: currentUser.username }, 
-        pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }], 
-        authenticatorSelection: { residentKey: "preferred", userVerification: "preferred" }, 
-        timeout: 60000 
-      } 
-    });
-    
-    if (!credential) throw new Error("Registration cancelled by user.");
-    
-    const credentialIdStr = bufferToBase64(credential.rawId);
-    const url = `${AUTH_APPS_SCRIPT_URL}?action=registerFingerprint&username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&credentialId=${encodeURIComponent(credentialIdStr)}`;
-    
-    const script = document.createElement('script');
-    const callbackName = 'bioCallback_' + Math.round(100000 * Math.random());
-    
-    window[callbackName] = function(data) {
-      if (data.success) {
-        window.showToast("✅ Fingerprint registered securely!");
-        
-        let savedKeys = JSON.parse(localStorage.getItem('devicePasskeys') || '[]');
-        savedKeys = savedKeys.filter(k => k.username !== currentUser.username); 
-        savedKeys.push({ username: currentUser.username, id: credentialIdStr });
-        localStorage.setItem('devicePasskeys', JSON.stringify(savedKeys));
 
-        closeFingerprintModal(); 
-        const fpBtn = document.getElementById('fingerprint-login-btn');
-        if(fpBtn) fpBtn.style.display = 'block'; 
-      } else {
-        window.showToast("Failed to link fingerprint: " + data.error, "#ef4444");
-      }
-      
-      // STOP THE ANIMATION
-      btn.classList.remove('saving');
-      btn.innerText = originalText;
-      btn.style.opacity = "1";
-      btn.style.pointerEvents = "auto";
-      
-      delete window[callbackName];
-      if (script.parentNode) document.body.removeChild(script);
-    };
-    
-    script.onerror = function() {
-      window.showToast("Network error during registration.", "#ef4444");
-      
-      // STOP THE ANIMATION
-      btn.classList.remove('saving');
-      btn.innerText = originalText;
-      btn.style.opacity = "1";
-      btn.style.pointerEvents = "auto";
-      
-      delete window[callbackName];
-      if (script.parentNode) document.body.removeChild(script);
-    };
-    
-    script.src = url + '&callback=' + callbackName;
-    document.body.appendChild(script);
-    
-  } catch (err) {
-    let errorMsg = "Registration cancelled or device not supported.";
-    if (err.name === 'NotAllowedError') errorMsg = "Fingerprint request was denied or cancelled.";
-    window.showToast(errorMsg, "#ef4444");
-    
-    // STOP THE ANIMATION
-    btn.classList.remove('saving');
-    btn.innerText = originalText;
-    btn.style.opacity = "1";
-    btn.style.pointerEvents = "auto";
-  }
-}
-async function attemptFingerprintLogin() {
-  let savedKeys = JSON.parse(localStorage.getItem('devicePasskeys') || '[]');
-  const oldFallback = localStorage.getItem('fingerprintUser'); // For backwards compatibility
-
-  if (savedKeys.length === 0 && !oldFallback) {
-    return window.showToast("No fingerprint registered on this device.", "#ef4444");
-  }
-
-  const btnContainer = document.getElementById('fingerprint-login-btn');
-  const spinner = document.getElementById('fingerprint-spinner');
-  
-  btnContainer.style.pointerEvents = "none";
-  btnContainer.style.opacity = "0.7";
-  spinner.style.display = "block"; 
-
-  try {
-    const challenge = new Uint8Array(32);
-    window.crypto.getRandomValues(challenge);
-    const rpId = window.location.hostname || "localhost";
-
-    // --- NEW: BYPASS SELECTION BOX BY PROVIDING SPECIFIC CREDENTIALS ---
-    const allowed = savedKeys.map(key => ({
-      type: "public-key",
-      id: base64ToBuffer(key.id)
-    }));
-
-    const assertion = await navigator.credentials.get({
-      publicKey: {
-        challenge: challenge,
-        rpId: rpId,
-        allowCredentials: allowed.length > 0 ? allowed : undefined, // Skips selection prompt if length is 1!
-        userVerification: "preferred",
-        timeout: 60000
-      }
-    });
-
-    if (!assertion) throw new Error("No assertion returned");
-
-    const credentialIdStr = bufferToBase64(assertion.rawId);
-    
-    // Find exactly which username this fingerprint belongs to
-    const matchedKey = savedKeys.find(k => k.id === credentialIdStr);
-    const loginUsername = matchedKey ? matchedKey.username : oldFallback;
-
-    const url = `${AUTH_APPS_SCRIPT_URL}?action=fingerprintLogin&username=${encodeURIComponent(loginUsername)}&credentialId=${encodeURIComponent(credentialIdStr)}`;
-
-    const script = document.createElement('script');
-    const callbackName = 'loginBioCb_' + Math.round(100000 * Math.random());
-
-    window[callbackName] = function(data) {
-      if (data.success) {
-        window.showToast("✅ Fingerprint verified!");
-        data.user.token = data.token; 
-        login(data.user, false); 
-      } else {
-        window.showToast("Login failed: " + data.error, "#ef4444");
-      }
-      
-      btnContainer.style.pointerEvents = "auto";
-      btnContainer.style.opacity = "1";
-      spinner.style.display = "none";
-      
-      delete window[callbackName];
-      if (script.parentNode) document.body.removeChild(script);
-    };
-
-    script.onerror = function() {
-      window.showToast("Network error. Try again.", "#ef4444");
-      btnContainer.style.pointerEvents = "auto";
-      btnContainer.style.opacity = "1";
-      spinner.style.display = "none";
-      delete window[callbackName];
-      if (script.parentNode) document.body.removeChild(script);
-    };
-
-    script.src = url + '&callback=' + callbackName;
-    document.body.appendChild(script);
-
-  } catch (err) {
-    window.showToast("Fingerprint scan cancelled or failed.", "#ef4444");
-    btnContainer.style.pointerEvents = "auto";
-    btnContainer.style.opacity = "1";
-    spinner.style.display = "none";
-  }
-}
     
 function handleUserActivity() {
   if (currentUser) {
@@ -12794,9 +12541,7 @@ if (isScreenVisible('video-container')) {
     <input type="password" id="confirm-pwd" placeholder="Confirm New Password" style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; outline: none;">
     <button onclick="submitPasswordChange()" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 25px;">Update Password</button>
 
-    <h3 style="border-bottom: 1px solid #334155; padding-bottom: 5px; font-size: 1.1rem;">Biometric Login</h3>
-    <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px;">Register your device's fingerprint or FaceID for faster login.</p>
-    <button onclick="registerBiometrics()" style="width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 20px;">+ Register Fingerprint</button>
+    
 
     <button onclick="closeSettingsModal()" style="width: 100%; padding: 12px; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Close</button>
   </div>
