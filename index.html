@@ -5086,6 +5086,12 @@ body.light-mode .video-title {
     </div>
   </div> 
   <script>
+    async function hashPassword(password) {
+  const msgBuffer = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
     // ========== ADMIN PANEL CLEAR HELPERS ==========
 window.clearPdfAdminPanel = function() {
     document.getElementById("new-pdf-name").value = "";
@@ -5618,7 +5624,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwR7W-9UOR1KBrMYb_VlcVUP-tENEIVFURwZYD9WO-o8DiFpqBSfkfb46qq-wjYbQezFQ/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxx06U1kYajeD38MH25ZpeE2rIu7IQ5vIfh29BNpu2_1HB60ts85a0OkCk0RC8zLE2M/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAHniq3ZVy5MrG6BGlkTfEhJDc-Qe5SjzywdAPWglUSCd4nBoO7EjltprXAJD3Wv76/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -6326,47 +6332,48 @@ window.showToast = function(message, bgColor = "#22c55e") {
 
     // ========== AUTHENTICATION FUNCTION (BULLETPROOF) ==========
 async function authenticateWithAppsScript(username, password) {
-  const authUrl = `${AUTH_APPS_SCRIPT_URL}?action=authenticate&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&_t=${Date.now()}`;
   
-  const performAuth = () => {
-    return new Promise((resolve) => {
-      const callbackName = 'authCb_' + Date.now() + Math.floor(Math.random() * 1000);
-      const script = document.createElement('script');
-      let isDone = false;
+  const performAuth = async () => {
+    try {
+      // 1. Pack the data securely into a FormData object (Request Body)
+      const formData = new FormData();
+      formData.append('action', 'authenticate');
+      formData.append('username', username);
+      formData.append('password', password); // This should be the hashed password
+
+      // 2. Setup an AbortController for the 15-second timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      // 3. Send the secure POST request
+      const response = await fetch(AUTH_APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      // 4. Read the response
+      const textResponse = await response.text();
+
+      // 5. Extract JSON from Apps Script's callback(JSON) format
+      const firstParen = textResponse.indexOf('(');
+      const lastParen = textResponse.lastIndexOf(')');
       
-      const timeoutTimer = setTimeout(() => {
-        if (!isDone) {
-          isDone = true;
-          script.remove();
-          delete window[callbackName];
-          resolve({ networkFailed: true, error: 'timeout' });
-        }
-      }, 15000); // 15-second patience window
+      if (firstParen !== -1 && lastParen !== -1) {
+        const jsonString = textResponse.substring(firstParen + 1, lastParen);
+        return { networkFailed: false, data: JSON.parse(jsonString) };
+      } else {
+        return { networkFailed: false, data: JSON.parse(textResponse) };
+      }
 
-      window[callbackName] = function(data) {
-        if (!isDone) {
-          isDone = true;
-          clearTimeout(timeoutTimer);
-          script.remove();
-          delete window[callbackName];
-          // WE PASS THE ENTIRE DATA OBJECT BACK HERE
-          resolve({ networkFailed: false, data: data }); 
-        }
-      };
-
-      script.onerror = function() {
-        if (!isDone) {
-          isDone = true;
-          clearTimeout(timeoutTimer);
-          script.remove();
-          delete window[callbackName];
-          resolve({ networkFailed: true, error: 'network_error' });
-        }
-      };
-
-      script.src = `${authUrl}&callback=${callbackName}`;
-      document.head.appendChild(script);
-    });
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return { networkFailed: true, error: 'timeout' };
+      }
+      return { networkFailed: true, error: 'network_error' };
+    }
   };
 
   try {
@@ -6380,7 +6387,7 @@ async function authenticateWithAppsScript(username, password) {
     }
 
     if (!result.networkFailed) {
-      // FIX IS HERE: Return the exact data the server sends back, including the lockout countdown!
+      // Return the exact data the server sends back, including the lockout countdown!
       if (result.data) {
         return result.data; 
       } else {
@@ -7784,7 +7791,7 @@ async function loadClasses() {
         console.log("Could not fetch IP:", error);
       }
     }
-
+    
     // ========== SESSION MANAGEMENT ==========
     function saveSession() {
       if (currentUser) {
@@ -7891,16 +7898,47 @@ async function loadClasses() {
    // ========== SINGLE DEVICE LOGIN MONITOR (FASTER & RESPONSIVE) ==========
     // let sessionMonitorInterval = null;
     let isCheckingSession = false; // Prevents overlapping network requests
+// PASTE THIS NEW FUNCTION HERE:
+async function checkSessionWithAppsScript(username, token) {
+  return new Promise(async (resolve) => {
+    try {
+      const formData = new FormData();
+      formData.append('action', 'check_session');
+      formData.append('username', username);
+      formData.append('token', token);
 
-    // 1. The core check function
+      const response = await fetch(AUTH_APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: formData
+      });
+
+      const textResponse = await response.text();
+
+      const firstParen = textResponse.indexOf('(');
+      const lastParen = textResponse.lastIndexOf(')');
+      
+      if (firstParen !== -1 && lastParen !== -1) {
+        const jsonString = textResponse.substring(firstParen + 1, lastParen);
+        const result = JSON.parse(jsonString);
+        resolve(result);
+      } else {
+        resolve(JSON.parse(textResponse));
+      }
+
+    } catch (error) {
+      console.error("Session check error:", error);
+      resolve({ success: false, valid: false, error: error.toString() });
+    }
+  });
+}
     async function checkCurrentSessionNow() {
       // Don't check if they aren't fully logged in or if a check is already running
       if (!currentUser || !currentUser.username || !currentUser.token || isCheckingSession) return;
       
       isCheckingSession = true;
       try {
-        const url = `${AUTH_APPS_SCRIPT_URL}?action=check_session&username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&_t=${Date.now()}`;
-        const response = await jsonpRequest(url, 'sessionCheckCb');
+        // CHANGED: We now use the secure POST method instead of jsonpRequest
+        const response = await checkSessionWithAppsScript(currentUser.username, currentUser.token);
         
         if (response && response.valid === false && response.reason === 'multi_login') {
           // Token mismatch! Someone else logged in.
@@ -8295,8 +8333,9 @@ async function submitPasswordChange() {
   btn.classList.add('saving'); 
   
   try {
-    const url = `${AUTH_APPS_SCRIPT_URL}?action=changePassword&username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&oldPassword=${encodeURIComponent(oldPwd)}&newPassword=${encodeURIComponent(newPwd)}`;
-    
+    const hashedOld = await hashPassword(oldPwd);
+const hashedNew = await hashPassword(newPwd);
+const url = `${AUTH_APPS_SCRIPT_URL}?action=changePassword&username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&oldPassword=${encodeURIComponent(hashedOld)}&newPassword=${encodeURIComponent(hashedNew)}`;
     const script = document.createElement('script');
     const callbackName = 'pwdCallback_' + Math.round(100000 * Math.random());
     
@@ -12019,17 +12058,19 @@ if (isScreenVisible('video-container')) {
       }
 
       loginErrorEl.style.display = "none";
-      
-      const originalText = "Login"; // Keep the original text safe
-      loginBtnEl.classList.add('saving');
-      loginBtnEl.innerHTML = 'Loading...';
-      loginBtnEl.disabled = true;
+  const originalText = "Login"; // Keep the original text safe
+  
+  loginBtnEl.classList.add('saving');
+  loginBtnEl.innerHTML = 'Loading...';
+  loginBtnEl.disabled = true;
 
-      const result = await authenticateWithAppsScript(username, password);
+  // ✅ ADDED HASHING LOGIC HERE
+  const hashedPassword = await hashPassword(password);
+  const result = await authenticateWithAppsScript(username, hashedPassword);
 
-      if (result?.success) {
-        const user = result.user;
-        login(user, false);
+  if (result?.success) {
+    const user = result.user;
+    login(user, false);
         
         // Remove loading state on success
         loginBtnEl.classList.remove('saving');
