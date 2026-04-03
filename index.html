@@ -5609,8 +5609,8 @@ if (isAdmin() || isEditor()) {
     const version = Date.now();
     
     // ========== APPS SCRIPT CONFIGURATION ==========
-    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYzv9ZvurA4sl8XbvVF-AkGR7u-uGEEBajJD6EPIskdLuEeN7uxIRpZYKPlIB63FiHKQ/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAHniq3ZVy5MrG6BGlkTfEhJDc-Qe5SjzywdAPWglUSCd4nBoO7EjltprXAJD3Wv76/exec';
+    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzPqv2EEbigSTAKQbN9a0JzF-oXBzuj8w-rTjbZbfDwDNcga1_k123UZ6-4SRdZJa7ArQ/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxp794nGm0He184gzxoPUuWhw6gL2ewuV2zJ9WcG8bKAwMkLH1IEwjqdyXt_bSz3yy/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -8662,65 +8662,53 @@ function stopInactivityTracker() {
       }
     }
 
-    async function sendTelegramMessage(message) {
-      try {
-        if (!TELEGRAM_CONFIG.ENABLED || !TELEGRAM_CONFIG.BOT_TOKEN || !TELEGRAM_CONFIG.CHAT_ID) {
-          return false;
-        }
+    // ========== SECURE TELEGRAM DELIVERY (VIA GOOGLE SERVER) ==========
+async function sendTelegramMessage(message) {
+  try {
+    if (!TELEGRAM_CONFIG.ENABLED) return false;
 
-        const url = `https://api.telegram.org/bot${TELEGRAM_CONFIG.BOT_TOKEN}/sendMessage`;
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            chat_id: TELEGRAM_CONFIG.CHAT_ID, 
-            text: message, 
-            parse_mode: 'Markdown' 
-          })
-        });
-        
-        if (response.ok) {
-          console.log("Telegram message sent successfully");
-          return true;
-        } else {
-          return false;
-        }
-      } catch (error) {
-        console.error("Error sending Telegram message:", error);
-        return false;
-      }
-    }
+    const formData = new FormData();
+    formData.append('action', 'sendTelegramProxy');
+    formData.append('type', 'text');
+    formData.append('message', message);
 
-    async function sendPDFToTelegram(pdfBase64, fileName) {
-      try {
-        if (!TELEGRAM_CONFIG.ENABLED || !TELEGRAM_CONFIG.BOT_TOKEN || !TELEGRAM_CONFIG.CHAT_ID) return false;
+    fetch(AUTH_APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: formData
+    });
+    
+    console.log("Secure text notification sent to server");
+    return true; 
+  } catch (error) {
+    console.error("Error routing Telegram message:", error);
+    return false;
+  }
+}
 
-        const url = `https://api.telegram.org/bot${TELEGRAM_CONFIG.BOT_TOKEN}/sendDocument`;
-        
-        const byteCharacters = atob(pdfBase64);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'application/pdf' });
-        
-        const formData = new FormData();
-        formData.append('chat_id', TELEGRAM_CONFIG.CHAT_ID);
-        formData.append('document', blob, fileName);
-        
-        const response = await fetch(url, {
-          method: 'POST',
-          body: formData
-        });
-        
-        return response.ok;
-      } catch (error) {
-        console.error("Error sending PDF to Telegram:", error);
-        return false;
-      }
-    }
+async function sendPDFToTelegram(pdfBase64, fileName) {
+  try {
+    if (!TELEGRAM_CONFIG.ENABLED) return false;
 
+    const formData = new FormData();
+    formData.append('action', 'sendTelegramProxy');
+    formData.append('type', 'document');
+    formData.append('pdfBase64', pdfBase64);
+    formData.append('filename', fileName);
+
+    fetch(AUTH_APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors', 
+      body: formData
+    });
+    
+    console.log("Secure PDF sent to server");
+    return true;
+  } catch (error) {
+    console.error("Error routing PDF to server:", error);
+    return false;
+  }
+}
     // ========== IMPROVED IMAGE HANDLING FUNCTIONS ==========
     function convertImageUrl(url) {
       if (!url) return '';
