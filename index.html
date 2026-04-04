@@ -12928,22 +12928,7 @@ function updateAdminControls() {
       console.log('App was successfully installed to home screen!');
     });
   </script>
-  <div id="settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
-  <div style="background: #1e293b; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; color: white; border: 1px solid #3b82f6; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-    <h2 style="margin-top: 0; margin-bottom: 20px; text-align: center; color: #60a5fa;">Account Settings</h2>
-    
-    <h3 style="border-bottom: 1px solid #334155; padding-bottom: 5px; font-size: 1.1rem;">Change Password</h3>
-    <input type="password" id="old-pwd" placeholder="Current Password" style="width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; outline: none;">
-    <input type="password" id="new-pwd" placeholder="New Password" style="width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; outline: none;">
-    <input type="password" id="confirm-pwd" placeholder="Confirm New Password" style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; outline: none;">
-    <button onclick="submitPasswordChange()" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 25px;">Update Password</button>
-
-    
-
-    <button onclick="closeSettingsModal()" style="width: 100%; padding: 12px; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Close</button>
-  </div>
-</div>
-<div id="admin-structure-modal" class="modal" style="display: none; z-index: 10006;">
+  <div id="admin-structure-modal" class="modal" style="display: none; z-index: 10006;">
     <div class="modal-content" style="max-width: 500px; padding: 25px;">
       <div class="modal-header" style="margin-bottom: 15px;">
         <h2 style="font-size: 1.5rem; color: #22c55e;" id="struct-modal-title">🏗️ Structure Manager</h2>
@@ -13012,6 +12997,22 @@ function updateAdminControls() {
       </div>
     </div>
   </div>
+  <div id="settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+  <div style="background: #1e293b; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; color: white; border: 1px solid #3b82f6; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+    <h2 style="margin-top: 0; margin-bottom: 20px; text-align: center; color: #60a5fa;">Account Settings</h2>
+    
+    <h3 style="border-bottom: 1px solid #334155; padding-bottom: 5px; font-size: 1.1rem;">Change Password</h3>
+    <input type="password" id="old-pwd" placeholder="Current Password" style="width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; outline: none;">
+    <input type="password" id="new-pwd" placeholder="New Password" style="width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; outline: none;">
+    <input type="password" id="confirm-pwd" placeholder="Confirm New Password" style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; outline: none;">
+    <button onclick="submitPasswordChange()" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 25px;">Update Password</button>
+
+    
+
+    <button onclick="closeSettingsModal()" style="width: 100%; padding: 12px; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Close</button>
+  </div>
+</div>
+
 
 <script>
 // ========== V2 SECURE STRUCTURE MANAGER JS ==========
