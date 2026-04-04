@@ -5619,7 +5619,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwoASzbhCL_QpcP5gnDRFPpvMx3bGU6AxWjamgd_swvs-z8lEx1kTPiUrZtNFNJkg80/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzIHGAHGAVIMVT_dRLpikiYtWGMZCe-TnM9i77FuVpUZk7v1VtD7oocKyBenIHvQ4Fw/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -6114,7 +6114,7 @@ window.showToast = function(message, bgColor = "#22c55e") {
       // 3. Location Data (Where to write the image link in Google Sheets)
       formData.append('fieldId', fieldId);
       formData.append('sheetId', currentSubjectConfig?.sheetId || '');
-      formData.append('gid', currentSubjectConfig?.chapters?.[topicSelectEl.value] || '');
+      formData.append('gid', topicSelectEl.value || '');
       formData.append('rowIndex', rowIndex);
       formData.append('tempId', tempId);
       
@@ -12593,39 +12593,48 @@ async function submitV2Structure() {
   const timerVal = document.getElementById('struct-timer').value.trim();
   const subjType = document.getElementById('struct-type').value;
 
-  // Context gathering
-  let sheetId = '', gid = '';
+ let sheetId = '', gid = '';
   if (structCurrentMode === 'subject' || structCurrentMode === 'chapter') {
     const allData = await loadAllConfigAtOnce();
     const key = `${currentClass}_${structCurrentMode === 'chapter' ? currentSubject.toLowerCase() : selectedItem.toLowerCase()}`;
     if (allData?.config[key]) sheetId = allData.config[key].sheetId;
-    if (structCurrentMode === 'chapter' && allData?.config[`${currentClass}_${currentSubject.toLowerCase()}`]?.chapters[selectedItem]) {
-      gid = allData.config[`${currentClass}_${currentSubject.toLowerCase()}`].chapters[selectedItem];
+    
+    // Fallback for adding a new chapter
+    if (structCurrentAction === 'add' && structCurrentMode === 'chapter') {
+      const parentKey = `${currentClass}_${currentSubject.toLowerCase()}`;
+      if (allData?.config[parentKey]) sheetId = allData.config[parentKey].sheetId;
+    }
+    
+    // PERFECT GID ASSIGNMENT FOR CHAPTERS
+    if (structCurrentMode === 'chapter' && selectedItem) {
+      gid = selectedItem; // The dropdown value is already the perfect GID
     }
   }
 
   if (structCurrentAction === 'add') {
     formData.append('className', structCurrentMode === 'class' ? newClassName : currentClass);
     formData.append('subjectName', structCurrentMode === 'chapter' ? currentSubject : newSubjectName);
-    formData.append('chapterName', newChapterName);
-    formData.append('subjectType', subjType);
+    formData.append('chapterName', newChapterName); 
+    formData.append('subjectType', subjType); 
     formData.append('timer', timerVal);
+    if (structCurrentMode === 'class') formData.append('classIcon', structIcon);
+    if (structCurrentMode === 'class' || structCurrentMode === 'subject') formData.append('subjectIcon', structIcon);
     if (structCurrentMode !== 'class') formData.append('sheetId', sheetId);
   } else {
-    formData.append('oldName', selectedItem);
-    formData.append('className', currentClass);
+    formData.append('oldName', selectedItem); 
+    formData.append('className', currentClass); 
     formData.append('subjectName', currentSubject);
-    formData.append('sheetId', sheetId);
+    formData.append('sheetId', sheetId); 
     formData.append('gid', gid);
     if (structCurrentAction === 'edit') {
       formData.append('newName', structCurrentMode === 'class' ? newClassName : (structCurrentMode === 'subject' ? newSubjectName : newChapterName));
       formData.append('timer', timerVal);
+      if (structCurrentMode === 'class') formData.append('classIcon', structIcon);
+      if (structCurrentMode === 'subject') formData.append('subjectIcon', structIcon);
     }
   }
 
   await executeSecureRequest(formData, btn, "Execute");
-}
-
 async function executeSecureRequest(formData, btn, defaultText) {
   try {
     const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
