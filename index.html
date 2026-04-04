@@ -5636,7 +5636,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZPNp3NXjuzy69ctClPCQ-LGj_DJiJ1wQBPfEbkb8-SxKtFcOxBhA6Y3rokxpeQvPP/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxrFZ2XedZ4IakIovRksKuP2RZ2kIDZHrbSuuk066YUSbmHHnfertp4hqBr_24TfDwY/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -12675,16 +12675,32 @@ if (isScreenVisible('video-container')) {
           <button onclick="adminSubmitSubject()" class="btn-success" style="width: 100%;">Create Subject & Sheet</button>
         </div>
 
-        <div id="admin-tab-chapter" style="display:none;">
+       <div id="admin-tab-chapter" style="display:none;">
+          <select id="admin-chapter-action" class="form-input" style="margin-bottom: 15px; background: #1e293b; color: #10b981; font-weight: bold;" onchange="toggleAdminModes('chapter')">
+            <option value="add">➕ Add New Chapter</option>
+            <option value="edit">✏️ Edit Existing Chapter</option>
+          </select>
+
           <label style="color:#d1d5db; font-size:0.9rem;">Select Class</label>
-          <select id="admin-chapter-class" class="form-input" onchange="populateAdminSubjects()" style="margin-bottom: 15px;"></select>
+          <select id="admin-chapter-class" class="form-input" onchange="populateAdminSubjects('admin-chapter-class', 'admin-chapter-subject')" style="margin-bottom: 15px;"></select>
+          
           <label style="color:#d1d5db; font-size:0.9rem;">Select Subject</label>
-          <select id="admin-chapter-subject" class="form-input" style="margin-bottom: 15px;"></select>
-          <label style="color:#d1d5db; font-size:0.9rem;">Chapter Name</label>
+          <select id="admin-chapter-subject" class="form-input" onchange="populateAdminChapters()" style="margin-bottom: 15px;"></select>
+          
+          <div id="chapter-edit-section" style="display:none;">
+            <label style="color:#d1d5db; font-size:0.9rem;">Select Chapter to Edit</label>
+            <select id="admin-edit-chapter-select" class="form-input" style="margin-bottom: 15px;"></select>
+          </div>
+
+          <label style="color:#d1d5db; font-size:0.9rem;" id="chapter-name-label">Chapter Name</label>
           <input type="text" id="admin-chapter-name" placeholder="Enter chapter name" class="form-input" style="margin-bottom: 15px;">
-          <label style="color:#d1d5db; font-size:0.9rem;">Timer (Minutes, MCQ only)</label>
-          <input type="number" id="admin-chapter-timer" placeholder="Leave blank for none" class="form-input" style="margin-bottom: 15px;">
-          <button onclick="adminSubmitChapter()" class="btn-success" style="width: 100%;">Create Chapter Tab</button>
+          
+          <div id="chapter-timer-section">
+            <label style="color:#d1d5db; font-size:0.9rem;">Timer (Minutes, MCQ only)</label>
+            <input type="number" id="admin-chapter-timer" placeholder="Leave blank for none" class="form-input" style="margin-bottom: 15px;">
+          </div>
+          
+          <button onclick="adminSubmitChapter()" class="btn-success" style="width: 100%;" id="chapter-submit-btn">Create Chapter</button>
         </div>
       </div>
     </div>
@@ -12751,6 +12767,198 @@ if (isScreenVisible('video-container')) {
       deferredPrompt = null;
       console.log('App was successfully installed to home screen!');
     });
+    // =====================================================================
+// ========== MASTER ADMIN UI & LOGIC BLOCK (ADD & EDIT) ===============
+// =====================================================================
+
+function openAdminManagement() {
+  const modal = document.getElementById('admin-management-modal');
+  if (modal) {
+    modal.style.display = 'flex';
+    populateAdminClasses();
+  }
+}
+
+function switchAdminTab(tab) {
+  document.getElementById('admin-tab-class').style.display = tab === 'class' ? 'block' : 'none';
+  document.getElementById('admin-tab-subject').style.display = tab === 'subject' ? 'block' : 'none';
+  document.getElementById('admin-tab-chapter').style.display = tab === 'chapter' ? 'block' : 'none';
+}
+
+function openSpecificAdminTab(tabName) {
+  openAdminManagement();
+  switchAdminTab(tabName);
+}
+
+// Switches UI between Add and Edit modes depending on dropdown selection
+function toggleAdminModes(tab) {
+  const actionEl = document.getElementById(`admin-${tab}-action`);
+  if (!actionEl) return;
+  
+  const action = actionEl.value;
+  const isEdit = (action === 'edit');
+  
+  if (tab === 'class') {
+    document.getElementById('class-edit-section').style.display = isEdit ? 'block' : 'none';
+    document.getElementById('class-name-label').innerText = isEdit ? 'New Class Name' : 'Class Name';
+    document.getElementById('class-submit-btn').innerText = isEdit ? 'Save Changes' : 'Create Class';
+  } else if (tab === 'subject') {
+    document.getElementById('subject-edit-section').style.display = isEdit ? 'block' : 'none';
+    document.getElementById('subject-type-section').style.display = isEdit ? 'none' : 'block';
+    document.getElementById('subject-name-label').innerText = isEdit ? 'New Subject Name' : 'Subject Name';
+    document.getElementById('subject-submit-btn').innerText = isEdit ? 'Save Changes' : 'Create Subject';
+  } else if (tab === 'chapter') {
+    document.getElementById('chapter-edit-section').style.display = isEdit ? 'block' : 'none';
+    document.getElementById('chapter-timer-section').style.display = isEdit ? 'none' : 'block';
+    document.getElementById('chapter-name-label').innerText = isEdit ? 'New Chapter Name' : 'Chapter Name';
+    document.getElementById('chapter-submit-btn').innerText = isEdit ? 'Save Changes' : 'Create Chapter';
+    if (isEdit) populateAdminChapters(); // Load chapters into dropdown
+  }
+}
+
+// Populates all "Select Class" dropdowns
+async function populateAdminClasses() {
+  if (!ALL_CONFIG_CACHE) await loadAllConfigAtOnce();
+  if (!ALL_CONFIG_CACHE || !ALL_CONFIG_CACHE.classes) return;
+  
+  const classes = Object.keys(ALL_CONFIG_CACHE.classes);
+  const dropdowns = ['admin-subject-class', 'admin-chapter-class', 'admin-edit-class-select'];
+  
+  dropdowns.forEach(id => {
+    const select = document.getElementById(id);
+    if (!select) return;
+    select.innerHTML = '<option value="">-- Select Class --</option>';
+    classes.forEach(c => {
+      let displayName = isNaN(c) || parseInt(c) > 12 || parseInt(c) < 1 ? c : `Class ${c}`;
+      select.innerHTML += `<option value="${c}">${displayName}</option>`;
+    });
+  });
+}
+
+// Populates "Select Subject" dropdowns based on the chosen class
+function populateAdminSubjects(classSelectId, targetSelectId) {
+  const classVal = document.getElementById(classSelectId).value;
+  const select = document.getElementById(targetSelectId);
+  if (!select) return;
+  
+  select.innerHTML = '<option value="">-- Select Subject --</option>';
+  if (!classVal || !ALL_CONFIG_CACHE) return;
+  
+  const subjects = ALL_CONFIG_CACHE.classes[classVal] || [];
+  subjects.forEach(s => {
+    const key = `${classVal}_${s.name.toLowerCase()}`;
+    const sheetId = ALL_CONFIG_CACHE.config[key] ? ALL_CONFIG_CACHE.config[key].sheetId : "";
+    select.innerHTML += `<option value="${s.name}" data-sheet="${sheetId}">${s.name}</option>`;
+  });
+}
+
+// Populates "Select Chapter" dropdowns based on the chosen subject
+function populateAdminChapters() {
+  const classVal = document.getElementById('admin-chapter-class').value;
+  const subjectVal = document.getElementById('admin-chapter-subject').value;
+  const select = document.getElementById('admin-edit-chapter-select');
+  if (!select) return;
+  
+  select.innerHTML = '<option value="">-- Select Chapter --</option>';
+  if (!classVal || !subjectVal || !ALL_CONFIG_CACHE) return;
+  
+  const subjects = ALL_CONFIG_CACHE.classes[classVal] || [];
+  const targetSubject = subjects.find(s => s.name === subjectVal);
+  if (targetSubject && targetSubject.topics) {
+    targetSubject.topics.forEach(t => {
+      select.innerHTML += `<option value="${t.name}">${t.name}</option>`;
+    });
+  }
+}
+
+// ========== ADMIN SUBMISSION CALLS TO APPS SCRIPT ==========
+
+async function adminSubmitClass() {
+  const action = document.getElementById('admin-class-action').value;
+  const newName = document.getElementById('admin-class-name').value.trim();
+  const icon = document.getElementById('admin-class-icon').value.trim();
+  
+  let url = MASTER_CONFIG_APPS_SCRIPT_URL + `?username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&_t=${Date.now()}`;
+  
+  if (action === 'add') {
+    if (!newName) return alert("Class name required");
+    showPDFOverlay("Creating Class & Folders...");
+    url += `&action=adminCreateClass&className=${encodeURIComponent(newName)}&icon=${encodeURIComponent(icon)}`;
+  } else {
+    const oldName = document.getElementById('admin-edit-class-select').value;
+    if (!oldName) return alert("Select a class to edit");
+    if (!newName && !icon) return alert("Enter a new name or icon to save changes");
+    showPDFOverlay("Updating Class...");
+    url += `&action=adminEditClass&oldName=${encodeURIComponent(oldName)}&newName=${encodeURIComponent(newName)}&newIcon=${encodeURIComponent(icon)}`;
+  }
+  
+  try {
+    const res = await jsonpRequest(url, 'adminCb1');
+    hidePDFOverlay();
+    if(res.success) { showToast("Success!"); document.getElementById('admin-management-modal').style.display='none'; forceAppRefresh(); }
+    else alert("Error: " + res.error);
+  } catch(e) { hidePDFOverlay(); alert(e); }
+}
+
+async function adminSubmitSubject() {
+  const action = document.getElementById('admin-subject-action').value;
+  const cName = document.getElementById('admin-subject-class').value;
+  const newSubName = document.getElementById('admin-subject-name').value.trim();
+  
+  let url = MASTER_CONFIG_APPS_SCRIPT_URL + `?username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&_t=${Date.now()}&className=${encodeURIComponent(cName)}`;
+  
+  if (action === 'add') {
+    const sType = document.getElementById('admin-subject-type').value;
+    if (!cName || !newSubName) return alert("All fields required");
+    showPDFOverlay("Creating Subject & Google Sheet...");
+    url += `&action=adminCreateSubject&subjectName=${encodeURIComponent(newSubName)}&subjectType=${encodeURIComponent(sType)}`;
+  } else {
+    const oldSubName = document.getElementById('admin-edit-subject-select').value;
+    if (!cName || !oldSubName || !newSubName) return alert("Select a subject and enter a new name");
+    showPDFOverlay("Updating Subject...");
+    url += `&action=adminEditSubject&oldSubject=${encodeURIComponent(oldSubName)}&newSubject=${encodeURIComponent(newSubName)}`;
+  }
+  
+  try {
+    const res = await jsonpRequest(url, 'adminCb2');
+    hidePDFOverlay();
+    if(res.success) { showToast("Success!"); document.getElementById('admin-management-modal').style.display='none'; forceAppRefresh(); }
+    else alert("Error: " + res.error);
+  } catch(e) { hidePDFOverlay(); alert(e); }
+}
+
+async function adminSubmitChapter() {
+  const action = document.getElementById('admin-chapter-action').value;
+  const cName = document.getElementById('admin-chapter-class').value;
+  const sNameSelect = document.getElementById('admin-chapter-subject');
+  const sName = sNameSelect.value;
+  
+  if (!sNameSelect.selectedIndex || sNameSelect.selectedIndex === 0) return alert("Select a subject first");
+  const sheetId = sNameSelect.options[sNameSelect.selectedIndex].getAttribute('data-sheet');
+  const newChapterName = document.getElementById('admin-chapter-name').value.trim();
+  
+  let url = MASTER_CONFIG_APPS_SCRIPT_URL + `?username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&_t=${Date.now()}&sheetId=${encodeURIComponent(sheetId)}`;
+  
+  if (action === 'add') {
+    const timer = document.getElementById('admin-chapter-timer').value.trim();
+    if (!cName || !sName || !newChapterName) return alert("All fields required");
+    showPDFOverlay("Creating Chapter Tab...");
+    url += `&action=adminCreateChapter&className=${encodeURIComponent(cName)}&subjectName=${encodeURIComponent(sName)}&chapterName=${encodeURIComponent(newChapterName)}&timer=${encodeURIComponent(timer)}&type=MCQ`;
+  } else {
+    const oldChapter = document.getElementById('admin-edit-chapter-select').value;
+    if (!oldChapter || !newChapterName) return alert("Select a chapter and enter a new name");
+    showPDFOverlay("Updating Chapter Tab...");
+    url += `&action=adminEditChapter&oldChapter=${encodeURIComponent(oldChapter)}&newChapter=${encodeURIComponent(newChapterName)}`;
+  }
+  
+  try {
+    const res = await jsonpRequest(url, 'adminCb3');
+    hidePDFOverlay();
+    if(res.success) { showToast("Success!"); document.getElementById('admin-management-modal').style.display='none'; forceAppRefresh(); }
+    else alert("Error: " + res.error);
+  } catch(e) { hidePDFOverlay(); alert(e); }
+}
+// =====================================================================
   </script>
   <div id="settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
   <div style="background: #1e293b; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; color: white; border: 1px solid #3b82f6; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
@@ -12767,5 +12975,6 @@ if (isScreenVisible('video-container')) {
     <button onclick="closeSettingsModal()" style="width: 100%; padding: 12px; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Close</button>
   </div>
 </div>
+  
 </body>
 </html>
