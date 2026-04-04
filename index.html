@@ -4295,28 +4295,26 @@ body.light-mode .pdf-name {
     </div>
     
     <!-- Class Selection Screen -->
-    <div class="class-selection" id="class-selection">
-      <div class="greeting-message" id="greetingMessage"></div>
-      <div class="screen-header" style="display: flex; flex-direction: column; align-items: center;">
-        <div class="screen-title">Select Your Class</div>
-        <div class="screen-subtitle" style="margin-top: 10px;">Choose your class and Start</div>
-        <button class="admin-inline-btn admin-control-element" onclick="openSpecificAdminTab('class')">⚙️ Manage Classes</button>
-    
-      </div>
+    <div class="screen-header">
+      <div class="screen-title">Select Your Class</div>
+      <div class="screen-subtitle">Choose your class and Start</div>
+    </div>
+    <div id="admin-add-class-btn-container" class="admin-add-question" style="display: none; margin-bottom: 20px; padding: 12px;">
+       <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4);" onclick="openStructureModal('class')">➕ Add New Class / Subject</button>
+    </div>
       <div class="class-grid" id="class-grid">
         <!-- Classes will be loaded dynamically -->
       </div>
     </div>
     
    <!-- Subject Selection Screen -->
-    <div class="subject-selection" id="subject-selection">
-      <div class="screen-header" style="display: flex; flex-direction: column; align-items: center;">
-        <div class="screen-title">Select Subject</div>
-        <div class="screen-subtitle" id="current-class-display" style="margin-top: 10px;">Class</div>
-        <button class="admin-inline-btn admin-control-element" onclick="openSpecificAdminTab('subject')">⚙️ Manage Subjects</button>
-        
-        
-      </div>
+    <div class="screen-header">
+      <div class="screen-title">Select Subject</div>
+      <div class="screen-subtitle" id="current-class-display">Class</div>
+    </div>
+    <div id="admin-add-subject-btn-container" class="admin-add-question" style="display: none; margin-bottom: 20px; padding: 12px;">
+       <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4);" onclick="openStructureModal('subject')">➕ Add New Subject</button>
+    </div>
       <div class="subject-grid" id="subject-grid">
         <!-- Subjects will be loaded dynamically -->
       </div>
@@ -4478,12 +4476,15 @@ body.light-mode .pdf-name {
           <div class="question-count" id="quiz-question-count">0 questions</div>
         </div>
         
-        <div class="topic-row">
+       <div class="topic-row">
           <select id="topic-select" class="topic-select">
             <option value="">Loading chapters...</option>
           </select>
           <button class="start-btn" id="start-btn" disabled>Start</button>
-          <button class="admin-inline-btn admin-control-element" onclick="openSpecificAdminTab('chapter')" style="padding: 10px 15px; font-size: 0.9rem;">⚙️ Manage Chapters</button>
+        </div>
+        
+        <div id="admin-add-chapter-btn-container" class="admin-add-question" style="display: none; margin-top: 15px; margin-bottom: 0; padding: 10px;">
+           <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4);" onclick="openStructureModal('chapter')">➕ Add New Chapter</button>
         </div>
       </div>
 
@@ -4645,26 +4646,6 @@ body.light-mode .pdf-name {
           </div>
         </div>
        <style>
-         .admin-inline-btn {
-    background: rgba(16, 185, 129, 0.15); /* Subtle transparent green */
-    color: #10b981 !important; /* Explicit green text */
-    -webkit-text-fill-color: #10b981 !important; /* Fixes the invisible text bug */
-    border: 1px solid #10b981;
-    border-radius: 8px;
-    padding: 6px 16px;
-    font-size: 0.85rem;
-    font-weight: bold;
-    cursor: pointer;
-    margin: 8px auto 0 auto; /* Centers it and adds space on top */
-    display: none; /* Hidden by default */
-    transition: all 0.2s ease;
-  }
-  
-  .admin-inline-btn:hover {
-    background: #10b981;
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-  }
        
           .option-text-input {
               display: block !important;
@@ -5636,7 +5617,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxrFZ2XedZ4IakIovRksKuP2RZ2kIDZHrbSuuk066YUSbmHHnfertp4hqBr_24TfDwY/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwERHaGcUZ-l3HxcvJJrA7OBovrcybb7mEC7OAAmurz2oeQ3FnyTo_h0319cDVLq36S/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -6137,8 +6118,6 @@ window.showToast = function(message, bgColor = "#22c55e") {
       formData.append('gid', currentSubjectConfig?.chapters?.[topicSelectEl.value] || '');
       formData.append('rowIndex', rowIndex);
       formData.append('tempId', tempId);
-    formData.append('className', currentClass);
-    formData.append('subjectName', currentSubject);
 
       
 
@@ -6501,50 +6480,62 @@ async function authenticateWithAppsScript(username, password) {
     };
 
    
-   /// ========== UPDATE ADMIN CONTROLS AND WHATSAPP VISIBILITY ==========
-    function updateAdminControls() {
-      
-      // 1. NEW LOGIC: Unhide the inline Manage buttons on Class/Subject/Chapter screens
-      const adminElements = document.querySelectorAll('.admin-control-element');
-      if (isAdmin() || isEditor()) {
-        adminElements.forEach(el => el.style.display = 'inline-block');
-      } else {
-        adminElements.forEach(el => el.style.display = 'none');
-      }
-
-      // 2. YOUR EXISTING LOGIC: Question Editor, WhatsApp, and Delete buttons
-      if (questionWhatsappIconEl) {
-        if (questionsLoaded && questions.length > 0) {
-          questionWhatsappIconEl.style.display = (isAdmin() || isEditor()) ? 'none' : 'block';
-        } else {
-          questionWhatsappIconEl.style.display = 'none';
-        }
-      }
-      
-      if (questionEditIconEl) {
-        if ((isAdmin() || isEditor()) && questionsLoaded && questions.length > 0) {
-          questionEditIconEl.style.display = 'block';
-        } else {
-          questionEditIconEl.style.display = 'none';
-        }
-      }
-      
-      if (questionDeleteIconEl) {
-        if ((isAdmin() || isEditor()) && questionsLoaded && questions.length > 0) {
-          questionDeleteIconEl.style.display = 'block';
-        } else {
-          questionDeleteIconEl.style.display = 'none';
-        }
-      }
-      
-      if (adminAddQuestionDiv) {
-        if ((isAdmin() || isEditor()) && currentSubjectConfig && currentTopicName) {
-          adminAddQuestionDiv.style.display = 'block';
-        } else {
-          adminAddQuestionDiv.style.display = 'none';
-        }
-      }
+   function updateAdminControls() {
+  // ==========================================
+  // 1. YOUR EXISTING CODE
+  // ==========================================
+  if (questionWhatsappIconEl) {
+    if (questionsLoaded && questions.length > 0) {
+      questionWhatsappIconEl.style.display = (isAdmin() || isEditor()) ? 'none' : 'block';
+    } else {
+      questionWhatsappIconEl.style.display = 'none';
     }
+  }
+  
+  if (questionEditIconEl) {
+    if ((isAdmin() || isEditor()) && questionsLoaded && questions.length > 0) {
+      questionEditIconEl.style.display = 'block';
+    } else {
+      questionEditIconEl.style.display = 'none';
+    }
+  }
+  
+  if (questionDeleteIconEl) {
+    if ((isAdmin() || isEditor()) && questionsLoaded && questions.length > 0) {
+      questionDeleteIconEl.style.display = 'block';
+    } else {
+      questionDeleteIconEl.style.display = 'none';
+    }
+  }
+  
+  if (adminAddQuestionDiv) {
+    if ((isAdmin() || isEditor()) && currentSubjectConfig && currentTopicName) {
+      adminAddQuestionDiv.style.display = 'block';
+    } else {
+      adminAddQuestionDiv.style.display = 'none';
+    }
+  }
+
+  // ==========================================
+  // 2. NEW CODE FOR CLASS/SUBJECT/CHAPTER BUTTONS
+  // ==========================================
+  const isAdminOrEditor = isAdmin() || isEditor();
+
+  const addClassBtn = document.getElementById('admin-add-class-btn-container');
+  if (addClassBtn) {
+    addClassBtn.style.display = isAdminOrEditor ? 'block' : 'none';
+  }
+
+  const addSubjectBtn = document.getElementById('admin-add-subject-btn-container');
+  if (addSubjectBtn) {
+    addSubjectBtn.style.display = isAdminOrEditor ? 'block' : 'none';
+  }
+
+  const addChapterBtn = document.getElementById('admin-add-chapter-btn-container');
+  if (addChapterBtn) {
+    addChapterBtn.style.display = isAdminOrEditor ? 'block' : 'none';
+  }
+}
     // ========== NAVIGATION FUNCTIONS ==========
     function navigateToClasses() {
       if (timerInterval) {
@@ -9599,8 +9590,6 @@ function showSubjectSelection(className) {
           formData.append('category', finalCategory); 
           formData.append('sheetId', window.currentPyqContext.sheetId);
           formData.append('gid', window.currentPyqContext.gid);
-          formData.append('className', currentClass);
-          formData.append('subjectName', currentSubject);
 
           const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, { method: 'POST', body: formData });
           const result = await response.json();
@@ -12640,71 +12629,7 @@ if (isScreenVisible('video-container')) {
     </div>
   </div>
   
-<div id="admin-management-modal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 500px;">
-      <div class="modal-header">
-        <h2 style="font-size: 1.5rem; background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">App Management</h2>
-        <button class="modal-close" onclick="document.getElementById('admin-management-modal').style.display='none'">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-          <button onclick="switchAdminTab('class')" class="btn-primary" style="flex:1; font-size: 0.85rem;">Classes</button>
-          <button onclick="switchAdminTab('subject')" class="btn-primary" style="flex:1; font-size: 0.85rem;">Subjects</button>
-          <button onclick="switchAdminTab('chapter')" class="btn-primary" style="flex:1; font-size: 0.85rem;">Chapters</button>
-        </div>
-        
-        <div id="admin-tab-class" style="display:block;">
-          <label style="color:#d1d5db; font-size:0.9rem;">Class Name (e.g., 10 or JEE)</label>
-          <input type="text" id="admin-class-name" placeholder="Enter class name" class="form-input" style="margin-bottom: 15px;">
-          <label style="color:#d1d5db; font-size:0.9rem;">Icon (Emoji)</label>
-          <input type="text" id="admin-class-icon" placeholder="e.g., 📚" class="form-input" style="margin-bottom: 15px;">
-          <button onclick="adminSubmitClass()" class="btn-success" style="width: 100%;">Create Class & Folder</button>
-        </div>
 
-        <div id="admin-tab-subject" style="display:none;">
-          <label style="color:#d1d5db; font-size:0.9rem;">Select Class</label>
-          <select id="admin-subject-class" class="form-input" style="margin-bottom: 15px;"></select>
-          <label style="color:#d1d5db; font-size:0.9rem;">Subject Name</label>
-          <input type="text" id="admin-subject-name" placeholder="Enter subject name" class="form-input" style="margin-bottom: 15px;">
-          <label style="color:#d1d5db; font-size:0.9rem;">Type</label>
-          <select id="admin-subject-type" class="form-input" style="margin-bottom: 15px;">
-            <option value="MCQ">MCQ</option>
-            <option value="PDF">PDF</option>
-            <option value="Video">Video</option>
-          </select>
-          <button onclick="adminSubmitSubject()" class="btn-success" style="width: 100%;">Create Subject & Sheet</button>
-        </div>
-
-       <div id="admin-tab-chapter" style="display:none;">
-          <select id="admin-chapter-action" class="form-input" style="margin-bottom: 15px; background: #1e293b; color: #10b981; font-weight: bold;" onchange="toggleAdminModes('chapter')">
-            <option value="add">➕ Add New Chapter</option>
-            <option value="edit">✏️ Edit Existing Chapter</option>
-          </select>
-
-          <label style="color:#d1d5db; font-size:0.9rem;">Select Class</label>
-          <select id="admin-chapter-class" class="form-input" onchange="populateAdminSubjects('admin-chapter-class', 'admin-chapter-subject')" style="margin-bottom: 15px;"></select>
-          
-          <label style="color:#d1d5db; font-size:0.9rem;">Select Subject</label>
-          <select id="admin-chapter-subject" class="form-input" onchange="populateAdminChapters()" style="margin-bottom: 15px;"></select>
-          
-          <div id="chapter-edit-section" style="display:none;">
-            <label style="color:#d1d5db; font-size:0.9rem;">Select Chapter to Edit</label>
-            <select id="admin-edit-chapter-select" class="form-input" style="margin-bottom: 15px;"></select>
-          </div>
-
-          <label style="color:#d1d5db; font-size:0.9rem;" id="chapter-name-label">Chapter Name</label>
-          <input type="text" id="admin-chapter-name" placeholder="Enter chapter name" class="form-input" style="margin-bottom: 15px;">
-          
-          <div id="chapter-timer-section">
-            <label style="color:#d1d5db; font-size:0.9rem;">Timer (Minutes, MCQ only)</label>
-            <input type="number" id="admin-chapter-timer" placeholder="Leave blank for none" class="form-input" style="margin-bottom: 15px;">
-          </div>
-          
-          <button onclick="adminSubmitChapter()" class="btn-success" style="width: 100%;" id="chapter-submit-btn">Create Chapter</button>
-        </div>
-      </div>
-    </div>
-  </div>
   <script>
     // ==========================================
     // PWA INSTALL LOGIC (NO CACHING)
@@ -12767,198 +12692,103 @@ if (isScreenVisible('video-container')) {
       deferredPrompt = null;
       console.log('App was successfully installed to home screen!');
     });
-    // =====================================================================
-// ========== MASTER ADMIN UI & LOGIC BLOCK (ADD & EDIT) ===============
-// =====================================================================
+    // ========== ADMIN STRUCTURE MANAGER (CLASS/SUBJECT/CHAPTER) ==========
 
-function openAdminManagement() {
-  const modal = document.getElementById('admin-management-modal');
-  if (modal) {
-    modal.style.display = 'flex';
-    populateAdminClasses();
+async function openStructureModal(mode) {
+  const modal = document.getElementById('admin-structure-modal');
+  const classInput = document.getElementById('struct-class');
+  const subjectInput = document.getElementById('struct-subject');
+  const chapterInput = document.getElementById('struct-chapter');
+  const sheetIdInput = document.getElementById('struct-sheet-id');
+  const contextInfo = document.getElementById('struct-context-info');
+  
+  // Reset Form
+  classInput.value = '';
+  subjectInput.value = '';
+  chapterInput.value = '';
+  sheetIdInput.value = '';
+  classInput.disabled = false;
+  subjectInput.disabled = false;
+  
+  if (mode === 'class') {
+    contextInfo.innerHTML = "Creating a brand new <b>Class</b>, <b>Subject</b>, and <b>Chapter</b>.";
+  } else if (mode === 'subject') {
+    contextInfo.innerHTML = `Adding a new <b>Subject</b> to Class: <b>${currentClass}</b>`;
+    classInput.value = currentClass;
+    classInput.disabled = true;
+  } else if (mode === 'chapter') {
+    contextInfo.innerHTML = `Adding a new <b>Chapter</b> to: <br><b>${currentClass} ➔ ${currentSubject}</b>`;
+    classInput.value = currentClass;
+    subjectInput.value = currentSubject;
+    classInput.disabled = true;
+    subjectInput.disabled = true;
+    
+    // Auto-fetch Subject Sheet ID using your existing config cache
+    const allData = await loadAllConfigAtOnce();
+    const key = `${currentClass}_${currentSubject.toLowerCase()}`;
+    if (allData && allData.config && allData.config[key]) {
+      sheetIdInput.value = allData.config[key].sheetId;
+    } else {
+      window.showCustomAlert("Error", "Cannot find subject file ID. Ensure it loaded properly.");
+      return;
+    }
   }
-}
-
-function switchAdminTab(tab) {
-  document.getElementById('admin-tab-class').style.display = tab === 'class' ? 'block' : 'none';
-  document.getElementById('admin-tab-subject').style.display = tab === 'subject' ? 'block' : 'none';
-  document.getElementById('admin-tab-chapter').style.display = tab === 'chapter' ? 'block' : 'none';
-}
-
-function openSpecificAdminTab(tabName) {
-  openAdminManagement();
-  switchAdminTab(tabName);
-}
-
-// Switches UI between Add and Edit modes depending on dropdown selection
-function toggleAdminModes(tab) {
-  const actionEl = document.getElementById(`admin-${tab}-action`);
-  if (!actionEl) return;
   
-  const action = actionEl.value;
-  const isEdit = (action === 'edit');
+  modal.style.display = 'flex';
+}
+
+async function submitStructure() {
+  const classVal = document.getElementById('struct-class').value.trim();
+  const subjectVal = document.getElementById('struct-subject').value.trim();
+  const chapterVal = document.getElementById('struct-chapter').value.trim();
+  const sheetIdVal = document.getElementById('struct-sheet-id').value;
   
-  if (tab === 'class') {
-    document.getElementById('class-edit-section').style.display = isEdit ? 'block' : 'none';
-    document.getElementById('class-name-label').innerText = isEdit ? 'New Class Name' : 'Class Name';
-    document.getElementById('class-submit-btn').innerText = isEdit ? 'Save Changes' : 'Create Class';
-  } else if (tab === 'subject') {
-    document.getElementById('subject-edit-section').style.display = isEdit ? 'block' : 'none';
-    document.getElementById('subject-type-section').style.display = isEdit ? 'none' : 'block';
-    document.getElementById('subject-name-label').innerText = isEdit ? 'New Subject Name' : 'Subject Name';
-    document.getElementById('subject-submit-btn').innerText = isEdit ? 'Save Changes' : 'Create Subject';
-  } else if (tab === 'chapter') {
-    document.getElementById('chapter-edit-section').style.display = isEdit ? 'block' : 'none';
-    document.getElementById('chapter-timer-section').style.display = isEdit ? 'none' : 'block';
-    document.getElementById('chapter-name-label').innerText = isEdit ? 'New Chapter Name' : 'Chapter Name';
-    document.getElementById('chapter-submit-btn').innerText = isEdit ? 'Save Changes' : 'Create Chapter';
-    if (isEdit) populateAdminChapters(); // Load chapters into dropdown
+  if (!classVal || !subjectVal || !chapterVal) {
+    window.showCustomAlert("Error", "Please fill out all visible fields.");
+    return;
   }
-}
-
-// Populates all "Select Class" dropdowns
-async function populateAdminClasses() {
-  if (!ALL_CONFIG_CACHE) await loadAllConfigAtOnce();
-  if (!ALL_CONFIG_CACHE || !ALL_CONFIG_CACHE.classes) return;
   
-  const classes = Object.keys(ALL_CONFIG_CACHE.classes);
-  const dropdowns = ['admin-subject-class', 'admin-chapter-class', 'admin-edit-class-select'];
-  
-  dropdowns.forEach(id => {
-    const select = document.getElementById(id);
-    if (!select) return;
-    select.innerHTML = '<option value="">-- Select Class --</option>';
-    classes.forEach(c => {
-      let displayName = isNaN(c) || parseInt(c) > 12 || parseInt(c) < 1 ? c : `Class ${c}`;
-      select.innerHTML += `<option value="${c}">${displayName}</option>`;
-    });
-  });
-}
-
-// Populates "Select Subject" dropdowns based on the chosen class
-function populateAdminSubjects(classSelectId, targetSelectId) {
-  const classVal = document.getElementById(classSelectId).value;
-  const select = document.getElementById(targetSelectId);
-  if (!select) return;
-  
-  select.innerHTML = '<option value="">-- Select Subject --</option>';
-  if (!classVal || !ALL_CONFIG_CACHE) return;
-  
-  const subjects = ALL_CONFIG_CACHE.classes[classVal] || [];
-  subjects.forEach(s => {
-    const key = `${classVal}_${s.name.toLowerCase()}`;
-    const sheetId = ALL_CONFIG_CACHE.config[key] ? ALL_CONFIG_CACHE.config[key].sheetId : "";
-    select.innerHTML += `<option value="${s.name}" data-sheet="${sheetId}">${s.name}</option>`;
-  });
-}
-
-// Populates "Select Chapter" dropdowns based on the chosen subject
-function populateAdminChapters() {
-  const classVal = document.getElementById('admin-chapter-class').value;
-  const subjectVal = document.getElementById('admin-chapter-subject').value;
-  const select = document.getElementById('admin-edit-chapter-select');
-  if (!select) return;
-  
-  select.innerHTML = '<option value="">-- Select Chapter --</option>';
-  if (!classVal || !subjectVal || !ALL_CONFIG_CACHE) return;
-  
-  const subjects = ALL_CONFIG_CACHE.classes[classVal] || [];
-  const targetSubject = subjects.find(s => s.name === subjectVal);
-  if (targetSubject && targetSubject.topics) {
-    targetSubject.topics.forEach(t => {
-      select.innerHTML += `<option value="${t.name}">${t.name}</option>`;
-    });
-  }
-}
-
-// ========== ADMIN SUBMISSION CALLS TO APPS SCRIPT ==========
-
-async function adminSubmitClass() {
-  const action = document.getElementById('admin-class-action').value;
-  const newName = document.getElementById('admin-class-name').value.trim();
-  const icon = document.getElementById('admin-class-icon').value.trim();
-  
-  let url = MASTER_CONFIG_APPS_SCRIPT_URL + `?username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&_t=${Date.now()}`;
-  
-  if (action === 'add') {
-    if (!newName) return alert("Class name required");
-    showPDFOverlay("Creating Class & Folders...");
-    url += `&action=adminCreateClass&className=${encodeURIComponent(newName)}&icon=${encodeURIComponent(icon)}`;
-  } else {
-    const oldName = document.getElementById('admin-edit-class-select').value;
-    if (!oldName) return alert("Select a class to edit");
-    if (!newName && !icon) return alert("Enter a new name or icon to save changes");
-    showPDFOverlay("Updating Class...");
-    url += `&action=adminEditClass&oldName=${encodeURIComponent(oldName)}&newName=${encodeURIComponent(newName)}&newIcon=${encodeURIComponent(icon)}`;
-  }
+  const btn = document.getElementById('struct-submit-btn');
+  btn.disabled = true;
+  btn.textContent = "Processing... (Please wait)";
   
   try {
-    const res = await jsonpRequest(url, 'adminCb1');
-    hidePDFOverlay();
-    if(res.success) { showToast("Success!"); document.getElementById('admin-management-modal').style.display='none'; forceAppRefresh(); }
-    else alert("Error: " + res.error);
-  } catch(e) { hidePDFOverlay(); alert(e); }
-}
-
-async function adminSubmitSubject() {
-  const action = document.getElementById('admin-subject-action').value;
-  const cName = document.getElementById('admin-subject-class').value;
-  const newSubName = document.getElementById('admin-subject-name').value.trim();
-  
-  let url = MASTER_CONFIG_APPS_SCRIPT_URL + `?username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&_t=${Date.now()}&className=${encodeURIComponent(cName)}`;
-  
-  if (action === 'add') {
-    const sType = document.getElementById('admin-subject-type').value;
-    if (!cName || !newSubName) return alert("All fields required");
-    showPDFOverlay("Creating Subject & Google Sheet...");
-    url += `&action=adminCreateSubject&subjectName=${encodeURIComponent(newSubName)}&subjectType=${encodeURIComponent(sType)}`;
-  } else {
-    const oldSubName = document.getElementById('admin-edit-subject-select').value;
-    if (!cName || !oldSubName || !newSubName) return alert("Select a subject and enter a new name");
-    showPDFOverlay("Updating Subject...");
-    url += `&action=adminEditSubject&oldSubject=${encodeURIComponent(oldSubName)}&newSubject=${encodeURIComponent(newSubName)}`;
+    let action = sheetIdVal ? 'createChapter' : 'createSubject';
+    let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=' + action;
+    url += '&className=' + encodeURIComponent(classVal);
+    url += '&subjectName=' + encodeURIComponent(subjectVal);
+    url += '&chapterName=' + encodeURIComponent(chapterVal);
+    if (sheetIdVal) url += '&sheetId=' + encodeURIComponent(sheetIdVal);
+    url += '&username=' + encodeURIComponent(currentUser.username);
+    url += '&token=' + encodeURIComponent(currentUser.token);
+    
+    const result = await jsonpRequest(url, 'structCb');
+    
+    if (result && result.success) {
+      window.showCustomAlert("Success", "Structure created successfully!");
+      document.getElementById('admin-structure-modal').style.display = 'none';
+      
+      // Invalidate your local config cache to pull fresh IDs
+      ALL_CONFIG_CACHE = null; 
+      
+      // Smart refresh based on where the user currently is
+      if (action === 'createChapter') {
+        loadChapters(); 
+      } else if (action === 'createSubject' && document.getElementById('subject-selection').style.display === 'block') {
+        loadSubjects();
+      } else {
+        loadClasses();
+      }
+    } else {
+      window.showCustomAlert("Error", "Failed to create: " + (result.error || "Unknown"));
+    }
+  } catch (error) {
+    window.showCustomAlert("Network Error", error.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Create Now";
   }
-  
-  try {
-    const res = await jsonpRequest(url, 'adminCb2');
-    hidePDFOverlay();
-    if(res.success) { showToast("Success!"); document.getElementById('admin-management-modal').style.display='none'; forceAppRefresh(); }
-    else alert("Error: " + res.error);
-  } catch(e) { hidePDFOverlay(); alert(e); }
 }
-
-async function adminSubmitChapter() {
-  const action = document.getElementById('admin-chapter-action').value;
-  const cName = document.getElementById('admin-chapter-class').value;
-  const sNameSelect = document.getElementById('admin-chapter-subject');
-  const sName = sNameSelect.value;
-  
-  if (!sNameSelect.selectedIndex || sNameSelect.selectedIndex === 0) return alert("Select a subject first");
-  const sheetId = sNameSelect.options[sNameSelect.selectedIndex].getAttribute('data-sheet');
-  const newChapterName = document.getElementById('admin-chapter-name').value.trim();
-  
-  let url = MASTER_CONFIG_APPS_SCRIPT_URL + `?username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}&_t=${Date.now()}&sheetId=${encodeURIComponent(sheetId)}`;
-  
-  if (action === 'add') {
-    const timer = document.getElementById('admin-chapter-timer').value.trim();
-    if (!cName || !sName || !newChapterName) return alert("All fields required");
-    showPDFOverlay("Creating Chapter Tab...");
-    url += `&action=adminCreateChapter&className=${encodeURIComponent(cName)}&subjectName=${encodeURIComponent(sName)}&chapterName=${encodeURIComponent(newChapterName)}&timer=${encodeURIComponent(timer)}&type=MCQ`;
-  } else {
-    const oldChapter = document.getElementById('admin-edit-chapter-select').value;
-    if (!oldChapter || !newChapterName) return alert("Select a chapter and enter a new name");
-    showPDFOverlay("Updating Chapter Tab...");
-    url += `&action=adminEditChapter&oldChapter=${encodeURIComponent(oldChapter)}&newChapter=${encodeURIComponent(newChapterName)}`;
-  }
-  
-  try {
-    const res = await jsonpRequest(url, 'adminCb3');
-    hidePDFOverlay();
-    if(res.success) { showToast("Success!"); document.getElementById('admin-management-modal').style.display='none'; forceAppRefresh(); }
-    else alert("Error: " + res.error);
-  } catch(e) { hidePDFOverlay(); alert(e); }
-}
-// =====================================================================
   </script>
   <div id="settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
   <div style="background: #1e293b; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; color: white; border: 1px solid #3b82f6; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
@@ -12975,6 +12805,35 @@ async function adminSubmitChapter() {
     <button onclick="closeSettingsModal()" style="width: 100%; padding: 12px; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Close</button>
   </div>
 </div>
-  
+  <div id="admin-structure-modal" class="modal" style="display: none; z-index: 10006;">
+    <div class="modal-content" style="max-width: 450px; padding: 25px;">
+      <div class="modal-header" style="margin-bottom: 15px;">
+        <h2 style="font-size: 1.5rem; background: linear-gradient(90deg, #3b82f6 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">🏗️ Manage Structure</h2>
+        <button class="modal-close" onclick="document.getElementById('admin-structure-modal').style.display='none'">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="struct-context-info" style="margin-bottom: 20px; color: #22c55e; font-size: 0.95rem; font-weight: 500; text-align: center; background: rgba(34, 197, 94, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.3);"></div>
+        
+        <div class="form-group" style="margin-bottom: 15px;" id="struct-class-group">
+          <label style="color: #93c5fd;">Class Name</label>
+          <input type="text" id="struct-class" class="form-input" placeholder="e.g. 10">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 15px;" id="struct-subject-group">
+          <label style="color: #93c5fd;">Subject Name</label>
+          <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="color: #93c5fd;">Chapter Name</label>
+          <input type="text" id="struct-chapter" class="form-input" placeholder="e.g. 1. Real Numbers">
+        </div>
+        
+        <input type="hidden" id="struct-sheet-id">
+        
+        <button id="struct-submit-btn" class="btn-success" style="width: 100%; margin-top: 15px; padding: 14px; border-radius: 8px;" onclick="submitStructure()">Create Now</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
