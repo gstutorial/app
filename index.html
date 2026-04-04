@@ -5619,7 +5619,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwqZ8S1zEj0Wbl5z6UJRi1zrpqwFj6Sf3HGYJrbG0cShgRe-UVhyT7M3ItZxI2QG1jZ/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwoASzbhCL_QpcP5gnDRFPpvMx3bGU6AxWjamgd_swvs-z8lEx1kTPiUrZtNFNJkg80/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -6092,8 +6092,6 @@ window.showToast = function(message, bgColor = "#22c55e") {
       console.log('🚀 Starting fetch upload...', { fileName, fieldId, rowIndex });
 
       // --- CRITICAL SAFETY CHECK ---
-      // If the token is missing, stop immediately. 
-      // This prevents "Unauthorized" errors from cluttering your server logs.
       if (!currentUser || !currentUser.token) {
         alert("Session Error: Please log in again before uploading images.");
         logout();
@@ -6106,7 +6104,6 @@ window.showToast = function(message, bgColor = "#22c55e") {
       formData.append('action', 'uploadImage'); 
       formData.append('username', currentUser.username);
       formData.append('token', currentUser.token);
-      // Optional: send role just for logging, though backend should verify via token
       formData.append('role', currentUser.role || 'Student'); 
       
       // 2. File Data
@@ -6120,8 +6117,10 @@ window.showToast = function(message, bgColor = "#22c55e") {
       formData.append('gid', currentSubjectConfig?.chapters?.[topicSelectEl.value] || '');
       formData.append('rowIndex', rowIndex);
       formData.append('tempId', tempId);
-
       
+      // 4. Folder Organization Data (Class & Subject)
+      formData.append('className', currentClass || '');
+      formData.append('subjectName', currentSubject || '');
 
       try {
         const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
@@ -6129,7 +6128,6 @@ window.showToast = function(message, bgColor = "#22c55e") {
           body: formData
         });
 
-        // Apps Script sometimes returns a redirect or an error page if it crashes
         if (!response.ok) {
           throw new Error(`Server responded with ${response.status}`);
         }
@@ -7615,36 +7613,23 @@ async function loadClasses() {
   }
 }
     function renderClassGrid(classes) {
-      classGridEl.innerHTML = "";
-
-      if (classes.length === 0) {
-        classGridEl.innerHTML = `
-          <div style="text-align: center; padding: 40px; color: #9ca3af; grid-column: 1/-1;">
-            <div style="font-size: 1.2rem; margin-bottom: 10px;">No classes available</div>
-            <div>You don't have access to any classes. Please contact the administrator.</div>
-          </div>
-        `;
-        return;
-      }
-
-      classes.forEach(cls => {
-        const card = document.createElement("div");
-        card.className = "class-card";
-        card.innerHTML = `
-          <div class="class-icon">${cls.icon}</div>
-          <div class="class-name">${cls.name}</div>
-          <div class="class-desc">${cls.description || ""}</div>
-        `;
-
-        card.addEventListener("click", () => {
-          showSubjectSelection(cls.id);
-          resetInactivityTimer();
-        });
-
-        classGridEl.appendChild(card);
-      });
-    }
-
+  classGridEl.innerHTML = "";
+  if (classes.length === 0) {
+    classGridEl.innerHTML = `<div style="text-align: center; padding: 40px; color: #9ca3af; grid-column: 1/-1;"><div style="font-size: 1.2rem; margin-bottom: 10px;">No classes available</div><div>You don't have access to any classes. Please contact the administrator.</div></div>`;
+    return;
+  }
+  classes.forEach(cls => {
+    const card = document.createElement("div");
+    card.className = "class-card";
+    card.setAttribute('data-id', cls.id); 
+    card.innerHTML = `<div class="class-icon">${cls.icon}</div><div class="class-name">${cls.name}</div><div class="class-desc">${cls.description || ""}</div>`;
+    card.addEventListener("click", () => {
+      showSubjectSelection(cls.id);
+      resetInactivityTimer();
+    });
+    classGridEl.appendChild(card);
+  });
+}
     // ========== LOAD SUBJECTS ==========
     async function loadSubjects() {
       try {
@@ -7692,50 +7677,28 @@ async function loadClasses() {
     }
 
    function renderSubjectGrid(subjects) {
-      subjectGridEl.innerHTML = "";
-
-      if (subjects.length === 0) {
-        subjectGridEl.innerHTML = `
-          <div style="text-align: center; padding: 40px; color: #fca5a5; grid-column: 1/-1;">
-            No subjects available for this class.
-          </div>
-        `;
-        return;
-      }
-
-     subjects.forEach((subject, index) => {
-        const card = document.createElement("div");
-        card.className = "subject-card";
-        card.innerHTML = `
-          <div class="subject-icon">${subject.icon}</div>
-          <div class="subject-name">${subject.name}</div>
-          <div class="subject-desc">${subject.desc}</div>
-        `;
-
-       card.addEventListener("click", () => {
-          if (currentUser.role === 'Trial' && index > 0) {
-            window.showTrialPopup();
-            return; 
-          }
-         
-          currentSubject = subject.name;
-          const lowerName = subject.name.toLowerCase();
-          
-          // Route based on subject keywords
-          if (lowerName.includes('previous year') || lowerName.includes('question answer') || lowerName.includes('pdf')) {
-            showPyqContainer(currentSubject);
-          } else if (lowerName.includes('video') || lowerName.includes('lecture') || lowerName.includes('youtube')) {
-            showVideoContainer(currentSubject);
-          } else {
-            showQuizContainer(currentSubject);
-          }
-          resetInactivityTimer();
-        });
-
-        // Add the card to the grid
-        subjectGridEl.appendChild(card);
-      });
-    }
+  subjectGridEl.innerHTML = "";
+  if (subjects.length === 0) {
+    subjectGridEl.innerHTML = `<div style="text-align: center; padding: 40px; color: #fca5a5; grid-column: 1/-1;">No subjects available for this class.</div>`;
+    return;
+  }
+  subjects.forEach((subject, index) => {
+    const card = document.createElement("div");
+    card.className = "subject-card";
+    card.setAttribute('data-id', subject.rawName); 
+    card.innerHTML = `<div class="subject-icon">${subject.icon}</div><div class="subject-name">${subject.name}</div><div class="subject-desc">${subject.desc}</div>`;
+    card.addEventListener("click", () => {
+      if (currentUser.role === 'Trial' && index > 0) { window.showTrialPopup(); return; }
+      currentSubject = subject.name;
+      const lowerName = subject.name.toLowerCase();
+      if (lowerName.includes('previous year') || lowerName.includes('question answer') || lowerName.includes('pdf')) { showPyqContainer(currentSubject); } 
+      else if (lowerName.includes('video') || lowerName.includes('lecture') || lowerName.includes('youtube')) { showVideoContainer(currentSubject); } 
+      else { showQuizContainer(currentSubject); }
+      resetInactivityTimer();
+    });
+    subjectGridEl.appendChild(card);
+  });
+}
     // ========== LOAD CHAPTERS ==========
     async function loadChapters() {
       try {
@@ -9583,6 +9546,8 @@ function showSubjectSelection(className) {
           });
 
           const formData = new FormData();
+          // NEW: Folders setup
+        
           formData.append('action', 'uploadPdf');
           formData.append('username', currentUser.username);
           formData.append('token', currentUser.token);
@@ -9594,6 +9559,8 @@ function showSubjectSelection(className) {
           formData.append('category', finalCategory); 
           formData.append('sheetId', window.currentPyqContext.sheetId);
           formData.append('gid', window.currentPyqContext.gid);
+          formData.append('className', currentClass || '');
+        formData.append('subjectName', currentSubject || '');
 
           const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, { method: 'POST', body: formData });
           const result = await response.json();
@@ -13015,6 +12982,11 @@ function updateAdminControls() {
             <input type="text" id="struct-chapter" class="form-input" placeholder="e.g. 1. Real Numbers">
           </div>
 
+          <div class="form-group" style="margin-bottom: 15px;" id="struct-icon-group">
+            <label style="color: #93c5fd;">Custom Emoji Icon</label>
+            <input type="text" id="struct-icon" class="form-input" placeholder="e.g. 🚀">
+          </div>
+
           <div class="form-group" style="margin-bottom: 15px;" id="struct-timer-group">
             <label style="color: #93c5fd;">Timer (Minutes)</label>
             <input type="number" id="struct-timer" class="form-input" placeholder="30" value="30">
@@ -13032,5 +13004,200 @@ function updateAdminControls() {
       </div>
     </div>
   </div>
+
+<script>
+// ========== V2 SECURE STRUCTURE MANAGER JS ==========
+
+let structCurrentMode = ''; let structCurrentAction = ''; let currentReorderArray = [];
+
+async function openStructureManager(mode) {
+  structCurrentMode = mode;
+  document.getElementById('struct-modal-title').textContent = `Manage ${mode.charAt(0).toUpperCase() + mode.slice(1)}s`;
+  document.getElementById('struct-action-buttons').style.display = 'grid';
+  document.getElementById('struct-form-container').style.display = 'none';
+  document.getElementById('struct-reorder-container').style.display = 'none';
+  document.getElementById('admin-structure-modal').style.display = 'flex';
+}
+
+function selectStructAction(action) {
+  structCurrentAction = action;
+  document.getElementById('struct-action-buttons').style.display = 'none';
+  if (action === 'reorder') {
+    document.getElementById('struct-reorder-container').style.display = 'block';
+    renderReorderUI();
+  } else {
+    document.getElementById('struct-form-container').style.display = 'block';
+    renderStructForm();
+  }
+}
+
+function populateEditDropdown() {
+  const select = document.getElementById('struct-edit-select');
+  select.innerHTML = '<option value="">-- Select --</option>';
+  currentReorderArray = [];
+  
+  if (structCurrentMode === 'class') {
+    const cards = document.querySelectorAll('#class-grid .class-card');
+    currentReorderArray = Array.from(cards).map(card => ({ id: card.getAttribute('data-id'), name: card.querySelector('.class-name').textContent }));
+  } else if (structCurrentMode === 'subject') {
+    const cards = document.querySelectorAll('#subject-grid .subject-card');
+    currentReorderArray = Array.from(cards).map(card => ({ id: card.getAttribute('data-id'), name: card.querySelector('.subject-name').textContent }));
+  } else if (structCurrentMode === 'chapter') {
+    const opts = document.getElementById('topic-select').options;
+    currentReorderArray = Array.from(opts).filter(o => o.value && !o.text.includes('Loading')).map(o => ({ id: o.value, name: o.text }));
+  }
+  
+  currentReorderArray.forEach(item => { select.innerHTML += `<option value="${item.id}">${item.name}</option>`; });
+}
+
+function syncStructEditFields() {
+  const select = document.getElementById('struct-edit-select');
+  const rawId = select.value; const dispName = select.options[select.selectedIndex].text;
+  if (structCurrentMode === 'class') document.getElementById('struct-class').value = rawId; 
+  if (structCurrentMode === 'subject') document.getElementById('struct-subject').value = rawId; 
+  if (structCurrentMode === 'chapter') document.getElementById('struct-chapter').value = dispName;
+}
+
+function renderStructForm() {
+  const fClass = document.getElementById('struct-class').parentElement;
+  const fSubject = document.getElementById('struct-subject').parentElement;
+  const fType = document.getElementById('struct-type').parentElement;
+  const fChapter = document.getElementById('struct-chapter').parentElement;
+  const fTimer = document.getElementById('struct-timer').parentElement;
+  const fIcon = document.getElementById('struct-icon').parentElement;
+  const fSelect = document.getElementById('struct-edit-select').parentElement;
+  const btn = document.getElementById('struct-submit-btn');
+
+  fClass.style.display = 'none'; fSubject.style.display = 'none'; fType.style.display = 'none';
+  fChapter.style.display = 'none'; fTimer.style.display = 'none'; fSelect.style.display = 'none'; fIcon.style.display = 'none';
+
+  if (structCurrentAction === 'add') {
+    btn.style.background = '#22c55e'; btn.textContent = "➕ Create Now";
+    if (structCurrentMode === 'class') { fClass.style.display = 'block'; fSubject.style.display = 'block'; fType.style.display = 'block'; fChapter.style.display = 'block'; fTimer.style.display = 'block'; fIcon.style.display = 'block';}
+    else if (structCurrentMode === 'subject') { fSubject.style.display = 'block'; fType.style.display = 'block'; fChapter.style.display = 'block'; fTimer.style.display = 'block'; fIcon.style.display = 'block';}
+    else { fChapter.style.display = 'block'; fTimer.style.display = 'block'; }
+  } else {
+    btn.style.background = structCurrentAction === 'delete' ? '#ef4444' : '#3b82f6';
+    btn.textContent = structCurrentAction === 'delete' ? "🗑️ Delete Permanently" : "✏️ Save Changes";
+    fSelect.style.display = 'block';
+    
+    if (structCurrentAction === 'edit') {
+      if (structCurrentMode === 'class') { fClass.style.display = 'block'; fIcon.style.display = 'block'; }
+      if (structCurrentMode === 'subject') { fSubject.style.display = 'block'; fIcon.style.display = 'block'; }
+      if (structCurrentMode === 'chapter') { fChapter.style.display = 'block'; fTimer.style.display = 'block'; }
+    }
+    populateEditDropdown();
+  }
+}
+
+function renderReorderUI() {
+  populateEditDropdown(); 
+  const list = document.getElementById('struct-reorder-list');
+  list.innerHTML = '';
+  currentReorderArray.forEach((item, index) => {
+    const li = document.createElement('div');
+    li.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:10px; margin-bottom:8px; border-radius:8px;";
+    li.innerHTML = `<span style="color:#e5e7eb; font-weight:500;">${item.name}</span>
+      <div style="display:flex; gap:5px;">
+        <button onclick="moveReorderItem(${index}, -1)" ${index===0?'disabled':''} style="padding:4px 10px; border-radius:5px; border:none; background:#3b82f6; color:white; cursor:pointer;">▲</button>
+        <button onclick="moveReorderItem(${index}, 1)" ${index===currentReorderArray.length-1?'disabled':''} style="padding:4px 10px; border-radius:5px; border:none; background:#3b82f6; color:white; cursor:pointer;">▼</button>
+      </div>`;
+    list.appendChild(li);
+  });
+}
+
+window.moveReorderItem = function(index, direction) {
+  const newIndex = index + direction;
+  if (newIndex >= 0 && newIndex < currentReorderArray.length) {
+     const temp = currentReorderArray[index];
+     currentReorderArray[index] = currentReorderArray[newIndex];
+     currentReorderArray[newIndex] = temp;
+     renderReorderUI();
+  }
+}
+
+async function submitReorder() {
+  const btn = document.getElementById('struct-save-reorder-btn');
+  btn.disabled = true; btn.textContent = "Saving...";
+  const formData = new URLSearchParams();
+  formData.append('action', 'manageStructure'); formData.append('subAction', 'reorder');
+  formData.append('targetType', structCurrentMode); formData.append('username', currentUser.username); formData.append('token', currentUser.token);
+  
+  const rawIds = currentReorderArray.map(item => item.id);
+  formData.append('orderList', JSON.stringify(rawIds));
+  if (structCurrentMode !== 'class') formData.append('className', currentClass);
+  if (structCurrentMode === 'chapter') formData.append('subjectName', currentSubject);
+
+  await executeSecureRequest(formData, btn, "Save Order");
+}
+
+async function submitV2Structure() {
+  if (structCurrentAction === 'delete' && !confirm(`Permanently delete this ${structCurrentMode}?`)) return;
+  const btn = document.getElementById('struct-submit-btn'); btn.disabled = true; btn.textContent = "Processing...";
+
+  const formData = new URLSearchParams();
+  formData.append('action', 'manageStructure'); formData.append('subAction', structCurrentAction);
+  formData.append('targetType', structCurrentMode); formData.append('username', currentUser.username); formData.append('token', currentUser.token);
+
+  const selectedItem = document.getElementById('struct-edit-select').value; 
+  const newClassName = document.getElementById('struct-class').value.trim();
+  const newSubjectName = document.getElementById('struct-subject').value.trim();
+  const newChapterName = document.getElementById('struct-chapter').value.trim();
+  const timerVal = document.getElementById('struct-timer').value.trim();
+  const subjType = document.getElementById('struct-type').value;
+  const structIcon = document.getElementById('struct-icon').value.trim();
+
+  let sheetId = '', gid = '';
+  if (structCurrentMode === 'subject' || structCurrentMode === 'chapter') {
+    const allData = await loadAllConfigAtOnce();
+    const key = `${currentClass}_${structCurrentMode === 'chapter' ? currentSubject.toLowerCase() : selectedItem.toLowerCase()}`;
+    if (allData?.config[key]) sheetId = allData.config[key].sheetId;
+    if (structCurrentAction === 'add' && structCurrentMode === 'chapter') {
+      const parentKey = `${currentClass}_${currentSubject.toLowerCase()}`;
+      if (allData?.config[parentKey]) sheetId = allData.config[parentKey].sheetId;
+    }
+    if (structCurrentMode === 'chapter' && selectedItem && allData?.config[`${currentClass}_${currentSubject.toLowerCase()}`]?.chapters) {
+      gid = allData.config[`${currentClass}_${currentSubject.toLowerCase()}`].chapters[selectedItem];
+    }
+  }
+
+  if (structCurrentAction === 'add') {
+    formData.append('className', structCurrentMode === 'class' ? newClassName : currentClass);
+    formData.append('subjectName', structCurrentMode === 'chapter' ? currentSubject : newSubjectName);
+    formData.append('chapterName', newChapterName); formData.append('subjectType', subjType); formData.append('timer', timerVal);
+    if (structCurrentMode === 'class') formData.append('classIcon', structIcon);
+    if (structCurrentMode === 'class' || structCurrentMode === 'subject') formData.append('subjectIcon', structIcon);
+    if (structCurrentMode !== 'class') formData.append('sheetId', sheetId);
+  } else {
+    formData.append('oldName', selectedItem); formData.append('className', currentClass); formData.append('subjectName', currentSubject);
+    formData.append('sheetId', sheetId); formData.append('gid', gid);
+    if (structCurrentAction === 'edit') {
+      formData.append('newName', structCurrentMode === 'class' ? newClassName : (structCurrentMode === 'subject' ? newSubjectName : newChapterName));
+      formData.append('timer', timerVal);
+      if (structCurrentMode === 'class') formData.append('classIcon', structIcon);
+      if (structCurrentMode === 'subject') formData.append('subjectIcon', structIcon);
+    }
+  }
+  await executeSecureRequest(formData, btn, "Execute");
+}
+
+async function executeSecureRequest(formData, btn, defaultText) {
+  try {
+    const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, { method: 'POST', body: formData, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+    const result = await response.json();
+    if (result && result.success) {
+      window.showCustomAlert("Success", "Structure updated successfully!");
+      document.getElementById('admin-structure-modal').style.display = 'none';
+      ALL_CONFIG_CACHE = null; 
+      setTimeout(() => {
+        if (structCurrentMode === 'chapter') loadChapters();
+        else if (structCurrentMode === 'subject') loadSubjects();
+        else loadClasses();
+      }, 1500); // Wait for Sheets to sync
+    } else { window.showCustomAlert("Error", result.error || "Failed request."); }
+  } catch (error) { window.showCustomAlert("Network Error", error.message); } 
+  finally { btn.disabled = false; btn.textContent = defaultText; }
+}
+</script>
 </body>
 </html>
