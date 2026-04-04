@@ -4302,7 +4302,7 @@ body.light-mode .pdf-name {
         <div class="screen-subtitle">Choose your class and Start</div>
       </div>
       <div id="admin-add-class-btn-container" class="admin-add-question" style="display: none; margin-bottom: 20px; padding: 12px;">
-       <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4);" onclick="openStructureModal('class')">➕ Add New Class / Subject</button>
+       <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4);" onclick="openStructureManager('class')">⚙️ Manage Classes</button>
     </div>
       <div class="class-grid" id="class-grid">
         <!-- Classes will be loaded dynamically -->
@@ -4316,7 +4316,7 @@ body.light-mode .pdf-name {
         <div class="screen-subtitle" id="current-class-display">Class</div>
       </div>
       <div id="admin-add-subject-btn-container" class="admin-add-question" style="display: none; margin-bottom: 20px; padding: 12px;">
-       <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4);" onclick="openStructureModal('subject')">➕ Add New Subject</button>
+       <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4);" onclick="openStructureManager('subject')">⚙️ Manage Subjects</button>
     </div>
       <div class="subject-grid" id="subject-grid">
         <!-- Subjects will be loaded dynamically -->
@@ -4486,7 +4486,7 @@ body.light-mode .pdf-name {
           <button class="start-btn" id="start-btn" disabled>Start</button>
         </div>
         <div id="admin-add-chapter-btn-container" class="admin-add-question" style="display: none; margin-top: 15px; margin-bottom: 0; padding: 10px;">
-           <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4);" onclick="openStructureModal('chapter')">➕ Add New Chapter</button>
+           <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4);" onclick="openStructureManager('chapter')">⚙️ Manage Chapters</button>
         </div>
       </div>
 
@@ -5619,7 +5619,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzQclJP-9iGno01ReQqLE2BcOcxBKzIK31dBpWjcEZGxroVYjoIqcbGmkMclsSliiP4/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwt8xP6znx_1hIvE7gi1Z2MIJKKITN8P0j2JRfBBHWnLKr8wrlZJDVJHs7JqG3IBHBo/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -12455,101 +12455,176 @@ if (isScreenVisible('video-container')) {
 
     // Start the app and load configs
     window.addEventListener('DOMContentLoaded', initializeApp);
-    // ========== ADMIN STRUCTURE MANAGER (CLASS/SUBJECT/CHAPTER) ==========
+   // ========== SECURE STRUCTURE MANAGER JS ==========
 
-async function openStructureModal(mode) {
-  const modal = document.getElementById('admin-structure-modal');
-  const classInput = document.getElementById('struct-class');
-  const subjectInput = document.getElementById('struct-subject');
-  const chapterInput = document.getElementById('struct-chapter');
-  const sheetIdInput = document.getElementById('struct-sheet-id');
-  const contextInfo = document.getElementById('struct-context-info');
+let currentStructContext = null;
+
+async function openStructureManager(mode) {
+  document.getElementById('struct-mode').value = mode;
+  document.getElementById('struct-action-type').value = 'create';
   
-  // Reset Form
-  classInput.value = '';
-  subjectInput.value = '';
-  chapterInput.value = '';
-  sheetIdInput.value = '';
-  classInput.disabled = false;
-  subjectInput.disabled = false;
-  
-  if (mode === 'class') {
-    contextInfo.innerHTML = "Creating a brand new <b>Class</b>, <b>Subject</b>, and <b>Chapter</b>.";
-  } else if (mode === 'subject') {
-    contextInfo.innerHTML = `Adding a new <b>Subject</b> to Class: <b>${currentClass}</b>`;
-    classInput.value = currentClass;
-    classInput.disabled = true;
-  } else if (mode === 'chapter') {
-    contextInfo.innerHTML = `Adding a new <b>Chapter</b> to: <br><b>${currentClass} ➔ ${currentSubject}</b>`;
-    classInput.value = currentClass;
-    subjectInput.value = currentSubject;
-    classInput.disabled = true;
-    subjectInput.disabled = true;
-    
-    // Auto-fetch Subject Sheet ID using your existing config cache
-    const allData = await loadAllConfigAtOnce();
-    const key = `${currentClass}_${currentSubject.toLowerCase()}`;
-    if (allData && allData.config && allData.config[key]) {
-      sheetIdInput.value = allData.config[key].sheetId;
-    } else {
-      window.showCustomAlert("Error", "Cannot find subject file ID. Ensure it loaded properly.");
-      return;
-    }
+  // Try to load context
+  const allData = await loadAllConfigAtOnce();
+  const key = `${currentClass}_${currentSubject ? currentSubject.toLowerCase() : ''}`;
+  if (allData && allData.config && allData.config[key]) {
+    document.getElementById('struct-sheet-id').value = allData.config[key].sheetId;
   }
   
-  modal.style.display = 'flex';
+  updateStructFormUI();
+  document.getElementById('admin-structure-modal').style.display = 'flex';
 }
 
-async function submitStructure() {
+function updateStructFormUI() {
+  const mode = document.getElementById('struct-mode').value; // class, subject, chapter
+  const action = document.getElementById('struct-action-type').value; // create, edit, delete
+  const infoEl = document.getElementById('struct-context-info');
+  const btn = document.getElementById('struct-submit-btn');
+  
+  const fClass = document.getElementById('struct-class');
+  const fSubject = document.getElementById('struct-subject');
+  const fChapter = document.getElementById('struct-chapter');
+  const fTimer = document.getElementById('struct-timer-group');
+  
+  // Reset visibility
+  fClass.parentElement.style.display = 'block';
+  fSubject.parentElement.style.display = 'block';
+  fChapter.parentElement.style.display = 'block';
+  fTimer.style.display = 'block';
+  fClass.disabled = false; fSubject.disabled = false; fChapter.disabled = false;
+  
+  if (action === 'create') {
+    btn.style.background = '#22c55e'; btn.textContent = "➕ Create New";
+    if (mode === 'class') {
+      infoEl.innerHTML = "Creating a brand new Structure";
+    } else if (mode === 'subject') {
+      infoEl.innerHTML = `Adding to Class: <b>${currentClass}</b>`;
+      fClass.value = currentClass; fClass.disabled = true;
+    } else {
+      infoEl.innerHTML = `Adding to: <b>${currentClass} ➔ ${currentSubject}</b>`;
+      fClass.value = currentClass; fSubject.value = currentSubject;
+      fClass.disabled = true; fSubject.disabled = true;
+    }
+  } 
+  else if (action === 'edit') {
+    btn.style.background = '#3b82f6'; btn.textContent = "✏️ Save Changes";
+    fClass.parentElement.style.display = 'none';
+    fSubject.parentElement.style.display = mode === 'subject' ? 'block' : 'none';
+    fChapter.parentElement.style.display = mode === 'chapter' ? 'block' : 'none';
+    fTimer.style.display = mode === 'subject' ? 'none' : 'block';
+    
+    if (mode === 'subject') {
+      infoEl.innerHTML = `Rename Subject: <b>${currentSubject}</b>`;
+      fSubject.value = currentSubject;
+    } else if (mode === 'chapter') {
+      infoEl.innerHTML = `Rename Chapter: <b>${currentTopicName}</b>`;
+      fChapter.value = currentTopicName;
+      // Extract GID safely
+      if (currentSubjectConfig && currentSubjectConfig.chapters && currentSubjectConfig.chapters[currentTopicName]) {
+        document.getElementById('struct-gid').value = currentSubjectConfig.chapters[currentTopicName];
+      }
+    } else {
+      infoEl.innerHTML = "Class editing must be done directly in Google Drive.";
+      btn.style.display = 'none';
+    }
+  }
+  else if (action === 'delete') {
+    btn.style.background = '#ef4444'; btn.textContent = "🗑️ Delete Permanently";
+    document.getElementById('struct-fields-container').style.display = 'none';
+    
+    if (mode === 'subject') {
+      infoEl.innerHTML = `⚠️ WARNING: Permanently delete Subject <b>${currentSubject}</b> and ALL its chapters?`;
+    } else if (mode === 'chapter') {
+      infoEl.innerHTML = `⚠️ WARNING: Permanently delete Chapter <b>${currentTopicName}</b>?`;
+      if (currentSubjectConfig && currentSubjectConfig.chapters && currentSubjectConfig.chapters[currentTopicName]) {
+        document.getElementById('struct-gid').value = currentSubjectConfig.chapters[currentTopicName];
+      }
+    } else {
+      infoEl.innerHTML = "Class deletion must be done directly in Google Drive.";
+      btn.style.display = 'none';
+    }
+  }
+}
+
+async function submitSecureStructure() {
+  const mode = document.getElementById('struct-mode').value;
+  const action = document.getElementById('struct-action-type').value;
   const classVal = document.getElementById('struct-class').value.trim();
   const subjectVal = document.getElementById('struct-subject').value.trim();
   const chapterVal = document.getElementById('struct-chapter').value.trim();
+  const timerVal = document.getElementById('struct-timer').value.trim();
   const sheetIdVal = document.getElementById('struct-sheet-id').value;
+  const gidVal = document.getElementById('struct-gid').value;
   
-  if (!classVal || !subjectVal || !chapterVal) {
-    window.showCustomAlert("Error", "Please fill out all visible fields.");
-    return;
+  if (action === 'delete') {
+    const confirmDelete = confirm(`Are you absolutely sure you want to delete this ${mode}? This cannot be undone.`);
+    if (!confirmDelete) return;
   }
-  
+
   const btn = document.getElementById('struct-submit-btn');
-  btn.disabled = true;
-  btn.textContent = "Processing... (Please wait)";
-  
+  btn.disabled = true; btn.textContent = "Processing securely...";
+
   try {
-    let action = sheetIdVal ? 'createChapter' : 'createSubject';
-    let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=' + action;
-    url += '&className=' + encodeURIComponent(classVal);
-    url += '&subjectName=' + encodeURIComponent(subjectVal);
-    url += '&chapterName=' + encodeURIComponent(chapterVal);
-    if (sheetIdVal) url += '&sheetId=' + encodeURIComponent(sheetIdVal);
-    url += '&username=' + encodeURIComponent(currentUser.username);
-    url += '&token=' + encodeURIComponent(currentUser.token);
+    let backendAction = '';
+    if (action === 'create') backendAction = sheetIdVal ? 'createChapter' : 'createSubject';
+    if (action === 'edit') backendAction = 'editStructure';
+    if (action === 'delete') backendAction = 'deleteStructure';
+
+    // SECURE POST REQUEST
+    const formData = new URLSearchParams();
+    formData.append('action', backendAction);
+    formData.append('username', currentUser.username);
+    formData.append('token', currentUser.token);
     
-    const result = await jsonpRequest(url, 'structCb');
+    if (action === 'create') {
+      formData.append('className', classVal);
+      formData.append('subjectName', subjectVal);
+      formData.append('chapterName', chapterVal);
+      if (sheetIdVal) formData.append('sheetId', sheetIdVal);
+      formData.append('timer', timerVal);
+    } else {
+      formData.append('targetType', mode);
+      formData.append('sheetId', sheetIdVal);
+      if (mode === 'chapter') formData.append('gid', gidVal);
+      if (action === 'edit') {
+        formData.append('newName', mode === 'subject' ? subjectVal : chapterVal);
+        formData.append('timer', timerVal);
+      }
+    }
+
+    const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: formData,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
     
+    const result = await response.json();
+
     if (result && result.success) {
-      window.showCustomAlert("Success", "Structure created successfully!");
+      window.showCustomAlert("Success", "Action completed successfully!");
       document.getElementById('admin-structure-modal').style.display = 'none';
+      ALL_CONFIG_CACHE = null; // Invalidate cache
       
-      // Invalidate your local config cache to pull fresh IDs
-      ALL_CONFIG_CACHE = null; 
-      
-      // Smart refresh based on where the user currently is
-      if (action === 'createChapter') {
+      // Smart refresh
+      if (action === 'delete' && mode === 'subject') {
+        document.getElementById('subject-selection').style.display = 'none';
+        loadClasses();
+      } else if (action === 'delete' && mode === 'chapter') {
+        // Just refresh the chapters list dropdown
         loadChapters(); 
-      } else if (action === 'createSubject' && document.getElementById('subject-selection').style.display === 'block') {
+      } else if (mode === 'chapter') {
+        loadChapters(); 
+      } else if (mode === 'subject') {
         loadSubjects();
       } else {
         loadClasses();
       }
     } else {
-      window.showCustomAlert("Error", "Failed to create: " + (result.error || "Unknown"));
+      window.showCustomAlert("Error", result.error || "Failed to process request.");
     }
   } catch (error) {
     window.showCustomAlert("Network Error", error.message);
   } finally {
-    btn.disabled = false;
-    btn.textContent = "Create Now";
+    btn.disabled = false; updateStructFormUI();
   }
 }
   </script>
@@ -12808,33 +12883,50 @@ async function submitStructure() {
     <button onclick="closeSettingsModal()" style="width: 100%; padding: 12px; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Close</button>
   </div>
 </div>
-  <div id="admin-structure-modal" class="modal" style="display: none; z-index: 10006;">
+<div id="admin-structure-modal" class="modal" style="display: none; z-index: 10006;">
     <div class="modal-content" style="max-width: 450px; padding: 25px;">
       <div class="modal-header" style="margin-bottom: 15px;">
-        <h2 style="font-size: 1.5rem; background: linear-gradient(90deg, #3b82f6 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">🏗️ Manage Structure</h2>
+        <h2 style="font-size: 1.5rem; color: #22c55e;" id="struct-modal-title">🏗️ Structure Manager</h2>
         <button class="modal-close" onclick="document.getElementById('admin-structure-modal').style.display='none'">&times;</button>
       </div>
       <div class="modal-body">
-        <div id="struct-context-info" style="margin-bottom: 20px; color: #22c55e; font-size: 0.95rem; font-weight: 500; text-align: center; background: rgba(34, 197, 94, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.3);"></div>
-        
-        <div class="form-group" style="margin-bottom: 15px;" id="struct-class-group">
-          <label style="color: #93c5fd;">Class Name</label>
-          <input type="text" id="struct-class" class="form-input" placeholder="e.g. 10">
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 15px;" id="struct-subject-group">
-          <label style="color: #93c5fd;">Subject Name</label>
-          <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics">
-        </div>
         
         <div class="form-group" style="margin-bottom: 15px;">
-          <label style="color: #93c5fd;">Chapter Name</label>
-          <input type="text" id="struct-chapter" class="form-input" placeholder="e.g. 1. Real Numbers">
+          <label style="color: #93c5fd;">Action Type</label>
+          <select id="struct-action-type" class="form-input" style="background: #1e293b; color: white;" onchange="updateStructFormUI()">
+            <option value="create">➕ Add New</option>
+            <option value="edit">✏️ Edit Current</option>
+            <option value="delete">🗑️ Delete Current</option>
+          </select>
+        </div>
+
+        <div id="struct-context-info" style="margin-bottom: 20px; color: #f59e0b; font-size: 0.95rem; text-align: center; background: rgba(245, 158, 11, 0.1); padding: 10px; border-radius: 8px;"></div>
+        
+        <div id="struct-fields-container">
+          <div class="form-group" style="margin-bottom: 15px;" id="struct-class-group">
+            <label style="color: #93c5fd;">Class Name</label>
+            <input type="text" id="struct-class" class="form-input" placeholder="e.g. 10">
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 15px;" id="struct-subject-group">
+            <label style="color: #93c5fd;">Subject Name</label>
+            <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics">
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 15px;" id="struct-chapter-group">
+            <label style="color: #93c5fd;">Chapter Name</label>
+            <input type="text" id="struct-chapter" class="form-input" placeholder="e.g. 1. Real Numbers">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 15px;" id="struct-timer-group">
+            <label style="color: #93c5fd;">Timer (Minutes)</label>
+            <input type="number" id="struct-timer" class="form-input" placeholder="30" value="30">
+          </div>
         </div>
         
         <input type="hidden" id="struct-sheet-id">
-        
-        <button id="struct-submit-btn" class="btn-success" style="width: 100%; margin-top: 15px; padding: 14px; border-radius: 8px;" onclick="submitStructure()">Create Now</button>
+        <input type="hidden" id="struct-gid">
+        <input type="hidden" id="struct-mode"> <button id="struct-submit-btn" class="btn-success" style="width: 100%; margin-top: 15px; padding: 14px; border-radius: 8px;" onclick="submitSecureStructure()">Execute</button>
       </div>
     </div>
   </div>
