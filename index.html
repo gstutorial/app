@@ -5416,203 +5416,202 @@ if (isAdmin() || isEditor()) {
     }
 
     // ========== ADMIN ACTIONS FOR VIDEOS ==========
-    function setupVideoUpload() {
-      const header = document.getElementById("admin-video-upload-header");
-      const content = document.getElementById("admin-video-upload-content");
-      const icon = document.getElementById("admin-video-toggle-icon");
-      const submitBtn = document.getElementById("submit-video-btn");
-      
-      header.onclick = function() {
-        if (content.style.display === "none") {
-          content.style.display = "block";
-          icon.style.transform = "rotate(180deg)";
-        } else {
-          content.style.display = "none";
-          icon.style.transform = "rotate(0deg)";
-        }
-      };
+function setupVideoUpload() {
+  const header = document.getElementById("admin-video-upload-header");
+  const content = document.getElementById("admin-video-upload-content");
+  const icon = document.getElementById("admin-video-toggle-icon");
+  const submitBtn = document.getElementById("submit-video-btn");
+  
+  if (!header || !content || !icon || !submitBtn) return; // Safety check
 
-      submitBtn.onclick = async () => {
-        if (isEditor() && !canAdd()) { window.showEditorPopup('Add'); return; }
-
-        const nameInput = document.getElementById("new-video-name").value.trim();
-        const urlInput = document.getElementById("new-video-url").value.trim();
-        const selectElement = document.getElementById("new-video-category-select");
-        const customInput = document.getElementById("new-video-category-new");
-        
-        if (!nameInput || !urlInput) { alert("Please provide both Title and YouTube Link."); return; }
-        if (!getYouTubeId(urlInput)) { alert("Please enter a valid YouTube link."); return; }
-
-        let finalCategory = "";
-        if (selectElement) {
-           finalCategory = selectElement.value === 'NEW' ? customInput.value.trim() : selectElement.value;
-        }
-
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = "Saving..."; submitBtn.disabled = true;
-
-        try {
-          // WE REUSE your updatePdfName / general AppScript logic by sending a JSONP request 
-          // to append a row. (See Step 5 for the Apps Script requirement).
-          let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=addSheetRow';
-          url += '&sheetId=' + window.currentVideoContext.sheetId;
-          url += '&gid=' + window.currentVideoContext.gid;
-          url += '&col1=' + encodeURIComponent(nameInput);
-          url += '&col2=' + encodeURIComponent(urlInput);
-          url += '&col3=' + encodeURIComponent(finalCategory);
-          url += '&username=' + encodeURIComponent(currentUser.username);
-          url += '&token=' + encodeURIComponent(currentUser.token);
-          url += '&_t=' + Date.now();
-
-          const response = await jsonpRequest(url, 'addVideoCb');
-          
-          if (response && response.success) {
-            document.getElementById("new-video-name").value = "";
-            document.getElementById("new-video-url").value = "";
-            if(customInput) customInput.style.display = 'none';
-            loadVideoList();
-          } else {
-            throw new Error(response.error);
-          }
-        } catch (err) {
-          alert("Failed to save: " + err);
-        } finally {
-          submitBtn.textContent = originalText; submitBtn.disabled = false;
-        }
-      };
+  header.onclick = function() {
+    if (content.style.display === "none") {
+      content.style.display = "block";
+      icon.style.transform = "rotate(180deg)";
+    } else {
+      content.style.display = "none";
+      icon.style.transform = "rotate(0deg)";
     }
-        // ========== FETCH YOUTUBE TITLE AUTOMATICALLY ==========
-    window.fetchYouTubeTitle = async function() {
-      const urlInput = document.getElementById("new-video-url").value.trim();
-      const nameInput = document.getElementById("new-video-name");
-      const fetchBtn = document.getElementById("fetch-title-btn");
+  };
 
-      if (!urlInput) { 
-          alert("Please paste a YouTube link in the URL box first."); 
-          return; 
-      }
+  submitBtn.onclick = async () => {
+    if (isEditor() && !canAdd()) { window.showEditorPopup('Add'); return; }
 
-      // Check if it's a valid YouTube URL using your existing helper function
-      const videoId = getYouTubeId(urlInput);
-      if (!videoId) { 
-          alert("Invalid YouTube link. Please check the URL."); 
-          return; 
-      }
-
-      // Change button text to show loading state
-      const originalText = fetchBtn.innerHTML;
-      fetchBtn.innerHTML = "⏳ Fetching...";
-      fetchBtn.disabled = true;
-      fetchBtn.style.opacity = "0.7";
-
-      try {
-          // Use YouTube's free oEmbed API to get video details
-          const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
-          
-          if (!response.ok) throw new Error("Could not fetch title");
-          
-          const data = await response.json();
-          
-          if (data && data.title) {
-              nameInput.value = data.title;
-              
-              // Optional: flash the input box green quickly to show success!
-              const originalBorder = nameInput.style.border;
-              nameInput.style.border = "2px solid #10b981";
-              setTimeout(() => { nameInput.style.border = originalBorder; }, 1500);
-          }
-      } catch (err) {
-          console.error("Fetch Error:", err);
-          alert("Could not fetch the title automatically (Video might be private or restricted). Please enter the title manually.");
-      } finally {
-          // Reset the button
-          fetchBtn.innerHTML = originalText;
-          fetchBtn.disabled = false;
-          fetchBtn.style.opacity = "1";
-      }
-    };
-
-
-    window.deleteVideoItem = async function(rowIndex) {
-      if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; }
-      
-      window.showCustomConfirm(
-        "Delete Video", "Are you sure you want to remove this video?", "Delete", 
-        async () => {
-          showPDFOverlay("Deleting Video...");
-          try {
-            let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=deletePdf&sheetId=' + window.currentVideoContext.sheetId + '&gid=' + window.currentVideoContext.gid + '&rowIndex=' + rowIndex + '&username=' + encodeURIComponent(currentUser.username) + '&token=' + encodeURIComponent(currentUser.token) + '&_t=' + Date.now();
-            const data = await jsonpRequest(url, 'deleteVidCb');
-            hidePDFOverlay();
-            if (data && data.success) loadVideoList(); 
-            else window.showCustomAlert("Error", "Error deleting: " + (data.error || "Unknown"));
-          } catch(e) { hidePDFOverlay(); window.showCustomAlert("Error", "Network error: " + e); }
-        }
-      );
-    };
-    // ========== EDIT VIDEO ACTIONS ==========
-    window.openEditVideoModal = function(rowIndex, currentName, currentCategory) {
-      if (isEditor() && !canEdit()) { window.showEditorPopup('Edit'); return; }
+    const nameInput = document.getElementById("new-video-name").value.trim();
+    const urlInput = document.getElementById("new-video-url").value.trim();
+    const selectElement = document.getElementById("new-video-category-select");
+    const customInput = document.getElementById("new-video-category-new");
     
-      document.getElementById('edit-video-row-index').value = rowIndex;
-      document.getElementById('edit-video-name').value = currentName;
+    if (!nameInput || !urlInput) { alert("Please provide both Title and YouTube Link."); return; }
+    if (!getYouTubeId(urlInput)) { alert("Please enter a valid YouTube link."); return; }
+
+    let finalCategory = "";
+    if (selectElement) {
+       finalCategory = selectElement.value === 'NEW' ? customInput.value.trim() : selectElement.value;
+    }
+
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = "Saving..."; 
+    submitBtn.disabled = true;
+
+    try {
+      let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=addSheetRow';
+      url += '&sheetId=' + window.currentVideoContext.sheetId;
+      url += '&gid=' + window.currentVideoContext.gid;
+      url += '&col1=' + encodeURIComponent(nameInput);
+      url += '&col2=' + encodeURIComponent(urlInput);
+      url += '&col3=' + encodeURIComponent(finalCategory);
+      url += '&username=' + encodeURIComponent(currentUser.username);
+      url += '&token=' + encodeURIComponent(currentUser.token);
+      url += '&_t=' + Date.now();
+
+      const response = await jsonpRequest(url, 'addVideoCb');
       
-      const select = document.getElementById('edit-video-category-select');
-      const customInput = document.getElementById('edit-video-category-new');
-      
-      // Check if category exists in dropdown
-      let hasCategory = false;
-      for(let i=0; i<select.options.length; i++) {
-          if(select.options[i].value === currentCategory) { hasCategory = true; break; }
-      }
-      
-      if(currentCategory && !hasCategory) {
-          select.value = 'NEW';
-          customInput.value = currentCategory;
-          customInput.style.display = 'block';
+      if (response && response.success) {
+        document.getElementById("new-video-name").value = "";
+        document.getElementById("new-video-url").value = "";
+        if(customInput) customInput.style.display = 'none';
+        loadVideoList();
       } else {
-          select.value = currentCategory || "";
-          customInput.style.display = 'none';
-          customInput.value = "";
+        throw new Error(response.error || "Unknown error");
       }
-      
-      document.getElementById('edit-video-modal').style.display = 'flex';
-    };
+    } catch (err) {
+      alert("Failed to save: " + err);
+    } finally {
+      submitBtn.textContent = originalText; 
+      submitBtn.disabled = false;
+    }
+  };
+}
 
-    window.saveVideoEditDetails = async function() {
-      const rowIndex = document.getElementById('edit-video-row-index').value;
-      const newName = document.getElementById('edit-video-name').value;
-      const selectVal = document.getElementById('edit-video-category-select').value;
-      const newCategory = selectVal === 'NEW' ? document.getElementById('edit-video-category-new').value : selectVal;
-      
-      if (!newName || newName.trim() === "") { alert("Video Title cannot be empty."); return; }
-      if (selectVal === 'NEW' && newCategory.trim() === "") { alert("Please type a new category name."); return; }
+// ========== FETCH YOUTUBE TITLE AUTOMATICALLY ==========
+window.fetchYouTubeTitle = async function() {
+  const urlInput = document.getElementById("new-video-url").value.trim();
+  const nameInput = document.getElementById("new-video-name");
+  const fetchBtn = document.getElementById("fetch-title-btn");
 
-      document.getElementById('edit-video-modal').style.display = 'none';
-      showPDFOverlay("Updating Video details...");
+  if (!urlInput) { 
+      alert("Please paste a YouTube link in the URL box first."); 
+      return; 
+  }
+
+  const videoId = getYouTubeId(urlInput);
+  if (!videoId) { 
+      alert("Invalid YouTube link. Please check the URL."); 
+      return; 
+  }
+
+  const originalText = fetchBtn.innerHTML;
+  fetchBtn.innerHTML = "⏳ Fetching...";
+  fetchBtn.disabled = true;
+  fetchBtn.style.opacity = "0.7";
+
+  try {
+      const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
       
+      if (!response.ok) throw new Error("Could not fetch title");
+      
+      const data = await response.json();
+      
+      if (data && data.title) {
+          nameInput.value = data.title;
+          const originalBorder = nameInput.style.border;
+          nameInput.style.border = "2px solid #10b981";
+          setTimeout(() => { nameInput.style.border = originalBorder; }, 1500);
+      }
+  } catch (err) {
+      console.error("Fetch Error:", err);
+      alert("Could not fetch the title automatically. Please enter the title manually.");
+  } finally {
+      fetchBtn.innerHTML = originalText;
+      fetchBtn.disabled = false;
+      fetchBtn.style.opacity = "1";
+  }
+};
+
+window.deleteVideoItem = async function(rowIndex) {
+  if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; }
+  
+  window.showCustomConfirm(
+    "Delete Video", "Are you sure you want to remove this video?", "Delete", 
+    async () => {
+      showPDFOverlay("Deleting Video...");
       try {
-        // We reuse updatePdfName because it generically updates Column A (Name) and Column C (Category)
-        let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=updatePdfName';
-        url += '&sheetId=' + window.currentVideoContext.sheetId;
-        url += '&gid=' + window.currentVideoContext.gid;
-        url += '&rowIndex=' + rowIndex;
-        url += '&newName=' + encodeURIComponent(newName.trim());
-        url += '&newCategory=' + encodeURIComponent(newCategory.trim()); 
-        url += '&username=' + encodeURIComponent(currentUser.username);
-        url += '&role=' + encodeURIComponent(currentUser.role);
-        url += '&token=' + encodeURIComponent(currentUser.token);
-        url += '&_t=' + Date.now();
-        
-        const data = await jsonpRequest(url, 'updateVidCb');
+        let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=deletePdf&sheetId=' + window.currentVideoContext.sheetId + '&gid=' + window.currentVideoContext.gid + '&rowIndex=' + rowIndex + '&username=' + encodeURIComponent(currentUser.username) + '&token=' + encodeURIComponent(currentUser.token) + '&_t=' + Date.now();
+        const data = await jsonpRequest(url, 'deleteVidCb');
         hidePDFOverlay();
-        
         if (data && data.success) loadVideoList(); 
-        else alert("Error updating Video: " + (data.error || "Unknown error"));
-      } catch(e) {
-        hidePDFOverlay(); alert("Network error: " + e);
+        else window.showCustomAlert("Error", "Error deleting: " + (data.error || "Unknown"));
+      } catch(e) { 
+        hidePDFOverlay(); 
+        window.showCustomAlert("Error", "Network error: " + e); 
       }
-    };
+    }
+  );
+};
+
+// ========== EDIT VIDEO ACTIONS ==========
+window.openEditVideoModal = function(rowIndex, currentName, currentCategory) {
+  if (isEditor() && !canEdit()) { window.showEditorPopup('Edit'); return; }
+
+  document.getElementById('edit-video-row-index').value = rowIndex;
+  document.getElementById('edit-video-name').value = currentName;
+  
+  const select = document.getElementById('edit-video-category-select');
+  const customInput = document.getElementById('edit-video-category-new');
+  
+  let hasCategory = false;
+  for(let i=0; i<select.options.length; i++) {
+      if(select.options[i].value === currentCategory) { hasCategory = true; break; }
+  }
+  
+  if(currentCategory && !hasCategory) {
+      select.value = 'NEW';
+      customInput.value = currentCategory;
+      customInput.style.display = 'block';
+  } else {
+      select.value = currentCategory || "";
+      customInput.style.display = 'none';
+      customInput.value = "";
+  }
+  
+  document.getElementById('edit-video-modal').style.display = 'flex';
+};
+
+window.saveVideoEditDetails = async function() {
+  const rowIndex = document.getElementById('edit-video-row-index').value;
+  const newName = document.getElementById('edit-video-name').value;
+  const selectVal = document.getElementById('edit-video-category-select').value;
+  const newCategory = selectVal === 'NEW' ? document.getElementById('edit-video-category-new').value : selectVal;
+  
+  if (!newName || newName.trim() === "") { alert("Video Title cannot be empty."); return; }
+  if (selectVal === 'NEW' && newCategory.trim() === "") { alert("Please type a new category name."); return; }
+
+  document.getElementById('edit-video-modal').style.display = 'none';
+  showPDFOverlay("Updating Video details...");
+  
+  try {
+    let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=updatePdfName';
+    url += '&sheetId=' + window.currentVideoContext.sheetId;
+    url += '&gid=' + window.currentVideoContext.gid;
+    url += '&rowIndex=' + rowIndex;
+    url += '&newName=' + encodeURIComponent(newName.trim());
+    url += '&newCategory=' + encodeURIComponent(newCategory.trim()); 
+    url += '&username=' + encodeURIComponent(currentUser.username);
+    url += '&role=' + encodeURIComponent(currentUser.role);
+    url += '&token=' + encodeURIComponent(currentUser.token);
+    url += '&_t=' + Date.now();
+    
+    const data = await jsonpRequest(url, 'updateVidCb');
+    hidePDFOverlay();
+    
+    if (data && data.success) loadVideoList(); 
+    else alert("Error updating Video: " + (data.error || "Unknown error"));
+  } catch(e) {
+    hidePDFOverlay(); 
+    alert("Network error: " + e);
+  }
+};
     
     // ========== FORCE CACHE BUSTING ==========
     const version = Date.now();
