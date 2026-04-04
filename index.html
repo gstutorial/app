@@ -13162,12 +13162,15 @@ async function submitV2Structure() {
     const allData = await loadAllConfigAtOnce();
     const key = `${currentClass}_${structCurrentMode === 'chapter' ? currentSubject.toLowerCase() : selectedItem.toLowerCase()}`;
     if (allData?.config[key]) sheetId = allData.config[key].sheetId;
+    
+    // Fallback for adding a new chapter
     if (structCurrentAction === 'add' && structCurrentMode === 'chapter') {
       const parentKey = `${currentClass}_${currentSubject.toLowerCase()}`;
       if (allData?.config[parentKey]) sheetId = allData.config[parentKey].sheetId;
     }
-    if (structCurrentMode === 'chapter' && selectedItem && allData?.config[`${currentClass}_${currentSubject.toLowerCase()}`]?.chapters) {
-      gid = allData.config[`${currentClass}_${currentSubject.toLowerCase()}`].chapters[selectedItem];
+    
+    if (structCurrentMode === 'chapter' && selectedItem) {
+      gid = selectedItem;
     }
   }
 
@@ -13203,7 +13206,7 @@ async function executeSecureRequest(formData, btn, defaultText) {
         if (structCurrentMode === 'chapter') loadChapters();
         else if (structCurrentMode === 'subject') loadSubjects();
         else loadClasses();
-      }, 1500); // Wait for Sheets to sync
+      }, 1500); 
     } else { window.showCustomAlert("Error", result.error || "Failed request."); }
   } catch (error) { window.showCustomAlert("Network Error", error.message); } 
   finally { btn.disabled = false; btn.textContent = defaultText; }
