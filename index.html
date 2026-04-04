@@ -6497,8 +6497,18 @@ async function authenticateWithAppsScript(username, password) {
     };
 
    
-   // ========== UPDATE ADMIN CONTROLS AND WHATSAPP VISIBILITY ==========
+   /// ========== UPDATE ADMIN CONTROLS AND WHATSAPP VISIBILITY ==========
     function updateAdminControls() {
+      
+      // 1. NEW LOGIC: Unhide the inline Manage buttons on Class/Subject/Chapter screens
+      const adminElements = document.querySelectorAll('.admin-control-element');
+      if (isAdmin() || isEditor()) {
+        adminElements.forEach(el => el.style.display = 'inline-block');
+      } else {
+        adminElements.forEach(el => el.style.display = 'none');
+      }
+
+      // 2. YOUR EXISTING LOGIC: Question Editor, WhatsApp, and Delete buttons
       if (questionWhatsappIconEl) {
         if (questionsLoaded && questions.length > 0) {
           questionWhatsappIconEl.style.display = (isAdmin() || isEditor()) ? 'none' : 'block';
