@@ -4297,13 +4297,11 @@ body.light-mode .pdf-name {
     <!-- Class Selection Screen -->
     <div class="class-selection" id="class-selection">
       <div class="greeting-message" id="greetingMessage"></div>
-      <div class="screen-header">
-        <div class="screen-title" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-        Select Your Class
-        <button class="admin-inline-btn admin-control-element" onclick="openSpecificAdminTab('class')">⚙️ Manage</button>
-      </div>
+      <div class="screen-header" style="display: flex; flex-direction: column; align-items: center;">
+        <div class="screen-title">Select Your Class</div>
+        <div class="screen-subtitle" style="margin-top: 10px;">Choose your class and Start</div>
+        <button class="admin-inline-btn admin-control-element" onclick="openSpecificAdminTab('class')">⚙️ Manage Classes</button>
     
-        <div class="screen-subtitle">Choose your class and Start</div>
       </div>
       <div class="class-grid" id="class-grid">
         <!-- Classes will be loaded dynamically -->
@@ -4312,12 +4310,12 @@ body.light-mode .pdf-name {
     
    <!-- Subject Selection Screen -->
     <div class="subject-selection" id="subject-selection">
-      <div class="screen-header">
-       <div class="screen-title" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-        Select Subject
-        <button class="admin-inline-btn admin-control-element" onclick="openSpecificAdminTab('subject')">⚙️ Manage</button>
-      </div>
-        <div class="screen-subtitle" id="current-class-display">Class</div>
+      <div class="screen-header" style="display: flex; flex-direction: column; align-items: center;">
+        <div class="screen-title">Select Subject</div>
+        <div class="screen-subtitle" id="current-class-display" style="margin-top: 10px;">Class</div>
+        <button class="admin-inline-btn admin-control-element" onclick="openSpecificAdminTab('subject')">⚙️ Manage Subjects</button>
+        
+        
       </div>
       <div class="subject-grid" id="subject-grid">
         <!-- Subjects will be loaded dynamically -->
@@ -4648,18 +4646,24 @@ body.light-mode .pdf-name {
         </div>
        <style>
          .admin-inline-btn {
-    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 4px 8px;
-    font-size: 0.75rem;
+    background: rgba(16, 185, 129, 0.15); /* Subtle transparent green */
+    color: #10b981 !important; /* Explicit green text */
+    -webkit-text-fill-color: #10b981 !important; /* Fixes the invisible text bug */
+    border: 1px solid #10b981;
+    border-radius: 8px;
+    padding: 6px 16px;
+    font-size: 0.85rem;
     font-weight: bold;
     cursor: pointer;
-    margin-left: 10px;
-    vertical-align: middle;
-    box-shadow: 0 2px 5px rgba(16,185,129,0.3);
+    margin: 8px auto 0 auto; /* Centers it and adds space on top */
     display: none; /* Hidden by default */
+    transition: all 0.2s ease;
+  }
+  
+  .admin-inline-btn:hover {
+    background: #10b981;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
   }
        
           .option-text-input {
