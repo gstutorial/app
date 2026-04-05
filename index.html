@@ -12690,27 +12690,51 @@ async function executeSecureRequest(formData, btn, defaultText) {
 // Ensure Button visibility respects EDITOR constraints
 function updateAdminControls() {
   if (!currentUser) return;
-
   const role = currentUser.role || '';
   const perms = (currentUser.permission || '').toLowerCase();
   const userClasses = (currentUser.class || '').split(',').map(c => c.trim());
-
+  
   const isAdmin = role === 'Admin';
   const isEditor = role === 'Editor';
   const hasManagePerms = isEditor && (perms.includes('add') || perms.includes('edit') || perms.includes('delete'));
   const classMatched = isEditor && userClasses.includes(currentClass);
-
+  
   const addClassBtn = document.getElementById('admin-add-class-btn-container');
   if (addClassBtn) addClassBtn.style.display = isAdmin ? 'block' : 'none';
-
+  
   const addSubjectBtn = document.getElementById('admin-add-subject-btn-container');
   if (addSubjectBtn) addSubjectBtn.style.display = (isAdmin || (hasManagePerms && classMatched)) ? 'block' : 'none';
-
+  
   const addChapterBtn = document.getElementById('admin-add-chapter-btn-container');
   if (addChapterBtn) addChapterBtn.style.display = (isAdmin || (hasManagePerms && classMatched)) ? 'block' : 'none';
 
   // Keep existing question edit controls
   if (adminAddQuestionDiv) adminAddQuestionDiv.style.display = (isAdmin || isEditor) ? 'block' : 'none';
+
+  // --- RESTORED LOGIC FOR WHATSAPP / EDIT / DELETE ICONS ---
+  if (questionWhatsappIconEl) {
+    if (typeof questionsLoaded !== 'undefined' && questionsLoaded && questions.length > 0) {
+      questionWhatsappIconEl.style.display = (isAdmin || isEditor) ? 'none' : 'block';
+    } else {
+      questionWhatsappIconEl.style.display = 'none';
+    }
+  }
+  
+  if (questionEditIconEl) {
+    if ((isAdmin || isEditor) && typeof questionsLoaded !== 'undefined' && questionsLoaded && questions.length > 0) {
+      questionEditIconEl.style.display = 'block';
+    } else {
+      questionEditIconEl.style.display = 'none';
+    }
+  }
+
+  if (questionDeleteIconEl) {
+    if ((isAdmin || isEditor) && typeof questionsLoaded !== 'undefined' && questionsLoaded && questions.length > 0) {
+      questionDeleteIconEl.style.display = 'block';
+    } else {
+      questionDeleteIconEl.style.display = 'none';
+    }
+  }
 }
   </script>
   <div id="edit-pdf-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center;">
