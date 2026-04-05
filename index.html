@@ -5618,8 +5618,8 @@ if (isAdmin() || isEditor()) {
     const version = Date.now();
     
     // ========== APPS SCRIPT CONFIGURATION ==========
-    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbycbOHNTekLVTkS98ekf5e1O07Fa3PVx5T1JwzbXSzIYjWytQjJKCaIwRDb_He1P38/exec';
+    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylsWmYofv5Bassqjutn53GpzJW2ZmwltzEdoaTk7Dusd6qaiexfFOLEKhyUzqZejdE4Q/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzHpaOB42OO9k_0HvKuy8wX29rREkoF6Ry2dGK_VJZU4lt_reNzF4rc1OVgombBp3FH/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -6457,18 +6457,26 @@ async function authenticateWithAppsScript(username, password) {
     function isAdmin() { return currentUser && currentUser.role === 'Admin'; }
     function isEditor() { return currentUser && currentUser.role === 'Editor'; }
 
-    function hasPermission(action) {
+   function hasPermission(action, entity = '') {
       if (!currentUser) return false;
       if (currentUser.role === 'Admin') return true;
       if (currentUser.role === 'Editor' && currentUser.permission) {
-        return currentUser.permission.toLowerCase().includes(action.toLowerCase());
+        const perms = currentUser.permission.toLowerCase();
+        if (!entity) return perms.includes(action.toLowerCase());
+        const regex = new RegExp(action.toLowerCase() + "\\s*\\(([^)]+)\\)");
+        const match = perms.match(regex);
+        if (match) {
+          const allowed = match[1].split(',').map(s => s.trim());
+          return allowed.includes(entity.toLowerCase());
+        }
+        return false;
       }
       return false;
     }
 
-    function canAdd() { return hasPermission('add'); }
-    function canEdit() { return hasPermission('edit'); }
-    function canDelete() { return hasPermission('delete'); }
+    function canAdd(entity = '') { return hasPermission('add', entity); }
+    function canEdit(entity = '') { return hasPermission('edit', entity); }
+    function canDelete(entity = '') { return hasPermission('delete', entity); }
     
     window.showTrialPopup = function() {
       document.getElementById('trial-popup-modal').style.display = 'flex';
@@ -12699,19 +12707,25 @@ function updateAdminControls() {
   const isEditor = role === 'Editor';
   const hasManagePerms = isEditor && (perms.includes('add') || perms.includes('edit') || perms.includes('delete'));
   const classMatched = isEditor && userClasses.includes(currentClass);
+      
+      const addClassBtn = document.getElementById('admin-add-class-btn-container');
+      if (addClassBtn) addClassBtn.style.display = isAdmin ? 'block' : 'none';
 
-  const addClassBtn = document.getElementById('admin-add-class-btn-container');
-  if (addClassBtn) addClassBtn.style.display = isAdmin ? 'block' : 'none';
+      const addSubjectBtn = document.getElementById('admin-add-subject-btn-container');
+      if (addSubjectBtn) addSubjectBtn.style.display = (isAdmin || (isEditor && classMatched && canAdd('subject'))) ? 'block' : 'none';
+      
+      const addChapterBtn = document.getElementById('admin-add-chapter-btn-container');
+      if (addChapterBtn) addChapterBtn.style.display = (isAdmin || (isEditor && classMatched && canAdd('chapter'))) ? 'block' : 'none';
 
-  const addSubjectBtn = document.getElementById('admin-add-subject-btn-container');
-  if (addSubjectBtn) addSubjectBtn.style.display = (isAdmin || (hasManagePerms && classMatched)) ? 'block' : 'none';
+      if (adminAddQuestionDiv) adminAddQuestionDiv.style.display = (isAdmin || (isEditor && canAdd('question'))) ? 'block' : 'none';
 
-  const addChapterBtn = document.getElementById('admin-add-chapter-btn-container');
-  if (addChapterBtn) addChapterBtn.style.display = (isAdmin || (hasManagePerms && classMatched)) ? 'block' : 'none';
+      if (questionEditIconEl) {
+        questionEditIconEl.style.display = ((isAdmin || (isEditor && canEdit('question'))) && questionsLoaded && questions.length > 0) ? 'block' : 'none';
+      }
+      if (questionDeleteIconEl) {
+        questionDeleteIconEl.style.display = ((isAdmin || (isEditor && canDelete('question'))) && questionsLoaded && questions.length > 0) ? 'block' : 'none';
+      }
 
-  // Keep existing question edit controls
-  if (adminAddQuestionDiv) adminAddQuestionDiv.style.display = (isAdmin || isEditor) ? 'block' : 'none';
-}
   </script>
   <div id="edit-pdf-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center;">
     <div class="modal-content" style="background: var(--bg-color, #1e293b); padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; border: 1px solid #3b82f6;">
@@ -12999,6 +13013,10 @@ function updateAdminControls() {
           <div class="form-group" style="margin-bottom: 15px;" id="struct-subject-group">
             <label style="color: #93c5fd;">Subject Name</label>
             <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics">
+          </div>
+          <div class="form-group" style="margin-bottom: 15px; display: none;" id="struct-icon-group">
+            <label style="color: #93c5fd;">Emoji Icon</label>
+            <input type="text" id="struct-icon" class="form-input" placeholder="e.g. 📚" maxlength="5">
           </div>
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-type-group">
