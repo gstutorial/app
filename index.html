@@ -12486,9 +12486,19 @@ async function openStructureManager(mode) {
 function selectStructAction(action) {
   structCurrentAction = action;
   document.getElementById('struct-action-buttons').style.display = 'none';
-  
   if (action === 'reorder') {
     document.getElementById('struct-reorder-container').style.display = 'block';
+    
+    // Extract array ONCE when modal opens
+    if (structCurrentMode === 'class') {
+      currentReorderArray = Array.from(document.querySelectorAll('#class-grid .class-name')).map(el => el.textContent);
+    } else if (structCurrentMode === 'subject') {
+      currentReorderArray = Array.from(document.querySelectorAll('#subject-grid .subject-name')).map(el => el.textContent);
+    } else {
+      currentReorderArray = Array.from(document.getElementById('topic-select').options)
+        .map(o => o.text).filter(t => !t.includes('Loading') && !t.includes('Select'));
+    }
+    
     renderReorderUI();
   } else {
     document.getElementById('struct-form-container').style.display = 'block';
@@ -12646,17 +12656,7 @@ function syncStructEditFields() {
   if (structCurrentMode === 'chapter') document.getElementById('struct-chapter').value = val;
 }
 
-// --- REORDER UI ---
 function renderReorderUI() {
-  if (structCurrentMode === 'class') {
-    currentReorderArray = Array.from(document.querySelectorAll('#class-grid .class-name')).map(el => el.textContent);
-  } else if (structCurrentMode === 'subject') {
-    currentReorderArray = Array.from(document.querySelectorAll('#subject-grid .subject-name')).map(el => el.textContent);
-  } else {
-    currentReorderArray = Array.from(document.getElementById('topic-select').options)
-      .map(o => o.text).filter(t => !t.includes('Loading') && !t.includes('Select'));
-  }
-  
   const list = document.getElementById('struct-reorder-list');
   list.innerHTML = '';
   currentReorderArray.forEach((item, index) => {
