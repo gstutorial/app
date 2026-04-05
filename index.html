@@ -12607,56 +12607,89 @@ async function submitReorder() {
 }
 
 async function submitV2Structure() {
-  if (structCurrentAction === 'delete' && !confirm(`Permanently delete this ${structCurrentMode}?`)) return;
+  // 1. Sanitize variables to ensure the check NEVER fails due to spaces or caps
+  const actionCheck = (structCurrentAction || '').toString().trim().toLowerCase();
+  const modeCheck = (structCurrentMode || 'item').toString().toUpperCase();
+
+  // 2. STRICT NATIVE WARNING POPUP
+  if (actionCheck === 'delete') {
+    const warningMessage = `⚠️ WARNING: You are about to permanently delete this ${modeCheck}.\n\nThis will safely erase all associated files, images, and folders from Google Drive and remove them from the Master Sheet. This action cannot be undone.\n\nAre you sure you want to proceed?`;
+    
+    // Forces the native browser dialog
+    if (!window.confirm(warningMessage)) {
+      return; // Stops the script immediately if user clicks "Cancel"
+    }
+  }
+
+  // 3. SHOW LOADING OVERLAY (Matches your Delete Question UI)
+  if (typeof showPDFOverlay === 'function') {
+     showPDFOverlay(`Processing ${modeCheck}...`);
+     updatePDFStatus(`Processing ${modeCheck}...`, 'Please wait...');
+  }
 
   const btn = document.getElementById('struct-submit-btn');
-  btn.disabled = true; btn.textContent = "Processing...";
-
-  const formData = new URLSearchParams();
-  formData.append('action', 'manageStructure');
-  formData.append('subAction', structCurrentAction);
-  formData.append('targetType', structCurrentMode);
-  formData.append('username', currentUser.username);
-  formData.append('token', currentUser.token);
-
-  const selectedItem = document.getElementById('struct-edit-select').value;
-  const newClassName = document.getElementById('struct-class').value.trim();
-  const newSubjectName = document.getElementById('struct-subject').value.trim();
-  const newChapterName = document.getElementById('struct-chapter').value.trim();
-  const timerVal = document.getElementById('struct-timer').value.trim();
-  const subjType = document.getElementById('struct-type').value;
-
-  // Context gathering
-  let sheetId = '', gid = '';
-  if (structCurrentMode === 'subject' || structCurrentMode === 'chapter') {
-    const allData = await loadAllConfigAtOnce();
-    const key = `${currentClass}_${structCurrentMode === 'chapter' ? currentSubject.toLowerCase() : selectedItem.toLowerCase()}`;
-    if (allData?.config[key]) sheetId = allData.config[key].sheetId;
-    if (structCurrentMode === 'chapter' && allData?.config[`${currentClass}_${currentSubject.toLowerCase()}`]?.chapters[selectedItem]) {
-      gid = allData.config[`${currentClass}_${currentSubject.toLowerCase()}`].chapters[selectedItem];
-    }
+  if (btn) {
+      btn.disabled = true; 
+      btn.textContent = "Processing...";
   }
 
-  if (structCurrentAction === 'add') {
-    formData.append('className', structCurrentMode === 'class' ? newClassName : currentClass);
-    formData.append('subjectName', structCurrentMode === 'chapter' ? currentSubject : newSubjectName);
-    formData.append('chapterName', newChapterName);
-    formData.append('subjectType', subjType);
-    formData.append('timer', timerVal);
-    if (structCurrentMode !== 'class') formData.append('sheetId', sheetId);
-  } else {
-    formData.append('oldName', selectedItem);
-    formData.append('className', currentClass);
-    formData.append('subjectName', currentSubject);
-    formData.append('sheetId', sheetId);
-    formData.append('gid', gid);
-    if (structCurrentAction === 'edit') {
-      formData.append('newName', structCurrentMode === 'class' ? newClassName : (structCurrentMode === 'subject' ? newSubjectName : newChapterName));
-      formData.append('timer', timerVal);
-    }
-  }
+  try {
+      const formData = new URLSearchParams();
+      formData.append('action', 'manageStructure');
+      formData.append('subAction', structCurrentAction);
+      formData.append('targetType', structCurrentMode);
+      formData.append('username', currentUser.username);
+      formData.append('token', currentUser.token);
 
-  await executeSecureRequest(formData, btn, "Execute");
+      const selectedItem = document.getElementById('struct-edit-select') ? document.getElementById('struct-edit-select').value : '';
+      const newClassName = document.getElementById('struct-class') ? document.getElementById('struct-class').value.trim() : '';
+      const newSubjectName = document.getElementById('struct-subject') ? document.getElementById('struct-subject').value.trim() : '';
+      const newChapterName = document.getElementById('struct-chapter') ? document.getElementById('struct-chapter').value.trim() : '';
+      const timerVal = document.getElementById('struct-timer') ? document.getElementById('struct-timer').value.trim() : '';
+      const subjType = document.getElementById('struct-type') ? document.getElementById('struct-type').value : '';
+
+      // Context gathering
+      let sheetId = '', gid = '';
+      if (structCurrentMode === 'subject' || structCurrentMode === 'chapter') {
+        const allData = await loadAllConfigAtOnce();
+        const key = `${currentClass}_${structCurrentMode === 'chapter' ? currentSubject.toLowerCase() : selectedItem.toLowerCase()}`;
+        if (allData?.config[key]) sheetId = allData.config[key].sheetId;
+        if (structCurrentMode === 'chapter' && allData?.config[`${currentClass}_${currentSubject.toLowerCase()}`]?.chapters[selectedItem]) {
+          gid = allData.config[`${currentClass}_${currentSubject.toLowerCase()}`].chapters[selectedItem];
+        }
+      }
+
+      if (structCurrentAction === 'add') {
+        formData.append('className', structCurrentMode === 'class' ? newClassName : currentClass);
+        formData.append('subjectName', structCurrentMode === 'chapter' ? currentSubject : newSubjectName);
+        formData.append('chapterName', newChapterName);
+        formData.append('subjectType', subjType);
+        formData.append('timer', timerVal);
+        if (structCurrentMode !== 'class') formData.append('sheetId', sheetId);
+      } else {
+        formData.append('oldName', selectedItem);
+        formData.append('className', currentClass);
+        formData.append('subjectName', currentSubject);
+        formData.append('sheetId', sheetId);
+        formData.append('gid', gid);
+        if (structCurrentAction === 'edit') {
+          formData.append('newName', structCurrentMode === 'class' ? newClassName : (structCurrentMode === 'subject' ? newSubjectName : newChapterName));
+          formData.append('timer', timerVal);
+        }
+      }
+
+      // Execute the backend request
+      await executeSecureRequest(formData, btn, "Execute");
+
+  } catch (error) {
+      console.error("Error in submitV2Structure:", error);
+      alert("Error: " + error.message);
+  } finally {
+      // 4. CLEAN UP OVERLAY
+      if (typeof hidePDFOverlay === 'function') {
+          hidePDFOverlay();
+      }
+  }
 }
 async function executeSecureRequest(formData, btn, defaultText) {
   try {
