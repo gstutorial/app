@@ -13232,23 +13232,23 @@ function updateAdminControls() {
           <div class="form-group" style="margin-bottom: 15px;" id="struct-class-group">
             <label style="color: #93c5fd;">Class Icon & Name</label>
             <div style="display: flex; flex-direction: row; align-items: center; gap: 10px; width: 100%;">
-              <input type="text" id="struct-class-icon" class="form-input" placeholder="🎓" style="width: 60px !important; flex: 0 0 60px; min-width: 60px; text-align: center; margin: 0;">
-              <input type="text" id="struct-class" class="form-input" placeholder="e.g. 10" style="flex: 1; min-width: 0; margin: 0;">
+              <input type="text" id="struct-class-icon" class="form-input" placeholder="🎓" style="width: 60px !important; flex: 0 0 60px; min-width: 60px; text-align: center; margin: 0; padding: 12px !important;">
+              <input type="text" id="struct-class" class="form-input" placeholder="e.g. 10" style="flex: 1; min-width: 0; margin: 0; padding: 12px 16px !important;">
             </div>
           </div>
           
           <div class="form-group" style="margin-bottom: 15px;" id="struct-subject-group">
             <label style="color: #93c5fd;">Subject Icon & Name</label>
             <div style="display: flex; flex-direction: row; align-items: center; gap: 10px; width: 100%;">
-              <input type="text" id="struct-subject-icon" class="form-input" placeholder="📚" style="width: 60px !important; flex: 0 0 60px; min-width: 60px; text-align: center; margin: 0;">
-              <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics" style="flex: 1; min-width: 0; margin: 0;">
+              <input type="text" id="struct-subject-icon" class="form-input" placeholder="📚" style="width: 60px !important; flex: 0 0 60px; min-width: 60px; text-align: center; margin: 0; padding: 12px !important;">
+              <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics" style="flex: 1; min-width: 0; margin: 0; padding: 12px 16px !important;">
             </div>
           </div>
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-type-group">
             <label style="color: #93c5fd;">Subject Type</label>
-            <select id="struct-type" class="form-input" style="background: #1e293b; color: white;">
-              <option value="quiz">📝 Standard Quiz</option>
+            <select id="struct-type" class="form-input" style="background: #1e293b; color: white; padding: 12px 16px !important;">
+              <option value="quiz">📝 Quiz Subject</option>
               <option value="pdf">📄 PDF Subject</option>
               <option value="video">📺 Video Subject</option>
             </select>
@@ -13256,12 +13256,12 @@ function updateAdminControls() {
           
           <div class="form-group" style="margin-bottom: 15px;" id="struct-chapter-group">
             <label style="color: #93c5fd;">Chapter Name</label>
-            <input type="text" id="struct-chapter" class="form-input" placeholder="e.g. 1. Real Numbers">
+            <input type="text" id="struct-chapter" class="form-input" placeholder="e.g. 1. Real Numbers" style="padding: 12px 16px !important;">
           </div>
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-timer-group">
             <label style="color: #93c5fd;">Timer (Minutes)</label>
-            <input type="number" id="struct-timer" class="form-input" placeholder="Leave blank for no timer">
+            <input type="number" id="struct-timer" class="form-input" placeholder="Leave blank for no timer" style="padding: 12px 16px !important;">
           </div>
           
           <button id="struct-submit-btn" class="btn-success" style="width: 100%; margin-top: 15px; padding: 14px; border-radius: 8px;" onclick="submitV2Structure()">Execute</button>
