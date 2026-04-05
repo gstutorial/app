@@ -7568,9 +7568,17 @@ async function loadClasses() {
     // 2. ROLE-BASED FILTERING
     if (currentUser && currentUser.role !== 'Admin') {
       const assignedClasses = currentUser.validatedAssignedClasses || [];
-      availableClasses = availableClasses.filter(cls => 
-        assignedClasses.some(assigned => assigned.toString().trim() === cls.id.toString().trim())
-      );
+      availableClasses = availableClasses.filter(cls => {
+        const rawClsId = cls.id.toString().trim();
+        // --- FIX: Strip emoji from the class ID before matching ---
+        const cleanClsId = rawClsId.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\u2600-\u27BF|\u2700-\u27BF|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDC00-\uDFFF])\s*/, '').trim();
+        
+        return assignedClasses.some(assigned => {
+          const assignedStr = assigned.toString().trim().toLowerCase();
+          // Match either the exact raw string or the emoji-stripped string
+          return assignedStr === rawClsId.toLowerCase() || assignedStr === cleanClsId.toLowerCase();
+        });
+      });
     }
 
     if (availableClasses.length === 0) {
