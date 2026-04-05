@@ -12498,11 +12498,25 @@ function renderStructForm() {
   const btn = document.getElementById('struct-submit-btn');
 
   // Reset visibilities
-  fClass.style.display = 'none'; fSubject.style.display = 'none'; fType.style.display = 'none';
-  fChapter.style.display = 'none'; fTimer.style.display = 'none'; fSelect.style.display = 'none';
+  fClass.style.display = 'none';
+  fSubject.style.display = 'none';
+  fType.style.display = 'none';
+  fChapter.style.display = 'none';
+  fTimer.style.display = 'none';
+  fSelect.style.display = 'none';
 
   if (structCurrentAction === 'add') {
-    btn.style.background = '#22c55e'; btn.textContent = "➕ Create Now";
+    btn.style.background = '#22c55e';
+    btn.textContent = "➕ Create Now";
+    
+    // --- FIX: CLEAR FORM FIELDS ON ADD ---
+    if (document.getElementById('struct-class')) document.getElementById('struct-class').value = '';
+    if (document.getElementById('struct-subject')) document.getElementById('struct-subject').value = '';
+    if (document.getElementById('struct-chapter')) document.getElementById('struct-chapter').value = '';
+    if (document.getElementById('struct-timer')) document.getElementById('struct-timer').value = '30'; // Default timer
+    if (document.getElementById('struct-type')) document.getElementById('struct-type').value = 'quiz'; // Default type
+    // -------------------------------------
+
     if (structCurrentMode === 'class') {
       fClass.style.display = 'block'; fSubject.style.display = 'block'; 
       fType.style.display = 'block'; fChapter.style.display = 'block'; fTimer.style.display = 'block';
