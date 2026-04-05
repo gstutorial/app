@@ -5619,7 +5619,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxe7EHm7jpze6rZHPSRUkJtYznHqfA9mL9zExInGqYR0j__OdtsjTjeBasldbBFfW-w/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxMmpasiCJiqtF6KHVKQs-aHR-9-RDRkQhU62ATsGaYVJCJ-T_jkZ4dczbRBDuNtQzL/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -7665,27 +7665,25 @@ async function loadClasses() {
         `;
 
         const allData = await loadAllConfigAtOnce();
-        
-        const subjects = [];
-        
-        if (allData && allData.config) {
-          const subjectSet = new Set();
-          for (const key in allData.config) {
-            if (key.startsWith(currentClass + '_')) {
-              const subject = key.split('_')[1];
-              subjectSet.add(subject);
-            }
-          }
-          
-          Array.from(subjectSet).forEach(subject => {
-            subjects.push({
-              id: subject,
-              name: subject.charAt(0).toUpperCase() + subject.slice(1),
-              icon: getSubjectIcon(subject),
-              desc: getSubjectDescription(subject)
-            });
-          });
+    const subjects = [];
+    if (allData && allData.config) {
+      const subjectMap = new Map();
+      for (const key in allData.config) {
+        if (key.startsWith(currentClass + '_')) {
+          const subject = key.split('_')[1];
+          subjectMap.set(subject, allData.config[key].icon); // Capture the real icon
         }
+      }
+      Array.from(subjectMap.keys()).forEach(subject => {
+        const dbIcon = subjectMap.get(subject);
+        subjects.push({
+          id: subject,
+          name: subject.charAt(0).toUpperCase() + subject.slice(1),
+          icon: dbIcon || getSubjectIcon(subject), // Uses custom emoji, falls back to default if blank
+          desc: getSubjectDescription(subject) || 'Interactive Learning'
+        });
+      });
+    }
 
         renderSubjectGrid(subjects);
 
@@ -13232,17 +13230,17 @@ function updateAdminControls() {
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-class-group">
             <label style="color: #93c5fd;">Class Icon & Name</label>
-            <div style="display: grid; grid-template-columns: 65px 1fr; gap: 10px; width: 100%;">
-              <input type="text" id="struct-class-icon" class="form-input" placeholder="🎓" style="text-align: center; padding: 12px 0 !important; margin: 0; min-width: 0;">
-              <input type="text" id="struct-class" class="form-input" placeholder="e.g. 10" style="padding: 12px 16px !important; margin: 0; min-width: 0;">
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="struct-class-icon" placeholder="🎓" style="width: 50px; text-align: center; padding: 12px 0; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 1.1rem; outline: none; margin: 0;">
+              <input type="text" id="struct-class" placeholder="e.g. 10" style="flex: 1; padding: 12px 16px; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem; outline: none; margin: 0;">
             </div>
           </div>
           
           <div class="form-group" style="margin-bottom: 15px;" id="struct-subject-group">
             <label style="color: #93c5fd;">Subject Icon & Name</label>
-            <div style="display: grid; grid-template-columns: 65px 1fr; gap: 10px; width: 100%;">
-              <input type="text" id="struct-subject-icon" class="form-input" placeholder="📚" style="text-align: center; padding: 12px 0 !important; margin: 0; min-width: 0;">
-              <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics" style="padding: 12px 16px !important; margin: 0; min-width: 0;">
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="struct-subject-icon" placeholder="📚" style="width: 50px; text-align: center; padding: 12px 0; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 1.1rem; outline: none; margin: 0;">
+              <input type="text" id="struct-subject" placeholder="e.g. Mathematics" style="flex: 1; padding: 12px 16px; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem; outline: none; margin: 0;">
             </div>
           </div>
 
