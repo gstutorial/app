@@ -7674,17 +7674,16 @@ async function loadClasses() {
           subjectMap.set(subject, allData.config[key].icon); // Capture the real icon
         }
       }
-      Array.from(subjectSet).forEach(subject => {
-        const key = `${currentClass}_${subject.toLowerCase()}`;
-        const dbIcon = allData.config[key]?.icon; // Retrieve icon from config
+      Array.from(subjectMap.keys()).forEach(subject => {
+        const dbIcon = subjectMap.get(subject);
         subjects.push({
           id: subject,
           name: subject.charAt(0).toUpperCase() + subject.slice(1),
-          icon: dbIcon || getSubjectIcon(subject),
+          icon: dbIcon || getSubjectIcon(subject), // Uses custom emoji, falls back to default if blank
           desc: getSubjectDescription(subject) || 'Interactive Learning'
         });
       });
-
+    }
         renderSubjectGrid(subjects);
 
       } catch (error) {
@@ -13230,17 +13229,17 @@ function updateAdminControls() {
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-class-group">
             <label style="color: #93c5fd;">Class Icon & Name</label>
-            <div style="display: flex !important; flex-direction: row !important; align-items: center !important; gap: 8px !important; width: 100% !important;">
-              <input type="text" id="struct-class-icon" placeholder="🎓" style="width: 55px !important; min-width: 55px !important; text-align: center !important; padding: 12px 0 !important; border-radius: 10px !important; border: 1px solid rgba(75, 85, 99, 0.9) !important; background: #111827 !important; color: #e5e7eb !important; font-size: 1.1rem !important; outline: none !important; margin: 0 !important;">
-              <input type="text" id="struct-class" placeholder="e.g. 10" style="flex: 1 !important; padding: 12px 16px !important; border-radius: 10px !important; border: 1px solid rgba(75, 85, 99, 0.9) !important; background: #111827 !important; color: #e5e7eb !important; font-size: 0.95rem !important; outline: none !important; margin: 0 !important;">
+            <div style="display: grid; grid-template-columns: 65px 1fr; gap: 10px; width: 100%;">
+              <input type="text" id="struct-class-icon" class="form-input" placeholder="🎓" style="text-align: center; padding: 12px 0 !important; margin: 0; min-width: 0;">
+              <input type="text" id="struct-class" class="form-input" placeholder="e.g. 10" style="padding: 12px 16px !important; margin: 0; min-width: 0;">
             </div>
           </div>
           
           <div class="form-group" style="margin-bottom: 15px;" id="struct-subject-group">
             <label style="color: #93c5fd;">Subject Icon & Name</label>
-            <div style="display: flex !important; flex-direction: row !important; align-items: center !important; gap: 8px !important; width: 100% !important;">
-              <input type="text" id="struct-subject-icon" placeholder="📚" style="width: 55px !important; min-width: 55px !important; text-align: center !important; padding: 12px 0 !important; border-radius: 10px !important; border: 1px solid rgba(75, 85, 99, 0.9) !important; background: #111827 !important; color: #e5e7eb !important; font-size: 1.1rem !important; outline: none !important; margin: 0 !important;">
-              <input type="text" id="struct-subject" placeholder="e.g. Mathematics" style="flex: 1 !important; padding: 12px 16px !important; border-radius: 10px !important; border: 1px solid rgba(75, 85, 99, 0.9) !important; background: #111827 !important; color: #e5e7eb !important; font-size: 0.95rem !important; outline: none !important; margin: 0 !important;">
+            <div style="display: grid; grid-template-columns: 65px 1fr; gap: 10px; width: 100%;">
+              <input type="text" id="struct-subject-icon" class="form-input" placeholder="📚" style="text-align: center; padding: 12px 0 !important; margin: 0; min-width: 0;">
+              <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics" style="padding: 12px 16px !important; margin: 0; min-width: 0;">
             </div>
           </div>
 
