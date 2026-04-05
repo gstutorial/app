@@ -5433,7 +5433,7 @@ if (isAdmin() || isEditor()) {
       };
 
       submitBtn.onclick = async () => {
-        if (isEditor() && !canAddVideo()) { window.showEditorPopup('Add'); return; }
+        if (isEditor() && !canAdd()) { window.showEditorPopup('Add'); return; }
 
         const nameInput = document.getElementById("new-video-name").value.trim();
         const urlInput = document.getElementById("new-video-url").value.trim();
@@ -5534,7 +5534,7 @@ if (isAdmin() || isEditor()) {
 
 
     window.deleteVideoItem = async function(rowIndex) {
-      if (isEditor() && !canDeleteVideo()) { window.showEditorPopup('Delete'); return; }
+      if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; }
       
       window.showCustomConfirm(
         "Delete Video", "Are you sure you want to remove this video?", "Delete", 
@@ -5552,7 +5552,7 @@ if (isAdmin() || isEditor()) {
     };
     // ========== EDIT VIDEO ACTIONS ==========
     window.openEditVideoModal = function(rowIndex, currentName, currentCategory) {
-      if (isEditor() && !canEditVideo()) { window.showEditorPopup('Edit'); return; }
+      if (isEditor() && !canEdit()) { window.showEditorPopup('Edit'); return; }
     
       document.getElementById('edit-video-row-index').value = rowIndex;
       document.getElementById('edit-video-name').value = currentName;
@@ -5619,7 +5619,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzWV4P22PMeBKXYjWTDMGWT3RDmJjRwXMBpx_boEjkF537hVTUjJev9qn9H8YhEGac2/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzawZkdwFLUPWfLe2PDuMzPqLO38wrDTU2M7q6nPD2cKZqAhplMz-f3y6EwXHYf4TzD/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -6120,8 +6120,6 @@ window.showToast = function(message, bgColor = "#22c55e") {
       formData.append('gid', currentSubjectConfig?.chapters?.[topicSelectEl.value] || '');
       formData.append('rowIndex', rowIndex);
       formData.append('tempId', tempId);
-    formData.append('className', className);
-formData.append('subjectName', subjectName);
 
       
 
@@ -6206,7 +6204,7 @@ formData.append('subjectName', subjectName);
           else { tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9); modalDataset.tempId = tempId; }
         }
 
-        const result = await uploadImageToDrive(file.name, base64Data, file.type, fieldName, rowIndex, tempId, currentClass, currentSubject);
+        const result = await uploadImageToDrive(file.name, base64Data, file.type, fieldName, rowIndex, tempId);
         
         if (progressBar) { progressBar.style.width = '100%'; progressBar.classList.remove('active'); }
         
@@ -6471,21 +6469,6 @@ async function authenticateWithAppsScript(username, password) {
     function canAdd() { return hasPermission('add'); }
     function canEdit() { return hasPermission('edit'); }
     function canDelete() { return hasPermission('delete'); }
-    function canAddQuestion() { return hasPermission('add_question'); }
-function canAddPdf() { return hasPermission('add_pdf'); }
-function canAddVideo() { return hasPermission('add_video'); }
-function canEditQuestion() { return hasPermission('edit_question'); }
-function canEditPdf() { return hasPermission('edit_pdf'); }
-function canEditVideo() { return hasPermission('edit_video'); }
-function canDeleteQuestion() { return hasPermission('delete_question'); }
-function canDeletePdf() { return hasPermission('delete_pdf'); }
-function canDeleteVideo() { return hasPermission('delete_video'); }
-function canAddSubject() { return hasPermission('add_subject'); }
-function canAddChapter() { return hasPermission('add_chapter'); }
-function canEditSubject() { return hasPermission('edit_subject'); }
-function canEditChapter() { return hasPermission('edit_chapter'); }
-function canDeleteSubject() { return hasPermission('delete_subject'); }
-function canDeleteChapter() { return hasPermission('delete_chapter'); }
     
     window.showTrialPopup = function() {
       document.getElementById('trial-popup-modal').style.display = 'flex';
@@ -9450,7 +9433,7 @@ function showSubjectSelection(className) {
 
     // ========== NEW UI EDIT MODAL ACTIONS ==========
    window.openEditPdfModal = function(rowIndex, currentName, currentCategory) {
-      if (isEditor() && !canEditPdf()) { window.showEditorPopup('Edit'); return; } // NEW
+      if (isEditor() && !canEdit()) { window.showEditorPopup('Edit'); return; } // NEW
     
       document.getElementById('edit-pdf-row-index').value = rowIndex;
       document.getElementById('edit-pdf-name').value = currentName;
@@ -9512,7 +9495,7 @@ function showSubjectSelection(className) {
     };
 
    window.deletePdfItem = async function(rowIndex) {
-      if (isEditor() && !canDeletePdf()) { window.showEditorPopup('Delete'); return; }
+      if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; }
       
       window.showCustomConfirm(
         "Delete PDF", 
@@ -9575,7 +9558,7 @@ function showSubjectSelection(className) {
       });
 
      submitBtn.onclick = async () => {
-        if (isEditor() && !canAddPdf()) { window.showEditorPopup('Add'); return; } // NEW
+        if (isEditor() && !canAdd()) { window.showEditorPopup('Add'); return; } // NEW
         if (!selectedFile || !nameInput.value.trim()) { alert("Provide PDF and Name."); return; }
         
         // Handle new dropdown combo logic
@@ -9611,8 +9594,6 @@ function showSubjectSelection(className) {
           formData.append('category', finalCategory); 
           formData.append('sheetId', window.currentPyqContext.sheetId);
           formData.append('gid', window.currentPyqContext.gid);
-          formData.append('className', currentClass);
-formData.append('subjectName', currentSubject);
 
           const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, { method: 'POST', body: formData });
           const result = await response.json();
@@ -12146,7 +12127,7 @@ if (isScreenVisible('video-container')) {
 
     if (addQuestionBtn) {
       addQuestionBtn.addEventListener("click", function() {
-        if (isEditor() && !canAddQuestion()) { window.showEditorPopup('Add'); return; } // NEW
+        if (isEditor() && !canAdd()) { window.showEditorPopup('Add'); return; } // NEW
         if (!isAdmin() && !isEditor()) {
           alert("Admin/Editor access required");
           return;
@@ -12494,24 +12475,8 @@ async function openStructureManager(mode) {
   document.getElementById('admin-structure-modal').style.display = 'flex';
 }
 
-    function canPerformStructAction(action, targetType) {
-  if (isAdmin()) return true;
-  if (!isEditor()) return false;
-  const perm = (currentUser.permission || '').toLowerCase();
-  return perm.includes(`${action}_${targetType}`);
-}
-    
 function selectStructAction(action) {
   structCurrentAction = action;
-  
-  // 🔒 Permission check - add this line here
-  if (!canPerformStructAction(structCurrentAction, structCurrentMode)) {
-    window.showCustomAlert("Permission Denied", `You don't have ${structCurrentAction} permission for ${structCurrentMode}s.`);
-    // Re-show action buttons so user can try another action
-    document.getElementById('struct-action-buttons').style.display = 'grid';
-    return;
-  }
-  
   document.getElementById('struct-action-buttons').style.display = 'none';
   
   if (action === 'reorder') {
@@ -12589,15 +12554,14 @@ function syncStructEditFields() {
 // --- REORDER UI ---
 function renderReorderUI() {
   if (structCurrentMode === 'class') {
-    currentReorderArray = ALL_CONFIG_CACHE.classes.map(cls => cls.id);
+    currentReorderArray = Array.from(document.querySelectorAll('#class-grid .class-name')).map(el => el.textContent);
   } else if (structCurrentMode === 'subject') {
-    const prefix = `${currentClass}_`;
-    currentReorderArray = Object.keys(ALL_CONFIG_CACHE.config)
-      .filter(k => k.startsWith(prefix))
-      .map(k => k.substring(prefix.length));
+    currentReorderArray = Array.from(document.querySelectorAll('#subject-grid .subject-name')).map(el => el.textContent);
   } else {
-    currentReorderArray = chaptersList.slice();
+    currentReorderArray = Array.from(document.getElementById('topic-select').options)
+      .map(o => o.text).filter(t => !t.includes('Loading') && !t.includes('Select'));
   }
+  
   const list = document.getElementById('struct-reorder-list');
   list.innerHTML = '';
   currentReorderArray.forEach((item, index) => {
@@ -12613,6 +12577,7 @@ function renderReorderUI() {
     list.appendChild(li);
   });
 }
+
 window.moveReorderItem = function(index, direction) {
   const newIndex = index + direction;
   if (newIndex >= 0 && newIndex < currentReorderArray.length) {
@@ -12642,14 +12607,11 @@ async function submitReorder() {
 }
 
 async function submitV2Structure() {
-  // 1. Delete confirmation first (if applicable)
   if (structCurrentAction === 'delete' && !confirm(`Permanently delete this ${structCurrentMode}?`)) return;
 
   const btn = document.getElementById('struct-submit-btn');
-  btn.disabled = true;
-  btn.textContent = "Processing...";
+  btn.disabled = true; btn.textContent = "Processing...";
 
-  // 2. Create formData
   const formData = new URLSearchParams();
   formData.append('action', 'manageStructure');
   formData.append('subAction', structCurrentAction);
@@ -12657,7 +12619,6 @@ async function submitV2Structure() {
   formData.append('username', currentUser.username);
   formData.append('token', currentUser.token);
 
-  // 3. Get common values
   const selectedItem = document.getElementById('struct-edit-select').value;
   const newClassName = document.getElementById('struct-class').value.trim();
   const newSubjectName = document.getElementById('struct-subject').value.trim();
@@ -12665,7 +12626,7 @@ async function submitV2Structure() {
   const timerVal = document.getElementById('struct-timer').value.trim();
   const subjType = document.getElementById('struct-type').value;
 
-  // 4. Context gathering (sheetId, gid) for subject/chapter
+  // Context gathering
   let sheetId = '', gid = '';
   if (structCurrentMode === 'subject' || structCurrentMode === 'chapter') {
     const allData = await loadAllConfigAtOnce();
@@ -12676,7 +12637,6 @@ async function submitV2Structure() {
     }
   }
 
-  // 5. Add action-specific parameters
   if (structCurrentAction === 'add') {
     formData.append('className', structCurrentMode === 'class' ? newClassName : currentClass);
     formData.append('subjectName', structCurrentMode === 'chapter' ? currentSubject : newSubjectName);
@@ -12684,41 +12644,18 @@ async function submitV2Structure() {
     formData.append('subjectType', subjType);
     formData.append('timer', timerVal);
     if (structCurrentMode !== 'class') formData.append('sheetId', sheetId);
-
-    // ✅ Append icons ONLY for add action (and only for the relevant mode)
-    if (structCurrentMode === 'class') {
-      const classIcon = document.getElementById('struct-class-icon').value.trim();
-      if (classIcon) formData.append('classIcon', classIcon);
-    }
-    if (structCurrentMode === 'subject') {
-      const subjectIcon = document.getElementById('struct-subject-icon').value.trim();
-      if (subjectIcon) formData.append('subjectIcon', subjectIcon);
-    }
-  } 
-  else { // edit or delete
+  } else {
     formData.append('oldName', selectedItem);
     formData.append('className', currentClass);
     formData.append('subjectName', currentSubject);
     formData.append('sheetId', sheetId);
     formData.append('gid', gid);
-    
     if (structCurrentAction === 'edit') {
       formData.append('newName', structCurrentMode === 'class' ? newClassName : (structCurrentMode === 'subject' ? newSubjectName : newChapterName));
       formData.append('timer', timerVal);
-      
-      // ✅ Also allow icon change on edit (if you want)
-      if (structCurrentMode === 'class') {
-        const newClassIcon = document.getElementById('struct-class-icon').value.trim();
-        if (newClassIcon) formData.append('newIcon', newClassIcon);
-      }
-      if (structCurrentMode === 'subject') {
-        const newSubjectIcon = document.getElementById('struct-subject-icon').value.trim();
-        if (newSubjectIcon) formData.append('newIcon', newSubjectIcon);
-      }
     }
   }
 
-  // 6. Send request
   await executeSecureRequest(formData, btn, "Execute");
 }
 
@@ -12767,15 +12704,10 @@ function updateAdminControls() {
   if (addClassBtn) addClassBtn.style.display = isAdmin ? 'block' : 'none';
 
   const addSubjectBtn = document.getElementById('admin-add-subject-btn-container');
-if (addSubjectBtn) {
-  const canManageSubjects = isAdmin || (isEditor && (canAddSubject() || canEditSubject() || canDeleteSubject()));
-  addSubjectBtn.style.display = canManageSubjects ? 'block' : 'none';
-}
-const addChapterBtn = document.getElementById('admin-add-chapter-btn-container');
-if (addChapterBtn) {
-  const canManageChapters = isAdmin || (isEditor && (canAddChapter() || canEditChapter() || canDeleteChapter()));
-  addChapterBtn.style.display = canManageChapters ? 'block' : 'none';
-}
+  if (addSubjectBtn) addSubjectBtn.style.display = (isAdmin || (hasManagePerms && classMatched)) ? 'block' : 'none';
+
+  const addChapterBtn = document.getElementById('admin-add-chapter-btn-container');
+  if (addChapterBtn) addChapterBtn.style.display = (isAdmin || (hasManagePerms && classMatched)) ? 'block' : 'none';
 
   // Keep existing question edit controls
   if (adminAddQuestionDiv) adminAddQuestionDiv.style.display = (isAdmin || isEditor) ? 'block' : 'none';
@@ -13084,21 +13016,12 @@ if (addChapterBtn) {
           </div>
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-timer-group">
-  <label style="color: #93c5fd;">Timer (Minutes)</label>
-  <input type="number" id="struct-timer" class="form-input" placeholder="30" value="30">
-</div>
-
-<!-- NEW ICON GROUPS -->
-<div class="form-group" style="margin-bottom: 15px;" id="struct-class-icon-group">
-  <label style="color: #93c5fd;">Class Icon (emoji)</label>
-  <input type="text" id="struct-class-icon" class="form-input" placeholder="📚">
-</div>
-<div class="form-group" style="margin-bottom: 15px;" id="struct-subject-icon-group">
-  <label style="color: #93c5fd;">Subject Icon (emoji)</label>
-  <input type="text" id="struct-subject-icon" class="form-input" placeholder="📘">
-</div>
-
-<button id="struct-submit-btn" class="btn-success" style="width: 100%; margin-top: 15px; padding: 14px; border-radius: 8px;" onclick="submitV2Structure()">Execute</button>
+            <label style="color: #93c5fd;">Timer (Minutes)</label>
+            <input type="number" id="struct-timer" class="form-input" placeholder="30" value="30">
+          </div>
+          
+          <button id="struct-submit-btn" class="btn-success" style="width: 100%; margin-top: 15px; padding: 14px; border-radius: 8px;" onclick="submitV2Structure()">Execute</button>
+        </div>
 
         <div id="struct-reorder-container" style="display: none;">
           <div style="margin-bottom: 15px; color: #93c5fd; font-size: 0.9rem; text-align: center;">Use the arrows to rearrange the order.</div>
