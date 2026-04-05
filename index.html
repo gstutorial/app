@@ -5433,7 +5433,7 @@ if (isAdmin() || isEditor()) {
       };
 
       submitBtn.onclick = async () => {
-        if (isEditor() && !canAdd()) { window.showEditorPopup('Add'); return; }
+        if (isEditor() && !canAddVideo()) { window.showEditorPopup('Add'); return; }
 
         const nameInput = document.getElementById("new-video-name").value.trim();
         const urlInput = document.getElementById("new-video-url").value.trim();
@@ -5534,7 +5534,7 @@ if (isAdmin() || isEditor()) {
 
 
     window.deleteVideoItem = async function(rowIndex) {
-      if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; }
+      if (isEditor() && !canDeleteVideo()) { window.showEditorPopup('Delete'); return; }
       
       window.showCustomConfirm(
         "Delete Video", "Are you sure you want to remove this video?", "Delete", 
@@ -5552,7 +5552,7 @@ if (isAdmin() || isEditor()) {
     };
     // ========== EDIT VIDEO ACTIONS ==========
     window.openEditVideoModal = function(rowIndex, currentName, currentCategory) {
-      if (isEditor() && !canEdit()) { window.showEditorPopup('Edit'); return; }
+      if (isEditor() && !canEditVideo()) { window.showEditorPopup('Edit'); return; }
     
       document.getElementById('edit-video-row-index').value = rowIndex;
       document.getElementById('edit-video-name').value = currentName;
@@ -5618,8 +5618,8 @@ if (isAdmin() || isEditor()) {
     const version = Date.now();
     
     // ========== APPS SCRIPT CONFIGURATION ==========
-    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylsWmYofv5Bassqjutn53GpzJW2ZmwltzEdoaTk7Dusd6qaiexfFOLEKhyUzqZejdE4Q/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzHpaOB42OO9k_0HvKuy8wX29rREkoF6Ry2dGK_VJZU4lt_reNzF4rc1OVgombBp3FH/exec';
+    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzWV4P22PMeBKXYjWTDMGWT3RDmJjRwXMBpx_boEjkF537hVTUjJev9qn9H8YhEGac2/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -6089,33 +6089,55 @@ window.showToast = function(message, bgColor = "#22c55e") {
 
     // ========== UPLOAD IMAGE TO GOOGLE DRIVE - FIXED WITH FETCH ==========
   async function uploadImageToDrive(fileName, fileData, mimeType, fieldId, rowIndex, tempId) {
+      console.log('🚀 Starting fetch upload...', { fileName, fieldId, rowIndex });
+
+      // --- CRITICAL SAFETY CHECK ---
+      // If the token is missing, stop immediately. 
+      // This prevents "Unauthorized" errors from cluttering your server logs.
       if (!currentUser || !currentUser.token) {
         alert("Session Error: Please log in again before uploading images.");
         logout();
         return { success: false, error: "No valid session" };
       }
-
+      
       const formData = new FormData();
-      formData.append('action', 'uploadImage');
+      
+      // 1. Mandatory Action & Credentials
+      formData.append('action', 'uploadImage'); 
       formData.append('username', currentUser.username);
       formData.append('token', currentUser.token);
-      formData.append('role', currentUser.role || 'Student');
+      // Optional: send role just for logging, though backend should verify via token
+      formData.append('role', currentUser.role || 'Student'); 
       
+      // 2. File Data
       formData.append('fileData', fileData);
-      formData.append('fileName', fileName);
+      formData.append('fileName', fileName); 
       formData.append('mimeType', mimeType);
-      formData.append('subjectName', currentSubject);
       
+      // 3. Location Data (Where to write the image link in Google Sheets)
       formData.append('fieldId', fieldId);
       formData.append('sheetId', currentSubjectConfig?.sheetId || '');
       formData.append('gid', currentSubjectConfig?.chapters?.[topicSelectEl.value] || '');
       formData.append('rowIndex', rowIndex);
       formData.append('tempId', tempId);
+    formData.append('className', className);
+formData.append('subjectName', subjectName);
+
+      
 
       try {
-        const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, { method: 'POST', body: formData });
-        if (!response.ok) { throw new Error(`Server responded with ${response.status}`); }
-        return await response.json();
+        const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+          method: 'POST',
+          body: formData
+        });
+
+        // Apps Script sometimes returns a redirect or an error page if it crashes
+        if (!response.ok) {
+          throw new Error(`Server responded with ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result;
       } catch (error) {
         console.error('❌ Upload fetch error:', error);
         return { success: false, error: "Network Error: " + error.toString() };
@@ -6184,7 +6206,7 @@ window.showToast = function(message, bgColor = "#22c55e") {
           else { tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9); modalDataset.tempId = tempId; }
         }
 
-        const result = await uploadImageToDrive(file.name, base64Data, file.type, fieldName, rowIndex, tempId);
+        const result = await uploadImageToDrive(file.name, base64Data, file.type, fieldName, rowIndex, tempId, currentClass, currentSubject);
         
         if (progressBar) { progressBar.style.width = '100%'; progressBar.classList.remove('active'); }
         
@@ -6437,26 +6459,33 @@ async function authenticateWithAppsScript(username, password) {
     function isAdmin() { return currentUser && currentUser.role === 'Admin'; }
     function isEditor() { return currentUser && currentUser.role === 'Editor'; }
 
-   function hasPermission(action, entity = '') {
+    function hasPermission(action) {
       if (!currentUser) return false;
       if (currentUser.role === 'Admin') return true;
       if (currentUser.role === 'Editor' && currentUser.permission) {
-        const perms = currentUser.permission.toLowerCase();
-        if (!entity) return perms.includes(action.toLowerCase());
-        const regex = new RegExp(action.toLowerCase() + "\\s*\\(([^)]+)\\)");
-        const match = perms.match(regex);
-        if (match) {
-          const allowed = match[1].split(',').map(s => s.trim());
-          return allowed.includes(entity.toLowerCase());
-        }
-        return false;
+        return currentUser.permission.toLowerCase().includes(action.toLowerCase());
       }
       return false;
     }
 
-    function canAdd(entity = '') { return hasPermission('add', entity); }
-    function canEdit(entity = '') { return hasPermission('edit', entity); }
-    function canDelete(entity = '') { return hasPermission('delete', entity); }
+    function canAdd() { return hasPermission('add'); }
+    function canEdit() { return hasPermission('edit'); }
+    function canDelete() { return hasPermission('delete'); }
+    function canAddQuestion() { return hasPermission('add_question'); }
+function canAddPdf() { return hasPermission('add_pdf'); }
+function canAddVideo() { return hasPermission('add_video'); }
+function canEditQuestion() { return hasPermission('edit_question'); }
+function canEditPdf() { return hasPermission('edit_pdf'); }
+function canEditVideo() { return hasPermission('edit_video'); }
+function canDeleteQuestion() { return hasPermission('delete_question'); }
+function canDeletePdf() { return hasPermission('delete_pdf'); }
+function canDeleteVideo() { return hasPermission('delete_video'); }
+function canAddSubject() { return hasPermission('add_subject'); }
+function canAddChapter() { return hasPermission('add_chapter'); }
+function canEditSubject() { return hasPermission('edit_subject'); }
+function canEditChapter() { return hasPermission('edit_chapter'); }
+function canDeleteSubject() { return hasPermission('delete_subject'); }
+function canDeleteChapter() { return hasPermission('delete_chapter'); }
     
     window.showTrialPopup = function() {
       document.getElementById('trial-popup-modal').style.display = 'flex';
@@ -9421,7 +9450,7 @@ function showSubjectSelection(className) {
 
     // ========== NEW UI EDIT MODAL ACTIONS ==========
    window.openEditPdfModal = function(rowIndex, currentName, currentCategory) {
-      if (isEditor() && !canEdit()) { window.showEditorPopup('Edit'); return; } // NEW
+      if (isEditor() && !canEditPdf()) { window.showEditorPopup('Edit'); return; } // NEW
     
       document.getElementById('edit-pdf-row-index').value = rowIndex;
       document.getElementById('edit-pdf-name').value = currentName;
@@ -9483,7 +9512,7 @@ function showSubjectSelection(className) {
     };
 
    window.deletePdfItem = async function(rowIndex) {
-      if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; }
+      if (isEditor() && !canDeletePdf()) { window.showEditorPopup('Delete'); return; }
       
       window.showCustomConfirm(
         "Delete PDF", 
@@ -9503,68 +9532,62 @@ function showSubjectSelection(className) {
     };
     // ========== SETUP ADMIN UPLOAD ==========
     function setupPdfUpload() {
+      // --- NEW: Setup Collapsible Panel Logic ---
       const pdfHeader = document.getElementById("admin-pdf-upload-header");
       const pdfContent = document.getElementById("admin-pdf-upload-content");
       const pdfToggleIcon = document.getElementById("admin-pdf-toggle-icon");
-
+      
       if (pdfHeader && pdfContent && pdfToggleIcon) {
+        // Remove previous onclick to avoid duplicates if called multiple times
         pdfHeader.onclick = function() {
           if (pdfContent.style.display === "none") {
             pdfContent.style.display = "block";
-            pdfToggleIcon.style.transform = "rotate(180deg)"; 
+            pdfToggleIcon.style.transform = "rotate(180deg)"; // Arrow points up
           } else {
             pdfContent.style.display = "none";
-            pdfToggleIcon.style.transform = "rotate(0deg)"; 
+            pdfToggleIcon.style.transform = "rotate(0deg)"; // Arrow points down
           }
         };
       }
+      // --- END NEW ---
 
       const uploadArea = document.getElementById("upload-pdf-area");
       const fileInput = document.getElementById("pdf-file-input");
       const submitBtn = document.getElementById("submit-pdf-btn");
       const nameInput = document.getElementById("new-pdf-name");
-
+      
+     
+      
       const newUploadArea = uploadArea.cloneNode(true);
       uploadArea.parentNode.replaceChild(newUploadArea, uploadArea);
-
+      
       let selectedFile = null;
-
       newUploadArea.addEventListener("click", () => fileInput.click());
-
+      
       fileInput.addEventListener("change", (e) => {
         if (e.target.files.length > 0) {
           selectedFile = e.target.files[0];
-          if (selectedFile.type !== "application/pdf") {
-            alert("Please select a valid PDF.");
-            selectedFile = null;
-            return;
-          }
+          if (selectedFile.type !== "application/pdf") { alert("Please select a valid PDF."); selectedFile = null; return; }
           newUploadArea.querySelector(".upload-text").textContent = `Selected: ${selectedFile.name}`;
           submitBtn.disabled = false;
           if (!nameInput.value) nameInput.value = selectedFile.name.replace('.pdf', '');
         }
       });
 
-      submitBtn.onclick = async () => {
-        if (isEditor() && !canAdd()) { window.showEditorPopup('Add'); return; }
-
-        if (!selectedFile || !nameInput.value.trim()) {
-          alert("Provide PDF and Name.");
-          return;
-        }
-
+     submitBtn.onclick = async () => {
+        if (isEditor() && !canAddPdf()) { window.showEditorPopup('Add'); return; } // NEW
+        if (!selectedFile || !nameInput.value.trim()) { alert("Provide PDF and Name."); return; }
+        
+        // Handle new dropdown combo logic
         const selectElement = document.getElementById("new-pdf-category-select");
         const customInput = document.getElementById("new-pdf-category-new");
         let finalCategory = "";
-        
         if (selectElement) {
            finalCategory = selectElement.value === 'NEW' ? customInput.value.trim() : selectElement.value;
         }
 
         const originalText = submitBtn.textContent;
-        submitBtn.textContent = "Uploading...";
-        submitBtn.disabled = true;
-
+        submitBtn.textContent = "Uploading..."; submitBtn.disabled = true;
         document.getElementById("pdf-upload-progress").style.display = "block";
         document.getElementById("pdf-progress-bar").style.width = "50%";
         document.getElementById("pdf-upload-status").textContent = "Uploading to Drive...";
@@ -9581,16 +9604,15 @@ function showSubjectSelection(className) {
           formData.append('username', currentUser.username);
           formData.append('token', currentUser.token);
           formData.append('role', currentUser.role);
-          formData.append('className', currentClass);
-          formData.append('subjectName', currentSubject);
-
           formData.append('fileData', base64Data);
           formData.append('fileName', selectedFile.name);
           formData.append('mimeType', 'application/pdf');
           formData.append('pdfNameText', nameInput.value.trim());
-          formData.append('category', finalCategory);
+          formData.append('category', finalCategory); 
           formData.append('sheetId', window.currentPyqContext.sheetId);
           formData.append('gid', window.currentPyqContext.gid);
+          formData.append('className', currentClass);
+formData.append('subjectName', currentSubject);
 
           const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, { method: 'POST', body: formData });
           const result = await response.json();
@@ -9601,11 +9623,8 @@ function showSubjectSelection(className) {
             document.getElementById("pdf-upload-status").style.color = "#22c55e";
             
             nameInput.value = "";
-            if (selectElement) selectElement.value = "";
-            if (customInput) {
-              customInput.value = "";
-              customInput.style.display = 'none';
-            }
+            if (selectElement) selectElement.value = ""; 
+            if (customInput) { customInput.value = ""; customInput.style.display = 'none'; }
             selectedFile = null;
             newUploadArea.querySelector(".upload-text").textContent = "Click to select PDF";
             
@@ -9615,15 +9634,14 @@ function showSubjectSelection(className) {
               loadPdfList();
             }, 1500);
           } else throw new Error(result.error);
-        } catch (err) {
+       } catch (err) {
           alert("Upload failed: " + err.message);
           document.getElementById("pdf-upload-progress").style.display = "none";
           document.getElementById("pdf-upload-status").textContent = "";
-        } finally {
-          submitBtn.textContent = originalText;
-        }
+        } finally { submitBtn.textContent = originalText; }
       };
     }
+
     
 // ========== UNIFIED BACK NAVIGATION (Hardware & Swipe) ==========
     let backButtonListenerAdded = false;
@@ -12128,7 +12146,7 @@ if (isScreenVisible('video-container')) {
 
     if (addQuestionBtn) {
       addQuestionBtn.addEventListener("click", function() {
-        if (isEditor() && !canAdd()) { window.showEditorPopup('Add'); return; } // NEW
+        if (isEditor() && !canAddQuestion()) { window.showEditorPopup('Add'); return; } // NEW
         if (!isAdmin() && !isEditor()) {
           alert("Admin/Editor access required");
           return;
@@ -12476,57 +12494,35 @@ async function openStructureManager(mode) {
   document.getElementById('admin-structure-modal').style.display = 'flex';
 }
 
+    function canPerformStructAction(action, targetType) {
+  if (isAdmin()) return true;
+  if (!isEditor()) return false;
+  const perm = (currentUser.permission || '').toLowerCase();
+  return perm.includes(`${action}_${targetType}`);
+}
+    
 function selectStructAction(action) {
-      structCurrentAction = action;
-      
-      document.getElementById('struct-btn-add').classList.remove('active');
-      document.getElementById('struct-btn-edit').classList.remove('active');
-      document.getElementById('struct-btn-delete').classList.remove('active');
-      document.getElementById('struct-btn-reorder').classList.remove('active');
-      document.getElementById(`struct-btn-${action}`).classList.add('active');
-      
-      const formContainer = document.getElementById('struct-form-container');
-      const reorderContainer = document.getElementById('struct-reorder-container');
-      const typeGroup = document.getElementById('struct-type-group');
-      const timerGroup = document.getElementById('struct-timer-group');
-      const submitBtn = document.getElementById('struct-submit-btn');
-      
-      // Toggle Emoji Icon field based on mode
-      const iconGroup = document.getElementById('struct-icon-group');
-      if (iconGroup) {
-        iconGroup.style.display = (structCurrentMode === 'class' || structCurrentMode === 'subject') ? 'block' : 'none';
-      }
+  structCurrentAction = action;
+  
+  // 🔒 Permission check - add this line here
+  if (!canPerformStructAction(structCurrentAction, structCurrentMode)) {
+    window.showCustomAlert("Permission Denied", `You don't have ${structCurrentAction} permission for ${structCurrentMode}s.`);
+    // Re-show action buttons so user can try another action
+    document.getElementById('struct-action-buttons').style.display = 'grid';
+    return;
+  }
+  
+  document.getElementById('struct-action-buttons').style.display = 'none';
+  
+  if (action === 'reorder') {
+    document.getElementById('struct-reorder-container').style.display = 'block';
+    renderReorderUI();
+  } else {
+    document.getElementById('struct-form-container').style.display = 'block';
+    renderStructForm();
+  }
+}
 
-      if (action === 'reorder') {
-        formContainer.style.display = 'none';
-        reorderContainer.style.display = 'block';
-        submitBtn.textContent = 'Save New Order';
-        submitBtn.className = 'btn-primary';
-        renderReorderList();
-      } else {
-        formContainer.style.display = 'block';
-        reorderContainer.style.display = 'none';
-        
-        if (action === 'add') {
-          typeGroup.style.display = (structCurrentMode === 'subject') ? 'block' : 'none';
-          timerGroup.style.display = (structCurrentMode === 'chapter') ? 'block' : 'none';
-          submitBtn.textContent = `Add New ${structCurrentMode.charAt(0).toUpperCase() + structCurrentMode.slice(1)}`;
-          submitBtn.className = 'btn-success';
-        } 
-        else if (action === 'edit') {
-          typeGroup.style.display = 'none';
-          timerGroup.style.display = (structCurrentMode === 'chapter') ? 'block' : 'none';
-          submitBtn.textContent = `Update ${structCurrentMode.charAt(0).toUpperCase() + structCurrentMode.slice(1)}`;
-          submitBtn.className = 'btn-primary';
-        }
-        else if (action === 'delete') {
-          typeGroup.style.display = 'none';
-          timerGroup.style.display = 'none';
-          submitBtn.textContent = `Delete ${structCurrentMode.charAt(0).toUpperCase() + structCurrentMode.slice(1)}`;
-          submitBtn.className = 'btn-danger';
-        }
-      }
-    }
 function renderStructForm() {
   const fClass = document.getElementById('struct-class').parentElement;
   const fSubject = document.getElementById('struct-subject').parentElement;
@@ -12593,14 +12589,15 @@ function syncStructEditFields() {
 // --- REORDER UI ---
 function renderReorderUI() {
   if (structCurrentMode === 'class') {
-    currentReorderArray = Array.from(document.querySelectorAll('#class-grid .class-name')).map(el => el.textContent);
+    currentReorderArray = ALL_CONFIG_CACHE.classes.map(cls => cls.id);
   } else if (structCurrentMode === 'subject') {
-    currentReorderArray = Array.from(document.querySelectorAll('#subject-grid .subject-name')).map(el => el.textContent);
+    const prefix = `${currentClass}_`;
+    currentReorderArray = Object.keys(ALL_CONFIG_CACHE.config)
+      .filter(k => k.startsWith(prefix))
+      .map(k => k.substring(prefix.length));
   } else {
-    currentReorderArray = Array.from(document.getElementById('topic-select').options)
-      .map(o => o.text).filter(t => !t.includes('Loading') && !t.includes('Select'));
+    currentReorderArray = chaptersList.slice();
   }
-  
   const list = document.getElementById('struct-reorder-list');
   list.innerHTML = '';
   currentReorderArray.forEach((item, index) => {
@@ -12616,7 +12613,6 @@ function renderReorderUI() {
     list.appendChild(li);
   });
 }
-
 window.moveReorderItem = function(index, direction) {
   const newIndex = index + direction;
   if (newIndex >= 0 && newIndex < currentReorderArray.length) {
@@ -12646,118 +12642,85 @@ async function submitReorder() {
 }
 
 async function submitV2Structure() {
-      // Security Check
-      if (isEditor()) {
-        if (structCurrentAction === 'add' && !canAdd(structCurrentMode)) { window.showEditorPopup('Add'); return; }
-        if (structCurrentAction === 'edit' && !canEdit(structCurrentMode)) { window.showEditorPopup('Edit'); return; }
-        if (structCurrentAction === 'delete' && !canDelete(structCurrentMode)) { window.showEditorPopup('Delete'); return; }
-        if (structCurrentAction === 'reorder' && !canEdit(structCurrentMode)) { window.showEditorPopup('Edit'); return; }
+  // 1. Delete confirmation first (if applicable)
+  if (structCurrentAction === 'delete' && !confirm(`Permanently delete this ${structCurrentMode}?`)) return;
+
+  const btn = document.getElementById('struct-submit-btn');
+  btn.disabled = true;
+  btn.textContent = "Processing...";
+
+  // 2. Create formData
+  const formData = new URLSearchParams();
+  formData.append('action', 'manageStructure');
+  formData.append('subAction', structCurrentAction);
+  formData.append('targetType', structCurrentMode);
+  formData.append('username', currentUser.username);
+  formData.append('token', currentUser.token);
+
+  // 3. Get common values
+  const selectedItem = document.getElementById('struct-edit-select').value;
+  const newClassName = document.getElementById('struct-class').value.trim();
+  const newSubjectName = document.getElementById('struct-subject').value.trim();
+  const newChapterName = document.getElementById('struct-chapter').value.trim();
+  const timerVal = document.getElementById('struct-timer').value.trim();
+  const subjType = document.getElementById('struct-type').value;
+
+  // 4. Context gathering (sheetId, gid) for subject/chapter
+  let sheetId = '', gid = '';
+  if (structCurrentMode === 'subject' || structCurrentMode === 'chapter') {
+    const allData = await loadAllConfigAtOnce();
+    const key = `${currentClass}_${structCurrentMode === 'chapter' ? currentSubject.toLowerCase() : selectedItem.toLowerCase()}`;
+    if (allData?.config[key]) sheetId = allData.config[key].sheetId;
+    if (structCurrentMode === 'chapter' && allData?.config[`${currentClass}_${currentSubject.toLowerCase()}`]?.chapters[selectedItem]) {
+      gid = allData.config[`${currentClass}_${currentSubject.toLowerCase()}`].chapters[selectedItem];
+    }
+  }
+
+  // 5. Add action-specific parameters
+  if (structCurrentAction === 'add') {
+    formData.append('className', structCurrentMode === 'class' ? newClassName : currentClass);
+    formData.append('subjectName', structCurrentMode === 'chapter' ? currentSubject : newSubjectName);
+    formData.append('chapterName', newChapterName);
+    formData.append('subjectType', subjType);
+    formData.append('timer', timerVal);
+    if (structCurrentMode !== 'class') formData.append('sheetId', sheetId);
+
+    // ✅ Append icons ONLY for add action (and only for the relevant mode)
+    if (structCurrentMode === 'class') {
+      const classIcon = document.getElementById('struct-class-icon').value.trim();
+      if (classIcon) formData.append('classIcon', classIcon);
+    }
+    if (structCurrentMode === 'subject') {
+      const subjectIcon = document.getElementById('struct-subject-icon').value.trim();
+      if (subjectIcon) formData.append('subjectIcon', subjectIcon);
+    }
+  } 
+  else { // edit or delete
+    formData.append('oldName', selectedItem);
+    formData.append('className', currentClass);
+    formData.append('subjectName', currentSubject);
+    formData.append('sheetId', sheetId);
+    formData.append('gid', gid);
+    
+    if (structCurrentAction === 'edit') {
+      formData.append('newName', structCurrentMode === 'class' ? newClassName : (structCurrentMode === 'subject' ? newSubjectName : newChapterName));
+      formData.append('timer', timerVal);
+      
+      // ✅ Also allow icon change on edit (if you want)
+      if (structCurrentMode === 'class') {
+        const newClassIcon = document.getElementById('struct-class-icon').value.trim();
+        if (newClassIcon) formData.append('newIcon', newClassIcon);
       }
-
-      const submitBtn = document.getElementById('struct-submit-btn');
-      const originalText = submitBtn.textContent;
-      submitBtn.textContent = "Processing...";
-      submitBtn.disabled = true;
-
-      try {
-        const formData = new FormData();
-        formData.append('action', 'manageStructure');
-        formData.append('subAction', structCurrentAction);
-        formData.append('targetType', structCurrentMode);
-        
-        const iconInput = document.getElementById('struct-icon');
-        if (iconInput) formData.append('icon', iconInput.value.trim());
-
-        formData.append('username', currentUser.username);
-        formData.append('token', currentUser.token);
-        formData.append('role', currentUser.role);
-
-        if (structCurrentAction === 'reorder') {
-          const listEl = document.getElementById('struct-reorder-list');
-          const items = Array.from(listEl.children).map(el => el.dataset.val);
-          formData.append('orderList', JSON.stringify(items));
-          
-          if (structCurrentMode === 'subject') formData.append('className', document.getElementById('struct-class').value);
-          else if (structCurrentMode === 'chapter') {
-            formData.append('className', document.getElementById('struct-class').value);
-            formData.append('subjectName', document.getElementById('struct-subject').value);
-          }
-        } 
-        else {
-          const classVal = document.getElementById('struct-class').value;
-          const subjectVal = document.getElementById('struct-subject').value;
-          const chapterVal = document.getElementById('struct-chapter').value;
-          
-          if (structCurrentMode === 'class') {
-            if (!classVal) throw new Error("Please enter Class Name");
-            formData.append('className', classVal);
-          } else if (structCurrentMode === 'subject') {
-            if (!classVal || !subjectVal) throw new Error("Please enter Class and Subject");
-            formData.append('className', classVal);
-            formData.append('subjectName', subjectVal);
-            
-            if (structCurrentAction === 'add') {
-              formData.append('subjectType', document.getElementById('struct-subject-type').value);
-            }
-          } else if (structCurrentMode === 'chapter') {
-            if (!classVal || !subjectVal || !chapterVal) throw new Error("Please fill all fields");
-            formData.append('className', classVal);
-            formData.append('subjectName', subjectVal);
-            formData.append('chapterName', chapterVal);
-            
-            const timerObj = document.getElementById('struct-timer');
-            if (timerObj && timerObj.value) formData.append('timer', timerObj.value);
-            
-            const configKey = `${classVal}_${subjectVal.toLowerCase()}`;
-            if (ALL_CONFIG_CACHE && ALL_CONFIG_CACHE.config[configKey]) {
-              formData.append('sheetId', ALL_CONFIG_CACHE.config[configKey].sheetId);
-              if (structCurrentAction !== 'add') {
-                formData.append('gid', ALL_CONFIG_CACHE.config[configKey].chapters[chapterVal]);
-              }
-            }
-          }
-
-          if (structCurrentAction === 'delete' || structCurrentAction === 'edit') {
-            let oldVal = '';
-            if (structCurrentMode === 'class') oldVal = classVal;
-            else if (structCurrentMode === 'subject') oldVal = subjectVal;
-            else if (structCurrentMode === 'chapter') oldVal = chapterVal;
-            
-            formData.append('oldName', oldVal);
-            
-            if (structCurrentAction === 'edit') {
-              const newVal = prompt(`Enter new name for ${oldVal}:`, oldVal);
-              if (!newVal || newVal === oldVal) {
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-                return; 
-              }
-              formData.append('newName', newVal.trim());
-            }
-          }
-        }
-
-        const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, { method: 'POST', body: formData });
-        const result = await response.json();
-
-        if (result.success) {
-          window.showToast("✅ Successfully updated structure!");
-          ALL_CONFIG_CACHE = null; 
-          document.getElementById('structure-manager-modal').style.display = 'none';
-          
-          if (isScreenVisible('class-selection')) await loadClasses();
-          else if (isScreenVisible('subject-selection')) await loadSubjects();
-          else if (isScreenVisible('quiz-container')) await loadChapters();
-        } else {
-          throw new Error(result.error || "Unknown error");
-        }
-      } catch(e) {
-        alert("Error: " + e.message);
-      } finally {
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
+      if (structCurrentMode === 'subject') {
+        const newSubjectIcon = document.getElementById('struct-subject-icon').value.trim();
+        if (newSubjectIcon) formData.append('newIcon', newSubjectIcon);
       }
     }
+  }
+
+  // 6. Send request
+  await executeSecureRequest(formData, btn, "Execute");
+}
 
 async function executeSecureRequest(formData, btn, defaultText) {
   try {
@@ -12799,25 +12762,24 @@ function updateAdminControls() {
   const isEditor = role === 'Editor';
   const hasManagePerms = isEditor && (perms.includes('add') || perms.includes('edit') || perms.includes('delete'));
   const classMatched = isEditor && userClasses.includes(currentClass);
-      
-      const addClassBtn = document.getElementById('admin-add-class-btn-container');
-      if (addClassBtn) addClassBtn.style.display = isAdmin ? 'block' : 'none';
 
-      const addSubjectBtn = document.getElementById('admin-add-subject-btn-container');
-      if (addSubjectBtn) addSubjectBtn.style.display = (isAdmin || (isEditor && classMatched && canAdd('subject'))) ? 'block' : 'none';
-      
-      const addChapterBtn = document.getElementById('admin-add-chapter-btn-container');
-      if (addChapterBtn) addChapterBtn.style.display = (isAdmin || (isEditor && classMatched && canAdd('chapter'))) ? 'block' : 'none';
+  const addClassBtn = document.getElementById('admin-add-class-btn-container');
+  if (addClassBtn) addClassBtn.style.display = isAdmin ? 'block' : 'none';
 
-      if (adminAddQuestionDiv) adminAddQuestionDiv.style.display = (isAdmin || (isEditor && canAdd('question'))) ? 'block' : 'none';
+  const addSubjectBtn = document.getElementById('admin-add-subject-btn-container');
+if (addSubjectBtn) {
+  const canManageSubjects = isAdmin || (isEditor && (canAddSubject() || canEditSubject() || canDeleteSubject()));
+  addSubjectBtn.style.display = canManageSubjects ? 'block' : 'none';
+}
+const addChapterBtn = document.getElementById('admin-add-chapter-btn-container');
+if (addChapterBtn) {
+  const canManageChapters = isAdmin || (isEditor && (canAddChapter() || canEditChapter() || canDeleteChapter()));
+  addChapterBtn.style.display = canManageChapters ? 'block' : 'none';
+}
 
-      if (questionEditIconEl) {
-        questionEditIconEl.style.display = ((isAdmin || (isEditor && canEdit('question'))) && questionsLoaded && questions.length > 0) ? 'block' : 'none';
-      }
-      if (questionDeleteIconEl) {
-        questionDeleteIconEl.style.display = ((isAdmin || (isEditor && canDelete('question'))) && questionsLoaded && questions.length > 0) ? 'block' : 'none';
-      }
-
+  // Keep existing question edit controls
+  if (adminAddQuestionDiv) adminAddQuestionDiv.style.display = (isAdmin || isEditor) ? 'block' : 'none';
+}
   </script>
   <div id="edit-pdf-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center;">
     <div class="modal-content" style="background: var(--bg-color, #1e293b); padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; border: 1px solid #3b82f6;">
@@ -13106,10 +13068,6 @@ function updateAdminControls() {
             <label style="color: #93c5fd;">Subject Name</label>
             <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics">
           </div>
-          <div class="form-group" style="margin-bottom: 15px; display: none;" id="struct-icon-group">
-            <label style="color: #93c5fd;">Emoji Icon</label>
-            <input type="text" id="struct-icon" class="form-input" placeholder="e.g. 📚" maxlength="5">
-          </div>
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-type-group">
             <label style="color: #93c5fd;">Subject Type</label>
@@ -13126,12 +13084,21 @@ function updateAdminControls() {
           </div>
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-timer-group">
-            <label style="color: #93c5fd;">Timer (Minutes)</label>
-            <input type="number" id="struct-timer" class="form-input" placeholder="30" value="30">
-          </div>
-          
-          <button id="struct-submit-btn" class="btn-success" style="width: 100%; margin-top: 15px; padding: 14px; border-radius: 8px;" onclick="submitV2Structure()">Execute</button>
-        </div>
+  <label style="color: #93c5fd;">Timer (Minutes)</label>
+  <input type="number" id="struct-timer" class="form-input" placeholder="30" value="30">
+</div>
+
+<!-- NEW ICON GROUPS -->
+<div class="form-group" style="margin-bottom: 15px;" id="struct-class-icon-group">
+  <label style="color: #93c5fd;">Class Icon (emoji)</label>
+  <input type="text" id="struct-class-icon" class="form-input" placeholder="📚">
+</div>
+<div class="form-group" style="margin-bottom: 15px;" id="struct-subject-icon-group">
+  <label style="color: #93c5fd;">Subject Icon (emoji)</label>
+  <input type="text" id="struct-subject-icon" class="form-input" placeholder="📘">
+</div>
+
+<button id="struct-submit-btn" class="btn-success" style="width: 100%; margin-top: 15px; padding: 14px; border-radius: 8px;" onclick="submitV2Structure()">Execute</button>
 
         <div id="struct-reorder-container" style="display: none;">
           <div style="margin-bottom: 15px; color: #93c5fd; font-size: 0.9rem; text-align: center;">Use the arrows to rearrange the order.</div>
