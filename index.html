@@ -12605,18 +12605,107 @@ async function submitReorder() {
 
   await executeSecureRequest(formData, btn, "Save Order");
 }
+    // --- CUSTOM ASYNC CONFIRMATION DIALOG ---
+function customConfirm(title, message) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    overlay.style.zIndex = '99999';
+    overlay.style.display = 'flex';
+    overlay.style.justifyContent = 'center';
+    overlay.style.alignItems = 'center';
+    overlay.style.backdropFilter = 'blur(4px)';
+
+    const modal = document.createElement('div');
+    modal.style.backgroundColor = '#1e293b'; 
+    modal.style.color = '#f8fafc';
+    modal.style.padding = '24px';
+    modal.style.borderRadius = '12px';
+    modal.style.width = '90%';
+    modal.style.maxWidth = '400px';
+    modal.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.5)';
+    modal.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+    modal.style.textAlign = 'center';
+
+    const titleEl = document.createElement('h3');
+    titleEl.innerHTML = title;
+    titleEl.style.marginTop = '0';
+    titleEl.style.color = '#ef4444'; // Red text for danger
+    titleEl.style.fontSize = '1.25rem';
+
+    const msgEl = document.createElement('p');
+    msgEl.textContent = message;
+    msgEl.style.fontSize = '0.95rem';
+    msgEl.style.lineHeight = '1.5';
+    msgEl.style.color = '#cbd5e1';
+    msgEl.style.marginBottom = '24px';
+    msgEl.style.whiteSpace = 'pre-wrap';
+
+    const btnContainer = document.createElement('div');
+    btnContainer.style.display = 'flex';
+    btnContainer.style.justifyContent = 'center';
+    btnContainer.style.gap = '12px';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.style.padding = '10px 20px';
+    cancelBtn.style.border = 'none';
+    cancelBtn.style.borderRadius = '8px';
+    cancelBtn.style.backgroundColor = '#475569';
+    cancelBtn.style.color = 'white';
+    cancelBtn.style.cursor = 'pointer';
+    cancelBtn.style.fontWeight = '600';
+    cancelBtn.style.flex = '1';
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.textContent = 'Yes, Delete';
+    confirmBtn.style.padding = '10px 20px';
+    confirmBtn.style.border = 'none';
+    confirmBtn.style.borderRadius = '8px';
+    confirmBtn.style.backgroundColor = '#ef4444';
+    confirmBtn.style.color = 'white';
+    confirmBtn.style.cursor = 'pointer';
+    confirmBtn.style.fontWeight = '600';
+    confirmBtn.style.flex = '1';
+
+    cancelBtn.onclick = () => {
+      document.body.removeChild(overlay);
+      resolve(false);
+    };
+    
+    confirmBtn.onclick = () => {
+      document.body.removeChild(overlay);
+      resolve(true);
+    };
+
+    btnContainer.appendChild(cancelBtn);
+    btnContainer.appendChild(confirmBtn);
+    modal.appendChild(titleEl);
+    modal.appendChild(msgEl);
+    modal.appendChild(btnContainer);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+  });
+}
 
 async function submitV2Structure() {
   // 1. Sanitize variables to ensure the check NEVER fails due to spaces or caps
   const actionCheck = (structCurrentAction || '').toString().trim().toLowerCase();
   const modeCheck = (structCurrentMode || 'item').toString().toUpperCase();
 
-  // 2. STRICT NATIVE WARNING POPUP
+  // 2. CUSTOM HTML WARNING POPUP
   if (actionCheck === 'delete') {
-    const warningMessage = `⚠️ WARNING: You are about to permanently delete this ${modeCheck}.\n\nThis will safely erase all associated files, images, and folders from Google Drive and remove them from the Master Sheet. This action cannot be undone.\n\nAre you sure you want to proceed?`;
+    const warningMessage = `This will safely erase all associated files, images, and folders from Google Drive and remove them from the Master Sheet.\n\nThis action cannot be undone.`;
     
-    // Forces the native browser dialog
-    if (!window.confirm(warningMessage)) {
+    // Waits for the user to click a button on the custom dialog
+    const isConfirmed = await customConfirm(`⚠️ Delete ${modeCheck}?`, warningMessage);
+    
+    if (!isConfirmed) {
       return; // Stops the script immediately if user clicks "Cancel"
     }
   }
