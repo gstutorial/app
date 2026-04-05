@@ -8039,17 +8039,17 @@ function validateUserAccount(user) {
   const normalizedRole = user.role ? user.role.trim().charAt(0).toUpperCase() + user.role.trim().slice(1).toLowerCase() : '';
   user.role = normalizedRole;
 
-  // --- EXISTING: ROLE CHECKS ---
-  const validRoles = ['Admin', 'Teacher', 'User', 'Student', 'Editor', 'Trial'];
-  if (!validRoles.includes(user.role)) {
-    return { valid: false, error: 'invalid_role' };
-  }
+ const validRoles = ['Admin', 'Teacher', 'User', 'Student', 'Editor', 'Trial'];
+    if (!validRoles.includes(user.role)) {
+      return { valid: false, error: 'invalid_role' };
+    }
 
-  const userClassValue = user.class || "";
-  const assignedClasses = userClassValue
-    .split(',')
-    .map(c => c.trim())
-    .filter(c => c && c.toLowerCase() !== 'none' && c.toLowerCase() !== 'null');
+    // --- FIX: Force userClassValue to be a String so .split() never fails ---
+    const userClassValue = (user.class !== undefined && user.class !== null) ? String(user.class) : "";
+    const assignedClasses = userClassValue
+      .split(',')
+      .map(c => c.trim())
+      .filter(c => c && c.toLowerCase() !== 'none' && c.toLowerCase() !== 'null');
 
   if (user.role === 'Admin') {
     return { valid: true, assignedClasses: [] };
