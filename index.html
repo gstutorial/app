@@ -12827,12 +12827,16 @@ function updateAdminControls() {
   if (!currentUser) return;
   const role = currentUser.role || '';
   const perms = (currentUser.permission || '').toLowerCase();
-  const userClasses = (currentUser.class || '').split(',').map(c => c.trim());
+ const userClasses = (currentUser.class || '').split(',').map(c => c.trim());
   
   const isAdmin = role === 'Admin';
   const isEditor = role === 'Editor';
   const hasManagePerms = isEditor && (perms.includes('add') || perms.includes('edit') || perms.includes('delete'));
-  const classMatched = isEditor && userClasses.includes(currentClass);
+  
+  // --- FIX: Strip emoji from currentClass before checking permissions ---
+  const currentClassStripped = (currentClass || '').replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\u2600-\u27BF|\u2700-\u27BF|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDC00-\uDFFF])\s*/, '').trim();
+  const classMatched = isEditor && userClasses.includes(currentClassStripped);
+  // ----------------------------------------------------------------------
   
   const addClassBtn = document.getElementById('admin-add-class-btn-container');
   if (addClassBtn) addClassBtn.style.display = isAdmin ? 'block' : 'none';
