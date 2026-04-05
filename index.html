@@ -5619,7 +5619,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw_-33zaPmEOQdUk-W8tshpKUJnv8jbU-kAGKGn-4cI5pJPKdOHVt2EHBlI0lG5lXUw/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4TMwRqm4b5nXiNoOZnnS8sCUUpYJeXQ6QHcKytkBemRenSK7FBePSWbN6zM4BGpzk/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -12519,7 +12519,9 @@ function renderStructForm() {
     
     // --- FIX: CLEAR FORM FIELDS ON ADD ---
     if (document.getElementById('struct-class')) document.getElementById('struct-class').value = '';
+    if (document.getElementById('struct-class-icon')) document.getElementById('struct-class-icon').value = '';
     if (document.getElementById('struct-subject')) document.getElementById('struct-subject').value = '';
+    if (document.getElementById('struct-subject-icon')) document.getElementById('struct-subject-icon').value = '';
     if (document.getElementById('struct-chapter')) document.getElementById('struct-chapter').value = '';
     if (document.getElementById('struct-timer')) document.getElementById('struct-timer').value = '30'; // Default timer
     if (document.getElementById('struct-type')) document.getElementById('struct-type').value = 'quiz'; // Default type
@@ -12754,7 +12756,9 @@ async function submitV2Structure() {
 
       const selectedItem = document.getElementById('struct-edit-select') ? document.getElementById('struct-edit-select').value : '';
       const newClassName = document.getElementById('struct-class') ? document.getElementById('struct-class').value.trim() : '';
+      const newClassIcon = document.getElementById('struct-class-icon') ? document.getElementById('struct-class-icon').value.trim() : '';
       const newSubjectName = document.getElementById('struct-subject') ? document.getElementById('struct-subject').value.trim() : '';
+      const newSubjectIcon = document.getElementById('struct-subject-icon') ? document.getElementById('struct-subject-icon').value.trim() : '';
       const newChapterName = document.getElementById('struct-chapter') ? document.getElementById('struct-chapter').value.trim() : '';
       const timerVal = document.getElementById('struct-timer') ? document.getElementById('struct-timer').value.trim() : '';
       const subjType = document.getElementById('struct-type') ? document.getElementById('struct-type').value : '';
@@ -12772,7 +12776,9 @@ async function submitV2Structure() {
 
       if (structCurrentAction === 'add') {
         formData.append('className', structCurrentMode === 'class' ? newClassName : currentClass);
+        formData.append('classIcon', newClassIcon);
         formData.append('subjectName', structCurrentMode === 'chapter' ? currentSubject : newSubjectName);
+        formData.append('subjectIcon', newSubjectIcon);
         formData.append('chapterName', newChapterName);
         formData.append('subjectType', subjType);
         formData.append('timer', timerVal);
@@ -13163,13 +13169,19 @@ function updateAdminControls() {
           </div>
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-class-group">
-            <label style="color: #93c5fd;">Class Name</label>
-            <input type="text" id="struct-class" class="form-input" placeholder="e.g. 10">
+            <label style="color: #93c5fd;">Class Icon & Name</label>
+            <div style="display: flex; gap: 10px;">
+              <input type="text" id="struct-class-icon" class="form-input" placeholder="🎓" style="width: 60px; text-align: center;">
+              <input type="text" id="struct-class" class="form-input" placeholder="e.g. 10" style="flex: 1;">
+            </div>
           </div>
           
           <div class="form-group" style="margin-bottom: 15px;" id="struct-subject-group">
-            <label style="color: #93c5fd;">Subject Name</label>
-            <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics">
+            <label style="color: #93c5fd;">Subject Icon & Name</label>
+            <div style="display: flex; gap: 10px;">
+              <input type="text" id="struct-subject-icon" class="form-input" placeholder="📚" style="width: 60px; text-align: center;">
+              <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics" style="flex: 1;">
+            </div>
           </div>
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-type-group">
