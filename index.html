@@ -12495,21 +12495,22 @@ function selectStructAction(action) {
 }
 
 function renderStructForm() {
-  const fClass = document.getElementById('struct-class').parentElement;
-  const fSubject = document.getElementById('struct-subject').parentElement;
-  const fType = document.getElementById('struct-type').parentElement;
-  const fChapter = document.getElementById('struct-chapter').parentElement;
-  const fTimer = document.getElementById('struct-timer').parentElement;
-  const fSelect = document.getElementById('struct-edit-select').parentElement;
+  // Target the explicitly defined group wrappers instead of parentElement
+  const fClass = document.getElementById('struct-class-group');
+  const fSubject = document.getElementById('struct-subject-group');
+  const fType = document.getElementById('struct-type-group');
+  const fChapter = document.getElementById('struct-chapter-group');
+  const fTimer = document.getElementById('struct-timer-group');
+  const fSelect = document.getElementById('struct-edit-select-group');
   const btn = document.getElementById('struct-submit-btn');
 
   // Reset visibilities
-  fClass.style.display = 'none';
-  fSubject.style.display = 'none';
-  fType.style.display = 'none';
-  fChapter.style.display = 'none';
-  fTimer.style.display = 'none';
-  fSelect.style.display = 'none';
+  if(fClass) fClass.style.display = 'none';
+  if(fSubject) fSubject.style.display = 'none';
+  if(fType) fType.style.display = 'none';
+  if(fChapter) fChapter.style.display = 'none';
+  if(fTimer) fTimer.style.display = 'none';
+  if(fSelect) fSelect.style.display = 'none';
 
   if (structCurrentAction === 'add') {
     btn.style.background = '#22c55e';
@@ -12526,24 +12527,33 @@ function renderStructForm() {
     // -------------------------------------
 
     if (structCurrentMode === 'class') {
-      fClass.style.display = 'block'; fSubject.style.display = 'block'; 
-      fType.style.display = 'block'; fChapter.style.display = 'block'; fTimer.style.display = 'block';
+      if(fClass) fClass.style.display = 'block'; 
+      if(fSubject) fSubject.style.display = 'block'; 
+      if(fType) fType.style.display = 'block'; 
+      if(fChapter) fChapter.style.display = 'block'; 
+      if(fTimer) fTimer.style.display = 'block';
     } else if (structCurrentMode === 'subject') {
-      fSubject.style.display = 'block'; fType.style.display = 'block'; 
-      fChapter.style.display = 'block'; fTimer.style.display = 'block';
+      if(fSubject) fSubject.style.display = 'block'; 
+      if(fType) fType.style.display = 'block'; 
+      if(fChapter) fChapter.style.display = 'block'; 
+      if(fTimer) fTimer.style.display = 'block';
     } else {
-      fChapter.style.display = 'block'; fTimer.style.display = 'block';
+      if(fChapter) fChapter.style.display = 'block'; 
+      if(fTimer) fTimer.style.display = 'block';
     }
   } else {
     // Edit & Delete
     btn.style.background = structCurrentAction === 'delete' ? '#ef4444' : '#3b82f6';
     btn.textContent = structCurrentAction === 'delete' ? "🗑️ Delete Permanently" : "✏️ Save Changes";
-    fSelect.style.display = 'block';
+    if(fSelect) fSelect.style.display = 'block';
     
     if (structCurrentAction === 'edit') {
-      if (structCurrentMode === 'class') fClass.style.display = 'block';
-      if (structCurrentMode === 'subject') fSubject.style.display = 'block';
-      if (structCurrentMode === 'chapter') { fChapter.style.display = 'block'; fTimer.style.display = 'block'; }
+      if (structCurrentMode === 'class' && fClass) fClass.style.display = 'block';
+      if (structCurrentMode === 'subject' && fSubject) fSubject.style.display = 'block';
+      if (structCurrentMode === 'chapter') { 
+        if(fChapter) fChapter.style.display = 'block'; 
+        if(fTimer) fTimer.style.display = 'block'; 
+      }
     }
     populateEditDropdown();
   }
@@ -13229,20 +13239,30 @@ function updateAdminControls() {
           </div>
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-class-group">
-            <label style="color: #93c5fd;">Class Icon & Name</label>
-            <div style="display: flex; gap: 8px;">
-              <input type="text" id="struct-class-icon" placeholder="🎓" style="width: 50px; text-align: center; padding: 12px 0; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 1.1rem; outline: none; margin: 0;">
-              <input type="text" id="struct-class" placeholder="e.g. 10" style="flex: 1; padding: 12px 16px; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem; outline: none; margin: 0;">
-            </div>
-          </div>
-          
-          <div class="form-group" style="margin-bottom: 15px;" id="struct-subject-group">
-            <label style="color: #93c5fd;">Subject Icon & Name</label>
-            <div style="display: flex; gap: 8px;">
-              <input type="text" id="struct-subject-icon" placeholder="📚" style="width: 50px; text-align: center; padding: 12px 0; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 1.1rem; outline: none; margin: 0;">
-              <input type="text" id="struct-subject" placeholder="e.g. Mathematics" style="flex: 1; padding: 12px 16px; border-radius: 10px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 0.95rem; outline: none; margin: 0;">
-            </div>
-          </div>
+      <div style="display: flex; gap: 15px;">
+        <div style="flex: 0 0 25%;">
+          <label style="color: #93c5fd; margin-bottom: 8px; display: block;">Emoji</label>
+          <input type="text" id="struct-class-icon" class="form-input" placeholder="🎓" style="padding: 12px 0; text-align: center;">
+        </div>
+        <div style="flex: 1;">
+          <label style="color: #93c5fd; margin-bottom: 8px; display: block;">Class Name</label>
+          <input type="text" id="struct-class" class="form-input" placeholder="e.g. 10" style="padding: 12px 16px;">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 15px;" id="struct-subject-group">
+      <div style="display: flex; gap: 15px;">
+        <div style="flex: 0 0 25%;">
+          <label style="color: #93c5fd; margin-bottom: 8px; display: block;">Emoji</label>
+          <input type="text" id="struct-subject-icon" class="form-input" placeholder="📚" style="padding: 12px 0; text-align: center;">
+        </div>
+        <div style="flex: 1;">
+          <label style="color: #93c5fd; margin-bottom: 8px; display: block;">Subject Name</label>
+          <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics" style="padding: 12px 16px;">
+        </div>
+      </div>
+    </div>
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-type-group">
             <label style="color: #93c5fd;">Subject Type</label>
