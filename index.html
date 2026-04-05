@@ -12523,7 +12523,7 @@ function renderStructForm() {
     if (document.getElementById('struct-subject')) document.getElementById('struct-subject').value = '';
     if (document.getElementById('struct-subject-icon')) document.getElementById('struct-subject-icon').value = '';
     if (document.getElementById('struct-chapter')) document.getElementById('struct-chapter').value = '';
-    if (document.getElementById('struct-timer')) document.getElementById('struct-timer').value = '30'; // Default timer
+    if (document.getElementById('struct-timer')) document.getElementById('struct-timer').value = ''; 
     if (document.getElementById('struct-type')) document.getElementById('struct-type').value = 'quiz'; // Default type
     // -------------------------------------
 
@@ -12549,6 +12549,16 @@ function renderStructForm() {
     }
     populateEditDropdown();
   }
+
+  // --- FIX: Trigger Auto-fill rules ---
+  const editSelectObj = document.getElementById('struct-edit-select');
+  if (editSelectObj) {
+      editSelectObj.onchange = handleStructEditSelectChange;
+      // Immediately trigger it to ensure the button starts disabled when Edit mode is opened
+      if (structCurrentAction === 'edit' || structCurrentAction === 'delete') {
+          handleStructEditSelectChange();
+      }
+  }
 }
 
 function populateEditDropdown() {
@@ -12566,6 +12576,57 @@ function populateEditDropdown() {
   }
   
   items.forEach(item => select.innerHTML += `<option value="${item}">${item}</option>`);
+}
+
+// --- FIX: Auto-fill fields and toggle Execute button based on selection ---
+function handleStructEditSelectChange() {
+    const select = document.getElementById('struct-edit-select');
+    const btn = document.getElementById('struct-submit-btn');
+    if (!select || !btn) return;
+    
+    const val = select.value;
+    
+    // 1. Disable the execute button if nothing is selected
+    if (!val || val === '') {
+        btn.disabled = true;
+        btn.style.opacity = '0.4';
+        btn.style.cursor = 'not-allowed';
+        
+        // Clear all fields
+        if (document.getElementById('struct-class')) document.getElementById('struct-class').value = '';
+        if (document.getElementById('struct-class-icon')) document.getElementById('struct-class-icon').value = '';
+        if (document.getElementById('struct-subject')) document.getElementById('struct-subject').value = '';
+        if (document.getElementById('struct-subject-icon')) document.getElementById('struct-subject-icon').value = '';
+        if (document.getElementById('struct-chapter')) document.getElementById('struct-chapter').value = '';
+        if (document.getElementById('struct-timer')) document.getElementById('struct-timer').value = '';
+        return;
+    } else {
+        // Enable the execute button
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+    }
+
+    // 2. Auto-fill the form based on what was selected
+    if (typeof structCurrentMode !== 'undefined') {
+        if (structCurrentMode === 'class' && document.getElementById('struct-class')) {
+            document.getElementById('struct-class').value = val;
+            if (typeof availableClasses !== 'undefined') {
+                const cls = availableClasses.find(c => c.id === val);
+                if (cls) document.getElementById('struct-class-icon').value = cls.icon || '';
+            }
+        } else if (structCurrentMode === 'subject' && document.getElementById('struct-subject')) {
+            document.getElementById('struct-subject').value = val;
+            if (typeof availableSubjects !== 'undefined') {
+                const sub = availableSubjects.find(s => s.name === val);
+                if (sub) document.getElementById('struct-subject-icon').value = sub.icon || '';
+            }
+        } else if (structCurrentMode === 'chapter' && document.getElementById('struct-chapter')) {
+            document.getElementById('struct-chapter').value = val;
+            // Let the user manually update the timer (left blank)
+            if (document.getElementById('struct-timer')) document.getElementById('struct-timer').value = '';
+        }
+    }
 }
 
 function syncStructEditFields() {
@@ -13170,17 +13231,17 @@ function updateAdminControls() {
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-class-group">
             <label style="color: #93c5fd;">Class Icon & Name</label>
-            <div style="display: flex; gap: 10px;">
-              <input type="text" id="struct-class-icon" class="form-input" placeholder="🎓" style="width: 60px; text-align: center;">
-              <input type="text" id="struct-class" class="form-input" placeholder="e.g. 10" style="flex: 1;">
+            <div style="display: flex; flex-direction: row; align-items: center; gap: 10px; width: 100%;">
+              <input type="text" id="struct-class-icon" class="form-input" placeholder="🎓" style="width: 60px !important; flex: 0 0 60px; min-width: 60px; text-align: center; margin: 0;">
+              <input type="text" id="struct-class" class="form-input" placeholder="e.g. 10" style="flex: 1; min-width: 0; margin: 0;">
             </div>
           </div>
           
           <div class="form-group" style="margin-bottom: 15px;" id="struct-subject-group">
             <label style="color: #93c5fd;">Subject Icon & Name</label>
-            <div style="display: flex; gap: 10px;">
-              <input type="text" id="struct-subject-icon" class="form-input" placeholder="📚" style="width: 60px; text-align: center;">
-              <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics" style="flex: 1;">
+            <div style="display: flex; flex-direction: row; align-items: center; gap: 10px; width: 100%;">
+              <input type="text" id="struct-subject-icon" class="form-input" placeholder="📚" style="width: 60px !important; flex: 0 0 60px; min-width: 60px; text-align: center; margin: 0;">
+              <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics" style="flex: 1; min-width: 0; margin: 0;">
             </div>
           </div>
 
@@ -13200,7 +13261,7 @@ function updateAdminControls() {
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-timer-group">
             <label style="color: #93c5fd;">Timer (Minutes)</label>
-            <input type="number" id="struct-timer" class="form-input" placeholder="30" value="30">
+            <input type="number" id="struct-timer" class="form-input" placeholder="Leave blank for no timer">
           </div>
           
           <button id="struct-submit-btn" class="btn-success" style="width: 100%; margin-top: 15px; padding: 14px; border-radius: 8px;" onclick="submitV2Structure()">Execute</button>
