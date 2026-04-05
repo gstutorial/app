@@ -5619,7 +5619,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4TMwRqm4b5nXiNoOZnnS8sCUUpYJeXQ6QHcKytkBemRenSK7FBePSWbN6zM4BGpzk/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxe7EHm7jpze6rZHPSRUkJtYznHqfA9mL9zExInGqYR0j__OdtsjTjeBasldbBFfW-w/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -12852,6 +12852,7 @@ async function submitV2Structure() {
         formData.append('gid', gid);
         if (structCurrentAction === 'edit') {
           formData.append('newName', structCurrentMode === 'class' ? newClassName : (structCurrentMode === 'subject' ? newSubjectName : newChapterName));
+          formData.append('newIcon', structCurrentMode === 'class' ? newClassIcon : (structCurrentMode === 'subject' ? newSubjectIcon : ''));
           formData.append('timer', timerVal);
         }
       }
@@ -13231,17 +13232,17 @@ function updateAdminControls() {
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-class-group">
             <label style="color: #93c5fd;">Class Icon & Name</label>
-            <div style="display: flex; flex-direction: row; align-items: center; gap: 10px; width: 100%;">
-              <input type="text" id="struct-class-icon" class="form-input" placeholder="🎓" style="width: 60px !important; flex: 0 0 60px; min-width: 60px; text-align: center; margin: 0; padding: 12px !important;">
-              <input type="text" id="struct-class" class="form-input" placeholder="e.g. 10" style="flex: 1; min-width: 0; margin: 0; padding: 12px 16px !important;">
+            <div style="display: grid; grid-template-columns: 65px 1fr; gap: 10px; width: 100%;">
+              <input type="text" id="struct-class-icon" class="form-input" placeholder="🎓" style="text-align: center; padding: 12px 0 !important; margin: 0; min-width: 0;">
+              <input type="text" id="struct-class" class="form-input" placeholder="e.g. 10" style="padding: 12px 16px !important; margin: 0; min-width: 0;">
             </div>
           </div>
           
           <div class="form-group" style="margin-bottom: 15px;" id="struct-subject-group">
             <label style="color: #93c5fd;">Subject Icon & Name</label>
-            <div style="display: flex; flex-direction: row; align-items: center; gap: 10px; width: 100%;">
-              <input type="text" id="struct-subject-icon" class="form-input" placeholder="📚" style="width: 60px !important; flex: 0 0 60px; min-width: 60px; text-align: center; margin: 0; padding: 12px !important;">
-              <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics" style="flex: 1; min-width: 0; margin: 0; padding: 12px 16px !important;">
+            <div style="display: grid; grid-template-columns: 65px 1fr; gap: 10px; width: 100%;">
+              <input type="text" id="struct-subject-icon" class="form-input" placeholder="📚" style="text-align: center; padding: 12px 0 !important; margin: 0; min-width: 0;">
+              <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics" style="padding: 12px 16px !important; margin: 0; min-width: 0;">
             </div>
           </div>
 
