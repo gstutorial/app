@@ -12658,7 +12658,6 @@ async function submitV2Structure() {
 
   await executeSecureRequest(formData, btn, "Execute");
 }
-
 async function executeSecureRequest(formData, btn, defaultText) {
   try {
     const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
