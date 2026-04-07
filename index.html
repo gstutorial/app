@@ -1372,14 +1372,15 @@ body.light-mode .pdf-name {
       100% { transform: translateY(-50%) rotate(360deg); }
     }
 
-    /* ===== LOGIN BUTTON SPINNER WITH TEXT ===== */
-    .login-btn.saving {
+    
+        /* ===== LOGIN BUTTON SPINNER WITH TEXT ===== */
+    .login-btn.saving, .start-btn.saving {
       position: relative;
       padding-left: 40px !important;
       pointer-events: none;
     }
 
-    .login-btn.saving::before {
+    .login-btn.saving::before, .start-btn.saving::before {
       content: '';
       position: absolute;
       width: 20px;
@@ -12075,7 +12076,7 @@ if (isScreenVisible('video-container')) {
       resetInactivityTimer();
     });
 
-    startBtnEl.addEventListener("click", function(e) {
+        startBtnEl.addEventListener("click", function(e) {
       e.preventDefault();
       const chapter = topicSelectEl.value;
       if (timerInterval) {
@@ -12084,12 +12085,25 @@ if (isScreenVisible('video-container')) {
       }
       removeTimerNotification();
       resetQuizState();
+
+      startBtnEl.classList.add('saving');
+      startBtnEl.innerHTML = 'Loading...';
+      startBtnEl.disabled = true;
+
       loadQuestionsFromGoogleSheet(chapter).then(() => {
         isQuizActive = true;
         quizStartTime = Date.now();
+        startBtnEl.classList.remove('saving');
+        startBtnEl.innerHTML = 'Start';
+        startBtnEl.disabled = false;
+      }).catch(() => {
+        startBtnEl.classList.remove('saving');
+        startBtnEl.innerHTML = 'Start';
+        startBtnEl.disabled = false;
       });
       resetInactivityTimer();
     });
+
 
     nextBtn.addEventListener("click", function(e) {
       e.preventDefault();
