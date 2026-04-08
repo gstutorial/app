@@ -12497,10 +12497,27 @@ async function openStructureManager(mode) {
   document.getElementById('admin-structure-modal').style.display = 'flex';
 }
 
-function selectStructAction(action) {
-  structCurrentAction = action;
-  document.getElementById('struct-action-buttons').style.display = 'none';
-  if (action === 'reorder') {
+    function selectStructAction(action) {
+      if (isEditor()) {
+        if (action === 'add' && !canAdd()) {
+          window.showEditorPopup('Add');
+          return;
+        }
+        if (action === 'edit' && !canEdit()) {
+          window.showEditorPopup('Edit');
+          return;
+        }
+        if (action === 'delete' && !canDelete()) {
+          window.showEditorPopup('Delete');
+          return;
+        }
+      }
+
+      structCurrentAction = action;
+      document.getElementById('struct-action-buttons').style.display = 'none';
+
+      if (action === 'reorder') {
+
     document.getElementById('struct-reorder-container').style.display = 'block';
     
     // Extract array ONCE when modal opens
