@@ -5436,7 +5436,7 @@ if (isAdmin() || isEditor()) {
       };
 
       submitBtn.onclick = async () => {
-        if (isEditor() && !canAdd()) { window.showEditorPopup('Add'); return; }
+        if (isEditor() && !canAdd('video')) { window.showEditorPopup('Add Video'); return; }
 
         const nameInput = document.getElementById("new-video-name").value.trim();
         const urlInput = document.getElementById("new-video-url").value.trim();
@@ -5537,7 +5537,7 @@ if (isAdmin() || isEditor()) {
 
 
     window.deleteVideoItem = async function(rowIndex) {
-      if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; }
+      if (isEditor() && !canDelete('video')) { window.showEditorPopup('Delete Video'); return; }
       
       window.showCustomConfirm(
         "Delete Video", "Are you sure you want to remove this video?", "Delete", 
@@ -5555,7 +5555,7 @@ if (isAdmin() || isEditor()) {
     };
     // ========== EDIT VIDEO ACTIONS ==========
     window.openEditVideoModal = function(rowIndex, currentName, currentCategory) {
-      if (isEditor() && !canEdit()) { window.showEditorPopup('Edit'); return; }
+      if (isEditor() && !canEdit('video')) { window.showEditorPopup('Edit Video'); return; }
     
       document.getElementById('edit-video-row-index').value = rowIndex;
       document.getElementById('edit-video-name').value = currentName;
@@ -5622,7 +5622,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0jHxEleJx47Y8jzJ6tUenXbvOo4yScQR4pNpt5xVLyT9pzq4KKZW9cpcjmnwLr639/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxcoEuEKUPsIgC_4OFrNNROeJUg2cKsbUkXtNzglBOOHsAvXmsCdi60M1lNg0QBTykX/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -6460,18 +6460,26 @@ async function authenticateWithAppsScript(username, password) {
     function isAdmin() { return currentUser && currentUser.role === 'Admin'; }
     function isEditor() { return currentUser && currentUser.role === 'Editor'; }
 
-    function hasPermission(action) {
+    function hasPermission(action, type = '') {
       if (!currentUser) return false;
       if (currentUser.role === 'Admin') return true;
       if (currentUser.role === 'Editor' && currentUser.permission) {
-        return currentUser.permission.toLowerCase().includes(action.toLowerCase());
+        const perms = currentUser.permission.toLowerCase();
+        const permArray = perms.split(',').map(p => p.trim());
+        if (type) {
+          const actionType = `${action} ${type}`.toLowerCase();
+          if (permArray.includes(actionType)) return true;
+          if (permArray.includes(action.toLowerCase())) return true;
+          return false;
+        } else {
+          return permArray.includes(action.toLowerCase());
+        }
       }
       return false;
     }
-
-    function canAdd() { return hasPermission('add'); }
-    function canEdit() { return hasPermission('edit'); }
-    function canDelete() { return hasPermission('delete'); }
+    function canAdd(type = '') { return hasPermission('add', type); }
+    function canEdit(type = '') { return hasPermission('edit', type); }
+    function canDelete(type = '') { return hasPermission('delete', type); }
     
     window.showTrialPopup = function() {
       document.getElementById('trial-popup-modal').style.display = 'flex';
@@ -6767,7 +6775,7 @@ async function authenticateWithAppsScript(username, password) {
    function setupEditIcon() {
       if (!questionEditIconEl) return;
       questionEditIconEl.addEventListener("click", function() {
-        if (isEditor() && !canEdit()) { window.showEditorPopup('Edit'); return; } // NEW
+        if (isEditor() && !canEdit('question')) { window.showEditorPopup('Edit Question'); return; } // NEW
         if (!isAdmin() && !isEditor()) return;
        
         if (!questionsLoaded || questions.length === 0 || currentIndex >= questions.length) {
@@ -6781,7 +6789,7 @@ async function authenticateWithAppsScript(username, password) {
     function setupDeleteIcon() {
       if (!questionDeleteIconEl) return;
       questionDeleteIconEl.addEventListener("click", function() {
-        if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; } 
+        if (isEditor() && !canDelete('question')) { window.showEditorPopup('Delete Question'); return; } 
         if (!isAdmin() && !isEditor()) return;
       
         if (!questionsLoaded || questions.length === 0 || currentIndex >= questions.length) {
@@ -9442,7 +9450,7 @@ function showSubjectSelection(className) {
 
     // ========== NEW UI EDIT MODAL ACTIONS ==========
    window.openEditPdfModal = function(rowIndex, currentName, currentCategory) {
-      if (isEditor() && !canEdit()) { window.showEditorPopup('Edit'); return; } // NEW
+      if (isEditor() && !canEdit('pdf')) { window.showEditorPopup('Edit PDF'); return; } // NEW
     
       document.getElementById('edit-pdf-row-index').value = rowIndex;
       document.getElementById('edit-pdf-name').value = currentName;
@@ -9504,7 +9512,7 @@ function showSubjectSelection(className) {
     };
 
    window.deletePdfItem = async function(rowIndex) {
-      if (isEditor() && !canDelete()) { window.showEditorPopup('Delete'); return; }
+      if (isEditor() && !canDelete('pdf')) { window.showEditorPopup('Delete PDF'); return; }
       
       window.showCustomConfirm(
         "Delete PDF", 
@@ -9567,7 +9575,7 @@ function showSubjectSelection(className) {
       });
 
      submitBtn.onclick = async () => {
-        if (isEditor() && !canAdd()) { window.showEditorPopup('Add'); return; } // NEW
+        if (isEditor() && !canAdd('pdf')) { window.showEditorPopup('Add PDF'); return; } // NEW
         if (!selectedFile || !nameInput.value.trim()) { alert("Provide PDF and Name."); return; }
         
         // Handle new dropdown combo logic
@@ -12149,7 +12157,7 @@ if (isScreenVisible('video-container')) {
 
     if (addQuestionBtn) {
       addQuestionBtn.addEventListener("click", function() {
-        if (isEditor() && !canAdd()) { window.showEditorPopup('Add'); return; } // NEW
+        if (isEditor() && !canAdd('question')) { window.showEditorPopup('Add Question'); return; } // NEW
         if (!isAdmin() && !isEditor()) {
           alert("Admin/Editor access required");
           return;
@@ -12499,18 +12507,10 @@ async function openStructureManager(mode) {
 
     function selectStructAction(action) {
       if (isEditor()) {
-        if (action === 'add' && !canAdd()) {
-          window.showEditorPopup('Add');
-          return;
-        }
-        if (action === 'edit' && !canEdit()) {
-          window.showEditorPopup('Edit');
-          return;
-        }
-        if (action === 'delete' && !canDelete()) {
-          window.showEditorPopup('Delete');
-          return;
-        }
+        if (action === 'add' && !canAdd(structCurrentMode)) { window.showEditorPopup('Add ' + structCurrentMode); return; }
+        if (action === 'edit' && !canEdit(structCurrentMode)) { window.showEditorPopup('Edit ' + structCurrentMode); return; }
+        if (action === 'delete' && !canDelete(structCurrentMode)) { window.showEditorPopup('Delete ' + structCurrentMode); return; }
+        if (action === 'reorder' && !canEdit(structCurrentMode)) { window.showEditorPopup('Edit ' + structCurrentMode); return; }
       }
 
       structCurrentAction = action;
