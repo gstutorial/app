@@ -12672,11 +12672,47 @@ function handleStructEditSelectChange() {
                 const sub = availableSubjects.find(s => s.name === val);
                 if (sub) document.getElementById('struct-subject-icon').value = sub.icon || '';
             }
-        } else if (structCurrentMode === 'chapter' && document.getElementById('struct-chapter')) {
-            document.getElementById('struct-chapter').value = val;
-            // Let the user manually update the timer (left blank)
-            if (document.getElementById('struct-timer')) document.getElementById('struct-timer').value = '';
+              } else if (structCurrentMode === 'chapter' && document.getElementById('struct-chapter')) {
+        document.getElementById('struct-chapter').value = val;
+        
+        if (document.getElementById('struct-timer')) {
+          const timerInput = document.getElementById('struct-timer');
+          const originalPlaceholder = timerInput.placeholder || 'Leave blank for no timer';
+          timerInput.value = '';
+          timerInput.placeholder = 'Loading...';
+          timerInput.disabled = true;
+          
+          if (typeof currentSubjectConfig !== 'undefined' && currentSubjectConfig && currentSubjectConfig.chapters && currentSubjectConfig.chapters[val]) {
+            const gid = currentSubjectConfig.chapters[val];
+            const sheetId = currentSubjectConfig.sheetId;
+            const apiUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&gid=${gid}&range=H2&_t=${Date.now()}`;
+            
+            fetch(apiUrl)
+              .then(res => res.text())
+              .then(text => {
+                try {
+                  const json = JSON.parse(text.substring(47).slice(0, -2));
+                  if (json.table.rows && json.table.rows.length > 0 && json.table.rows[0].c && json.table.rows[0].c[0]) {
+                    timerInput.value = json.table.rows[0].c[0].v || '';
+                  }
+                } catch(e) {
+                  // Ignore parsing errors, remains blank
+                }
+              })
+              .catch(e => {
+                // Ignore network errors, remains blank
+              })
+              .finally(() => {
+                timerInput.placeholder = originalPlaceholder;
+                timerInput.disabled = false;
+              });
+          } else {
+            timerInput.placeholder = originalPlaceholder;
+            timerInput.disabled = false;
+          }
         }
+      }
+
     }
 }
 
