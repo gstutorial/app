@@ -5622,7 +5622,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxPAmxV_HssK_NmLLEX1U8LC-7IEtX1nb08eQYbNMl3r_p7393NzPrJca6Lz27TR-6G/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzExgH1YL_gYxcytd0RQHzzfzwi2M6aOsastARPafJLCxVK_HnfsBVsiHACAsBE7Oy/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -12547,39 +12547,47 @@ function renderStructForm() {
   const fSelect = document.getElementById('struct-edit-select-group');
   const btn = document.getElementById('struct-submit-btn');
 
-  // Reset visibilities
-  if(fClass) fClass.style.display = 'none';
-  if(fSubject) fSubject.style.display = 'none';
-  if(fType) fType.style.display = 'none';
-  if(fChapter) fChapter.style.display = 'none';
-  if(fTimer) fTimer.style.display = 'none';
-  if(fSelect) fSelect.style.display = 'none';
-
-  if (structCurrentAction === 'add') {
+ if(fClass) fClass.style.display = 'none';
+      if(fSubject) fSubject.style.display = 'none';
+      if(fType) fType.style.display = 'none';
+      if(fChapter) fChapter.style.display = 'none';
+      if(fTimer) fTimer.style.display = 'none';
+      if(fSelect) fSelect.style.display = 'none';
+      
+      const fClassSub = document.getElementById('struct-class-subtitle-group');
+      const fSubjectSub = document.getElementById('struct-subject-subtitle-group');
+      if(fClassSub) fClassSub.style.display = 'none';
+      if(fSubjectSub) fSubjectSub.style.display = 'none';
+      
+      if (structCurrentAction === 'add') {
     btn.style.background = '#22c55e';
     btn.textContent = "➕ Create Now";
     
-    // --- FIX: CLEAR FORM FIELDS ON ADD ---
-    if (document.getElementById('struct-class')) document.getElementById('struct-class').value = '';
-    if (document.getElementById('struct-class-icon')) document.getElementById('struct-class-icon').value = '';
-    if (document.getElementById('struct-subject')) document.getElementById('struct-subject').value = '';
-    if (document.getElementById('struct-subject-icon')) document.getElementById('struct-subject-icon').value = '';
-    if (document.getElementById('struct-chapter')) document.getElementById('struct-chapter').value = '';
-    if (document.getElementById('struct-timer')) document.getElementById('struct-timer').value = ''; 
+   // --- FIX: CLEAR FORM FIELDS ON ADD ---
+        if (document.getElementById('struct-class')) document.getElementById('struct-class').value = '';
+        if (document.getElementById('struct-class-icon')) document.getElementById('struct-class-icon').value = '';
+        if (document.getElementById('struct-class-subtitle')) document.getElementById('struct-class-subtitle').value = '';
+        if (document.getElementById('struct-subject')) document.getElementById('struct-subject').value = '';
+        if (document.getElementById('struct-subject-icon')) document.getElementById('struct-subject-icon').value = '';
+        if (document.getElementById('struct-subject-subtitle')) document.getElementById('struct-subject-subtitle').value = '';
+        if (document.getElementById('struct-chapter')) document.getElementById('struct-chapter').value = '';
+        if (document.getElementById('struct-timer')) document.getElementById('struct-timer').value = ''; 
     if (document.getElementById('struct-type')) document.getElementById('struct-type').value = 'quiz'; // Default type
     // -------------------------------------
 
-    if (structCurrentMode === 'class') {
-      if(fClass) fClass.style.display = 'block'; 
-      if(fSubject) fSubject.style.display = 'block'; 
-      if(fType) fType.style.display = 'block'; 
-      if(fChapter) fChapter.style.display = 'block'; 
-      if(fTimer) fTimer.style.display = 'block';
-    } else if (structCurrentMode === 'subject') {
-      if(fSubject) fSubject.style.display = 'block'; 
-      if(fType) fType.style.display = 'block'; 
-      if(fChapter) fChapter.style.display = 'block'; 
-      if(fTimer) fTimer.style.display = 'block';
+   if (structCurrentMode === 'class') {
+          if(fClass) fClass.style.display = 'block';
+          if(fClassSub) fClassSub.style.display = 'block';
+          if(fSubject) fSubject.style.display = 'block';
+          if(fType) fType.style.display = 'block';
+          if(fChapter) fChapter.style.display = 'block';
+          if(fTimer) fTimer.style.display = 'block';
+        } else if (structCurrentMode === 'subject') {
+          if(fSubject) fSubject.style.display = 'block';
+          if(fSubjectSub) fSubjectSub.style.display = 'block';
+          if(fType) fType.style.display = 'block';
+          if(fChapter) fChapter.style.display = 'block';
+          if(fTimer) fTimer.style.display = 'block';
     } else {
       if(fChapter) fChapter.style.display = 'block'; 
       if(fTimer) fTimer.style.display = 'block';
@@ -12591,9 +12599,15 @@ function renderStructForm() {
     if(fSelect) fSelect.style.display = 'block';
     
     if (structCurrentAction === 'edit') {
-      if (structCurrentMode === 'class' && fClass) fClass.style.display = 'block';
-      if (structCurrentMode === 'subject' && fSubject) fSubject.style.display = 'block';
-      if (structCurrentMode === 'chapter') { 
+          if (structCurrentMode === 'class') {
+             if (fClass) fClass.style.display = 'block';
+             if (fClassSub) fClassSub.style.display = 'block';
+          }
+          if (structCurrentMode === 'subject') {
+             if (fSubject) fSubject.style.display = 'block';
+             if (fSubjectSub) fSubjectSub.style.display = 'block';
+          }
+          if (structCurrentMode === 'chapter') { 
         if(fChapter) fChapter.style.display = 'block'; 
         if(fTimer) fTimer.style.display = 'block'; 
       }
@@ -12661,18 +12675,24 @@ function handleStructEditSelectChange() {
     // 2. Auto-fill the form based on what was selected
     if (typeof structCurrentMode !== 'undefined') {
         if (structCurrentMode === 'class' && document.getElementById('struct-class')) {
-            document.getElementById('struct-class').value = val;
-            if (typeof availableClasses !== 'undefined') {
-                const cls = availableClasses.find(c => c.id === val);
-                if (cls) document.getElementById('struct-class-icon').value = cls.icon || '';
-            }
-        } else if (structCurrentMode === 'subject' && document.getElementById('struct-subject')) {
-            document.getElementById('struct-subject').value = val;
-            if (typeof availableSubjects !== 'undefined') {
-                const sub = availableSubjects.find(s => s.name === val);
-                if (sub) document.getElementById('struct-subject-icon').value = sub.icon || '';
-            }
-              } else if (structCurrentMode === 'chapter' && document.getElementById('struct-chapter')) {
+        document.getElementById('struct-class').value = val;
+        if (typeof availableClasses !== 'undefined') {
+          const cls = availableClasses.find(c => c.id === val);
+          if (cls) {
+             if (document.getElementById('struct-class-icon')) document.getElementById('struct-class-icon').value = cls.icon || '';
+             if (document.getElementById('struct-class-subtitle')) document.getElementById('struct-class-subtitle').value = cls.description || '';
+          }
+        }
+      } else if (structCurrentMode === 'subject' && document.getElementById('struct-subject')) {
+        document.getElementById('struct-subject').value = val;
+        if (typeof availableSubjects !== 'undefined') {
+          const sub = availableSubjects.find(s => s.name === val);
+          if (sub) {
+             if (document.getElementById('struct-subject-icon')) document.getElementById('struct-subject-icon').value = sub.icon || '';
+             if (document.getElementById('struct-subject-subtitle')) document.getElementById('struct-subject-subtitle').value = sub.desc || '';
+          }
+        }
+      } else if (structCurrentMode === 'chapter' && document.getElementById('struct-chapter')) {
         document.getElementById('struct-chapter').value = val;
         
         if (document.getElementById('struct-timer')) {
@@ -12925,13 +12945,15 @@ async function submitV2Structure() {
       const selectedItem = document.getElementById('struct-edit-select') ? document.getElementById('struct-edit-select').value : '';
       const newClassName = document.getElementById('struct-class') ? document.getElementById('struct-class').value.trim() : '';
       const newClassIcon = document.getElementById('struct-class-icon') ? document.getElementById('struct-class-icon').value.trim() : '';
-      const newSubjectName = document.getElementById('struct-subject') ? document.getElementById('struct-subject').value.trim() : '';
-      const newSubjectIcon = document.getElementById('struct-subject-icon') ? document.getElementById('struct-subject-icon').value.trim() : '';
-      const newChapterName = document.getElementById('struct-chapter') ? document.getElementById('struct-chapter').value.trim() : '';
-      const timerVal = document.getElementById('struct-timer') ? document.getElementById('struct-timer').value.trim() : '';
-      const subjType = document.getElementById('struct-type') ? document.getElementById('struct-type').value : '';
+    const newClassSubtitle = document.getElementById('struct-class-subtitle') ? document.getElementById('struct-class-subtitle').value.trim() : '';
+    const newSubjectName = document.getElementById('struct-subject') ? document.getElementById('struct-subject').value.trim() : '';
+    const newSubjectIcon = document.getElementById('struct-subject-icon') ? document.getElementById('struct-subject-icon').value.trim() : '';
+    const newSubjectSubtitle = document.getElementById('struct-subject-subtitle') ? document.getElementById('struct-subject-subtitle').value.trim() : '';
+    const newChapterName = document.getElementById('struct-chapter') ? document.getElementById('struct-chapter').value.trim() : '';
+    const timerVal = document.getElementById('struct-timer') ? document.getElementById('struct-timer').value.trim() : '';
+    const subjType = document.getElementById('struct-type') ? document.getElementById('struct-type').value : '';
 
-      // Context gathering
+    // Context gathering
       let sheetId = '', gid = '';
       if (structCurrentMode === 'subject' || structCurrentMode === 'chapter') {
         const allData = await loadAllConfigAtOnce();
@@ -12943,26 +12965,31 @@ async function submitV2Structure() {
       }
 
       if (structCurrentAction === 'add') {
-        formData.append('className', structCurrentMode === 'class' ? newClassName : currentClass);
-        formData.append('classIcon', newClassIcon);
-        formData.append('subjectName', structCurrentMode === 'chapter' ? currentSubject : newSubjectName);
-        formData.append('subjectIcon', newSubjectIcon);
-        formData.append('chapterName', newChapterName);
-        formData.append('subjectType', subjType);
+      formData.append('className', structCurrentMode === 'class' ? newClassName : currentClass);
+      formData.append('classIcon', newClassIcon);
+      formData.append('classSubtitle', newClassSubtitle);
+      formData.append('subjectName', structCurrentMode === 'chapter' ? currentSubject : newSubjectName);
+      formData.append('subjectIcon', newSubjectIcon);
+      formData.append('subjectSubtitle', newSubjectSubtitle);
+      formData.append('chapterName', newChapterName);
+      formData.append('subjectType', subjType);
+      formData.append('timer', timerVal);
+      if (structCurrentMode !== 'class') formData.append('sheetId', sheetId);
+    } else {
+      formData.append('oldName', selectedItem);
+      formData.append('className', currentClass);
+      formData.append('subjectName', currentSubject);
+      formData.append('sheetId', sheetId);
+      formData.append('gid', gid);
+      
+      if (structCurrentAction === 'edit') {
+        formData.append('newName', structCurrentMode === 'class' ? newClassName : (structCurrentMode === 'subject' ? newSubjectName : newChapterName));
+        formData.append('newIcon', structCurrentMode === 'class' ? newClassIcon : (structCurrentMode === 'subject' ? newSubjectIcon : ''));
+        formData.append('classSubtitle', newClassSubtitle);
+        formData.append('subjectSubtitle', newSubjectSubtitle);
         formData.append('timer', timerVal);
-        if (structCurrentMode !== 'class') formData.append('sheetId', sheetId);
-      } else {
-        formData.append('oldName', selectedItem);
-        formData.append('className', currentClass);
-        formData.append('subjectName', currentSubject);
-        formData.append('sheetId', sheetId);
-        formData.append('gid', gid);
-        if (structCurrentAction === 'edit') {
-          formData.append('newName', structCurrentMode === 'class' ? newClassName : (structCurrentMode === 'subject' ? newSubjectName : newChapterName));
-          formData.append('newIcon', structCurrentMode === 'class' ? newClassIcon : (structCurrentMode === 'subject' ? newSubjectIcon : ''));
-          formData.append('timer', timerVal);
-        }
       }
+    }
 
       // Execute the backend request
       await executeSecureRequest(formData, btn, "Execute");
@@ -13338,30 +13365,40 @@ function updateAdminControls() {
           </div>
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-class-group">
-      <div style="display: flex; gap: 15px;">
-        <div style="flex: 0 0 25%;">
-          <label style="color: #93c5fd; margin-bottom: 8px; display: block;">Emoji</label>
-          <input type="text" id="struct-class-icon" class="form-input" placeholder="🎓" style="padding: 12px 0; text-align: center;">
-        </div>
-        <div style="flex: 1;">
-          <label style="color: #93c5fd; margin-bottom: 8px; display: block;">Class Name</label>
-          <input type="text" id="struct-class" class="form-input" placeholder="e.g. 10" style="padding: 12px 16px;">
-        </div>
-      </div>
-    </div>
-
-    <div class="form-group" style="margin-bottom: 15px;" id="struct-subject-group">
-      <div style="display: flex; gap: 15px;">
-        <div style="flex: 0 0 25%;">
-          <label style="color: #93c5fd; margin-bottom: 8px; display: block;">Emoji</label>
-          <input type="text" id="struct-subject-icon" class="form-input" placeholder="📚" style="padding: 12px 0; text-align: center;">
-        </div>
-        <div style="flex: 1;">
-          <label style="color: #93c5fd; margin-bottom: 8px; display: block;">Subject Name</label>
-          <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics" style="padding: 12px 16px;">
-        </div>
-      </div>
-    </div>
+            <div style="display: flex; gap: 15px;">
+              <div style="flex: 0 0 25%;">
+                <label style="color: #93c5fd; margin-bottom: 8px; display: block;">Emoji</label>
+                <input type="text" id="struct-class-icon" class="form-input" placeholder="🎓" style="padding: 12px 0; text-align: center;">
+              </div>
+              <div style="flex: 1;">
+                <label style="color: #93c5fd; margin-bottom: 8px; display: block;">Class Name</label>
+                <input type="text" id="struct-class" class="form-input" placeholder="e.g. Class 10" style="padding: 12px 16px !important;">
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 15px;" id="struct-class-subtitle-group">
+            <label style="color: #93c5fd;">Class Subtitle</label>
+            <input type="text" id="struct-class-subtitle" class="form-input" placeholder="e.g. Interactive Learning" style="padding: 12px 16px !important;">
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 15px;" id="struct-subject-group">
+            <div style="display: flex; gap: 15px;">
+              <div style="flex: 0 0 25%;">
+                <label style="color: #93c5fd; margin-bottom: 8px; display: block;">Emoji</label>
+                <input type="text" id="struct-subject-icon" class="form-input" placeholder="e.g. ⚛️" style="padding: 12px 0; text-align: center;">
+              </div>
+              <div style="flex: 1;">
+                <label style="color: #93c5fd; margin-bottom: 8px; display: block;">Subject Name</label>
+                <input type="text" id="struct-subject" class="form-input" placeholder="e.g. Mathematics" style="padding: 12px 16px !important;">
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 15px;" id="struct-subject-subtitle-group">
+            <label style="color: #93c5fd;">Subject Subtitle</label>
+            <input type="text" id="struct-subject-subtitle" class="form-input" placeholder="e.g. Subject Description" style="padding: 12px 16px !important;">
+          </div>
 
           <div class="form-group" style="margin-bottom: 15px;" id="struct-type-group">
             <label style="color: #93c5fd;">Subject Type</label>
