@@ -5212,7 +5212,7 @@ window.clearVideoAdminPanel = function() {
         if (!allData.config[key]) throw new Error("No configuration found for this subject");
 
         const sheetId = allData.config[key].sheetId;
-        const firstChapterKey = Object.keys(allData.config[key].chapters)[0]; 
+        const firstChapterKey = allData.config[key].chaptersList ? allData.config[key].chaptersList[0].name : Object.keys(allData.config[key].chapters)[0]; 
         const gid = allData.config[key].chapters[firstChapterKey];
 
         const apiUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&headers=0&gid=${gid}&_t=${Date.now()}`;
@@ -5622,7 +5622,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxcoEuEKUPsIgC_4OFrNNROeJUg2cKsbUkXtNzglBOOHsAvXmsCdi60M1lNg0QBTykX/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxPAmxV_HssK_NmLLEX1U8LC-7IEtX1nb08eQYbNMl3r_p7393NzPrJca6Lz27TR-6G/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -7764,11 +7764,11 @@ async function loadClasses() {
         
         if (allData && allData.config && allData.config[key]) {
           currentSubjectConfig = {
-            sheetId: allData.config[key].sheetId,
-            chapters: allData.config[key].chapters
-          };
-          
-          chaptersList = Object.keys(currentSubjectConfig.chapters || {});
+      sheetId: allData.config[key].sheetId,
+      chapters: allData.config[key].chapters,
+      chaptersList: allData.config[key].chaptersList
+    };
+    chaptersList = currentSubjectConfig.chaptersList ? currentSubjectConfig.chaptersList.map(c => c.name) : Object.keys(currentSubjectConfig.chapters || {});
           
           if (chaptersList.length === 0) {
             throw new Error(`No chapters found for ${currentSubject}`);
@@ -9198,7 +9198,7 @@ function showSubjectSelection(className) {
         if (!allData.config[key]) throw new Error("No configuration found for this subject");
 
         const sheetId = allData.config[key].sheetId;
-        const firstChapterKey = Object.keys(allData.config[key].chapters)[0]; 
+        const firstChapterKey = allData.config[key].chaptersList ? allData.config[key].chaptersList[0].name : Object.keys(allData.config[key].chapters)[0];
         const gid = allData.config[key].chapters[firstChapterKey];
 
         const apiUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&headers=0&gid=${gid}&_t=${Date.now()}`;
@@ -12859,6 +12859,36 @@ async function submitV2Structure() {
   // 1. Sanitize variables to ensure the check NEVER fails due to spaces or caps
   const actionCheck = (structCurrentAction || '').toString().trim().toLowerCase();
   const modeCheck = (structCurrentMode || 'item').toString().toUpperCase();
+
+  // Extract names early for safety validation
+  const newClassName = document.getElementById('struct-class') ? document.getElementById('struct-class').value.trim() : '';
+  const newSubjectName = document.getElementById('struct-subject') ? document.getElementById('struct-subject').value.trim() : '';
+  const newChapterName = document.getElementById('struct-chapter') ? document.getElementById('struct-chapter').value.trim() : '';
+
+  // --- DUPLICATE PREVENTION SYSTEM ---
+  if (actionCheck === 'add') {
+    if (structCurrentMode === 'class' && newClassName) {
+      const existingClasses = Array.from(document.querySelectorAll('#class-grid .class-name')).map(el => el.textContent.trim().toLowerCase());
+      if (existingClasses.includes(newClassName.toLowerCase())) {
+        window.showCustomAlert("Duplicate Class", `⚠️ A class named <b>${newClassName}</b> already exists!<br><br>Please choose a unique name to prevent data overlap and deletion conflicts.`);
+        return;
+      }
+    }
+    else if (structCurrentMode === 'subject' && newSubjectName) {
+      const existingSubjects = Array.from(document.querySelectorAll('#subject-grid .subject-name')).map(el => el.textContent.trim().toLowerCase());
+      if (existingSubjects.includes(newSubjectName.toLowerCase())) {
+        window.showCustomAlert("Duplicate Subject", `⚠️ A subject named <b>${newSubjectName}</b> already exists in this class!<br><br>Please choose a unique name.`);
+        return;
+      }
+    }
+    else if (structCurrentMode === 'chapter' && newChapterName) {
+      const existingChapters = Array.from(document.getElementById('topic-select').options).map(o => o.text.trim().toLowerCase());
+      if (existingChapters.includes(newChapterName.toLowerCase())) {
+        window.showCustomAlert("Duplicate Chapter", `⚠️ A chapter named <b>${newChapterName}</b> already exists in this subject!<br><br>Please choose a unique name.`);
+        return;
+      }
+    }
+  }
 
   // 2. CUSTOM HTML WARNING POPUP
   if (actionCheck === 'delete') {
