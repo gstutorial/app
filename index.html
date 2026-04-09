@@ -12768,6 +12768,8 @@ async function syncStructEditFields() {
   const val = document.getElementById('struct-edit-select').value;
   if (!val) return;
 
+  const vTrim = val.trim().toLowerCase();
+
   // 1. Update the name fields instantly
   if (structCurrentMode === 'class' && document.getElementById('struct-class')) {
     document.getElementById('struct-class').value = val;
@@ -12775,17 +12777,17 @@ async function syncStructEditFields() {
     document.getElementById('struct-subject').value = val;
   } else if (structCurrentMode === 'chapter' && document.getElementById('struct-chapter')) {
     document.getElementById('struct-chapter').value = val;
-    return; // Chapters don't have icons or subtitles to fetch
+    return; 
   }
 
-  // 2. Fetch the actual database safely to guarantee we have the icons and subtitles
+  // 2. Fetch the actual database safely
   try {
     const data = await loadAllConfigAtOnce();
     if (!data) return;
 
     if (structCurrentMode === 'class') {
       if (data.classes) {
-        const cls = data.classes.find(c => c.name === val || c.id === val);
+        const cls = data.classes.find(c => c.name.toLowerCase() === vTrim || c.id.toLowerCase() === vTrim);
         if (cls) {
            if (document.getElementById('struct-class-icon')) document.getElementById('struct-class-icon').value = cls.icon || '';
            if (document.getElementById('struct-class-subtitle')) document.getElementById('struct-class-subtitle').value = cls.description || '';
@@ -12795,15 +12797,16 @@ async function syncStructEditFields() {
     else if (structCurrentMode === 'subject') {
       if (data.config) {
         let sub = null;
-        // Attempt exact match
-        if (typeof currentClass !== 'undefined' && currentClass) {
-          sub = data.config[`${currentClass}_${val.toLowerCase()}`];
+        
+        // Bulletproof Scan: Find ANY subject in the config that matches the selected name exactly, completely ignoring the class prefix
+        for (const key in data.config) {
+          const subjectPart = key.split('_')[1]; 
+          if (subjectPart && subjectPart.toLowerCase() === vTrim) {
+            sub = data.config[key];
+            break; // Found it!
+          }
         }
-        // Fallback scan
-        if (!sub) {
-          const foundKey = Object.keys(data.config).find(k => k.endsWith(`_${val.toLowerCase()}`));
-          if (foundKey) sub = data.config[foundKey];
-        }
+        
         if (sub) {
            if (document.getElementById('struct-subject-icon')) document.getElementById('struct-subject-icon').value = sub.icon || '';
            if (document.getElementById('struct-subject-subtitle')) document.getElementById('struct-subject-subtitle').value = sub.subtitle || '';
