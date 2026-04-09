@@ -5622,7 +5622,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzExgH1YL_gYxcytd0RQHzzfzwi2M6aOsastARPafJLCxVK_HnfsBVsiHACAsBE7Oy/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwttV4AnVo2vxCQ7moGITc9Ab2axHIUj1bCkJbY57Teltc4Z_NgRA03tgOzSVVYx-Zf/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -12560,10 +12560,10 @@ function renderStructForm() {
       if(fSubjectSub) fSubjectSub.style.display = 'none';
       
       if (structCurrentAction === 'add') {
-    btn.style.background = '#22c55e';
-    btn.textContent = "➕ Create Now";
-    
-   // --- FIX: CLEAR FORM FIELDS ON ADD ---
+        btn.style.background = '#22c55e';
+        btn.textContent = "➕ Create Now";
+        
+        // --- FIX: CLEAR FORM FIELDS ON ADD ---
         if (document.getElementById('struct-class')) document.getElementById('struct-class').value = '';
         if (document.getElementById('struct-class-icon')) document.getElementById('struct-class-icon').value = '';
         if (document.getElementById('struct-class-subtitle')) document.getElementById('struct-class-subtitle').value = '';
@@ -12571,11 +12571,10 @@ function renderStructForm() {
         if (document.getElementById('struct-subject-icon')) document.getElementById('struct-subject-icon').value = '';
         if (document.getElementById('struct-subject-subtitle')) document.getElementById('struct-subject-subtitle').value = '';
         if (document.getElementById('struct-chapter')) document.getElementById('struct-chapter').value = '';
-        if (document.getElementById('struct-timer')) document.getElementById('struct-timer').value = ''; 
-    if (document.getElementById('struct-type')) document.getElementById('struct-type').value = 'quiz'; // Default type
-    // -------------------------------------
-
-   if (structCurrentMode === 'class') {
+        if (document.getElementById('struct-timer')) document.getElementById('struct-timer').value = '';
+        if (document.getElementById('struct-type')) document.getElementById('struct-type').value = 'quiz';
+        
+        if (structCurrentMode === 'class') {
           if(fClass) fClass.style.display = 'block';
           if(fClassSub) fClassSub.style.display = 'block';
           if(fSubject) fSubject.style.display = 'block';
@@ -12588,17 +12587,17 @@ function renderStructForm() {
           if(fType) fType.style.display = 'block';
           if(fChapter) fChapter.style.display = 'block';
           if(fTimer) fTimer.style.display = 'block';
-    } else {
-      if(fChapter) fChapter.style.display = 'block'; 
-      if(fTimer) fTimer.style.display = 'block';
-    }
-  } else {
-    // Edit & Delete
-    btn.style.background = structCurrentAction === 'delete' ? '#ef4444' : '#3b82f6';
-    btn.textContent = structCurrentAction === 'delete' ? "🗑️ Delete Permanently" : "✏️ Save Changes";
-    if(fSelect) fSelect.style.display = 'block';
-    
-    if (structCurrentAction === 'edit') {
+        } else {
+          if(fChapter) fChapter.style.display = 'block';
+          if(fTimer) fTimer.style.display = 'block';
+        }
+      } else {
+        // Edit & Delete
+        btn.style.background = structCurrentAction === 'delete' ? '#ef4444' : '#3b82f6';
+        btn.textContent = structCurrentAction === 'delete' ? "🗑️ Delete Permanently" : "✏️ Save Changes";
+        if(fSelect) fSelect.style.display = 'block';
+        
+        if (structCurrentAction === 'edit') {
           if (structCurrentMode === 'class') {
              if (fClass) fClass.style.display = 'block';
              if (fClassSub) fClassSub.style.display = 'block';
@@ -12607,14 +12606,13 @@ function renderStructForm() {
              if (fSubject) fSubject.style.display = 'block';
              if (fSubjectSub) fSubjectSub.style.display = 'block';
           }
-          if (structCurrentMode === 'chapter') { 
-        if(fChapter) fChapter.style.display = 'block'; 
-        if(fTimer) fTimer.style.display = 'block'; 
+          if (structCurrentMode === 'chapter') {
+             if(fChapter) fChapter.style.display = 'block';
+             if(fTimer) fTimer.style.display = 'block';
+          }
+        }
+        populateEditDropdown();
       }
-    }
-    populateEditDropdown();
-  }
-
   // --- FIX: Trigger Auto-fill rules ---
   const editSelectObj = document.getElementById('struct-edit-select');
   if (editSelectObj) {
@@ -12772,8 +12770,9 @@ window.moveReorderItem = function(index, direction) {
 
 async function submitReorder() {
   const btn = document.getElementById('struct-save-reorder-btn');
-  btn.disabled = true; btn.textContent = "Saving...";
-  
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+
   const formData = new URLSearchParams();
   formData.append('action', 'manageStructure');
   formData.append('subAction', 'reorder');
@@ -12781,10 +12780,16 @@ async function submitReorder() {
   formData.append('username', currentUser.username);
   formData.append('token', currentUser.token);
   formData.append('orderList', JSON.stringify(currentReorderArray));
-  
-  if (structCurrentMode !== 'class') formData.append('className', currentClass);
-  if (structCurrentMode === 'chapter') formData.append('subjectName', currentSubject);
 
+  if (structCurrentMode !== 'class') formData.append('className', currentClass);
+  if (structCurrentMode === 'chapter') {
+    formData.append('subjectName', currentSubject);
+    // FIX: MUST SEND SHEET ID SO THE BACKEND SECURITY LOCK CAN FIND THE CHAPTER
+    if (typeof currentSubjectConfig !== 'undefined' && currentSubjectConfig && currentSubjectConfig.sheetId) {
+      formData.append('sheetId', currentSubjectConfig.sheetId);
+    }
+  }
+  
   await executeSecureRequest(formData, btn, "Save Order");
 }
     // --- CUSTOM ASYNC CONFIRMATION DIALOG ---
@@ -13394,8 +13399,13 @@ function updateAdminControls() {
               </div>
             </div>
           </div>
-          
+
           <div class="form-group" style="margin-bottom: 15px;" id="struct-subject-subtitle-group">
+            <label style="color: #93c5fd;">Subject Subtitle</label>
+            <input type="text" id="struct-subject-subtitle" class="form-input" placeholder="e.g. Subject Description" style="padding: 12px 16px !important;">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 15px;" id="struct-type-group">
             <label style="color: #93c5fd;">Subject Subtitle</label>
             <input type="text" id="struct-subject-subtitle" class="form-input" placeholder="e.g. Subject Description" style="padding: 12px 16px !important;">
           </div>
