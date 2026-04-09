@@ -12744,7 +12744,7 @@ async function handleStructEditSelectChange() {
             const sheetId = currentSubjectConfig.sheetId;
             const gid = currentSubjectConfig.chapters[val];
             if (sheetId && gid) {
-               const apiUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tq=SELECT%20H%20LIMIT%201&headers=0&gid=${gid}&_t=${Date.now()}`;
+               const apiUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tq=SELECT%20H%20LIMIT%201%20OFFSET%201&headers=0&gid=${gid}&_t=${Date.now()}`;
                fetch(apiUrl)
                  .then(res => res.text())
                  .then(text => {
@@ -13239,7 +13239,7 @@ async function submitBulkData() {
   let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=manageQuestions';
   url += '&subAction=bulkAdd';
   url += '&sheetId=' + encodeURIComponent(currentSubjectConfig.sheetId);
-  url += '&gid=' + encodeURIComponent(currentSubjectConfig.chapters[currentChapter]);
+  url += '&gid=' + encodeURIComponent(currentSubjectConfig.chapters[currentTopicName]);
   url += '&username=' + encodeURIComponent(currentUser.username);
   url += '&token=' + encodeURIComponent(currentUser.token);
   url += '&bulkData=' + encodeURIComponent(JSON.stringify(rows));
@@ -13249,7 +13249,7 @@ async function submitBulkData() {
     const res = await jsonpRequest(url, 'bulkCb');
     if (res && res.success) {
        closeBulkModal();
-       loadQuestions(currentChapter); 
+       loadQuestions(currentTopicName); 
     } else {
        alert("Error: " + (res.error || "Unknown"));
     }
@@ -13523,7 +13523,7 @@ async function submitBulkData() {
       </div>
       <div style="margin-bottom: 15px; color: #94a3b8; font-size: 0.9rem;">
         Paste your questions directly from Excel, Word, or Google Sheets. The columns <b>must be tab-separated</b> in this exact order:<br>
-        <b style="color:#f87171;">Question | Option A | Option B | Option C | Option D | Answer | Explanation | Timer</b>
+        <b style="color:#f87171;">Question | Option A | Option B | Option C | Option D | Answer | Explanation | Marks</b>
       </div>
       <textarea id="bulk-textarea" class="form-input" rows="12" placeholder="Paste data here..." style="font-family: monospace; white-space: pre; background: #0f172a; border: 1px solid #334155; color: #f8fafc; width: 100%; padding: 12px; border-radius: 6px; resize: vertical;"></textarea>
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
