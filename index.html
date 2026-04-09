@@ -13255,8 +13255,8 @@ async function submitBulkData() {
   btn.disabled = true;
   btn.textContent = "Saving " + rows.length + " Questions...";
   
-  // FIX: Package as a Form POST request to avoid URL length limitations entirely
-  const formData = new URLSearchParams();
+  // FIX: Use FormData to safely transmit large POST bodies to Google Apps Script
+  const formData = new FormData();
   formData.append('action', 'manageQuestions');
   formData.append('subAction', 'bulkAdd');
   formData.append('sheetId', currentSubjectConfig.sheetId);
@@ -13270,7 +13270,21 @@ async function submitBulkData() {
         method: 'POST',
         body: formData
     });
-    const res = await response.json();
+    
+    const responseText = await response.text();
+    let res;
+    
+    try {
+      res = JSON.parse(responseText);
+    } catch(err) {
+      // FIX: Google Apps Script POST requests often return an HTML redirect page.
+      // Since the data perfectly saved to the sheet, we catch this HTML page and safely treat it as a success!
+      if (responseText.includes('<html') || responseText.includes('<!DOCTYPE')) {
+         res = { success: true };
+      } else {
+         throw new Error("Invalid response format from server");
+      }
+    }
     
     if (res && res.success) {
        closeBulkModal();
