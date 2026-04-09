@@ -12650,52 +12650,71 @@ function populateEditDropdown() {
 }
 
 // --- FIX: Auto-fill fields and toggle Execute button based on selection ---
-function handleStructEditSelectChange() {
-    const select = document.getElementById('struct-edit-select');
-    const btn = document.getElementById('struct-submit-btn');
-    if (!select || !btn) return;
+async function handleStructEditSelectChange() {
+  const select = document.getElementById('struct-edit-select');
+  const btn = document.getElementById('struct-submit-btn');
+  if (!select || !btn) return;
+  const val = select.value;
+  
+  // 1. Disable the execute button if nothing is selected
+  if (!val || val === '') {
+    btn.disabled = true;
+    btn.style.opacity = '0.4';
+    btn.style.cursor = 'not-allowed';
     
-    const val = select.value;
-    
-    // 1. Disable the execute button if nothing is selected
-    if (!val || val === '') {
-        btn.disabled = true;
-        btn.style.opacity = '0.4';
-        btn.style.cursor = 'not-allowed';
-        
-        // Clear all fields
-        if (document.getElementById('struct-class')) document.getElementById('struct-class').value = '';
-        if (document.getElementById('struct-class-icon')) document.getElementById('struct-class-icon').value = '';
-        if (document.getElementById('struct-subject')) document.getElementById('struct-subject').value = '';
-        if (document.getElementById('struct-subject-icon')) document.getElementById('struct-subject-icon').value = '';
-        if (document.getElementById('struct-chapter')) document.getElementById('struct-chapter').value = '';
-        if (document.getElementById('struct-timer')) document.getElementById('struct-timer').value = '';
-        return;
-    } else {
-        // Enable the execute button
-        btn.disabled = false;
-        btn.style.opacity = '1';
-        btn.style.cursor = 'pointer';
+    // Clear all fields
+    if (document.getElementById('struct-class')) document.getElementById('struct-class').value = '';
+    if (document.getElementById('struct-class-icon')) document.getElementById('struct-class-icon').value = '';
+    if (document.getElementById('struct-class-subtitle')) document.getElementById('struct-class-subtitle').value = '';
+    if (document.getElementById('struct-subject')) document.getElementById('struct-subject').value = '';
+    if (document.getElementById('struct-subject-icon')) document.getElementById('struct-subject-icon').value = '';
+    if (document.getElementById('struct-subject-subtitle')) document.getElementById('struct-subject-subtitle').value = '';
+    if (document.getElementById('struct-chapter')) document.getElementById('struct-chapter').value = '';
+    if (document.getElementById('struct-timer')) document.getElementById('struct-timer').value = '';
+    return;
+  } else {
+    // Enable the execute button
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+  }
+
+  // 2. Fetch the database and Auto-fill the form
+  if (typeof structCurrentMode !== 'undefined') {
+    // Set the name instantly
+    if (structCurrentMode === 'class' && document.getElementById('struct-class')) {
+      document.getElementById('struct-class').value = val;
+    } else if (structCurrentMode === 'subject' && document.getElementById('struct-subject')) {
+      document.getElementById('struct-subject').value = val;
     }
 
-    // 2. Auto-fill the form based on what was selected
-    if (typeof structCurrentMode !== 'undefined') {
-        if (structCurrentMode === 'class' && document.getElementById('struct-class')) {
-        document.getElementById('struct-class').value = val;
-        if (typeof availableClasses !== 'undefined') {
-          const cls = availableClasses.find(c => c.id === val);
+    try {
+      const data = await loadAllConfigAtOnce();
+      if (!data) return;
+
+      if (structCurrentMode === 'class') {
+        if (data.classes) {
+          const cls = data.classes.find(c => c.name === val || c.id === val);
           if (cls) {
              if (document.getElementById('struct-class-icon')) document.getElementById('struct-class-icon').value = cls.icon || '';
              if (document.getElementById('struct-class-subtitle')) document.getElementById('struct-class-subtitle').value = cls.description || '';
           }
         }
-      } else if (structCurrentMode === 'subject' && document.getElementById('struct-subject')) {
-        document.getElementById('struct-subject').value = val;
-        if (typeof availableSubjects !== 'undefined') {
-          const sub = availableSubjects.find(s => s.name === val);
+      } else if (structCurrentMode === 'subject') {
+        if (data.config) {
+          let sub = null;
+          // Attempt exact match
+          if (typeof currentClass !== 'undefined' && currentClass) {
+            sub = data.config[`${currentClass}_${val.toLowerCase()}`];
+          }
+          // Fallback scan
+          if (!sub) {
+            const foundKey = Object.keys(data.config).find(k => k.endsWith(`_${val.toLowerCase()}`));
+            if (foundKey) sub = data.config[foundKey];
+          }
           if (sub) {
              if (document.getElementById('struct-subject-icon')) document.getElementById('struct-subject-icon').value = sub.icon || '';
-             if (document.getElementById('struct-subject-subtitle')) document.getElementById('struct-subject-subtitle').value = sub.desc || '';
+             if (document.getElementById('struct-subject-subtitle')) document.getElementById('struct-subject-subtitle').value = sub.subtitle || '';
           }
         }
       } else if (structCurrentMode === 'chapter' && document.getElementById('struct-chapter')) {
@@ -12708,38 +12727,41 @@ function handleStructEditSelectChange() {
           timerInput.placeholder = 'Loading...';
           timerInput.disabled = true;
           
-          if (typeof currentSubjectConfig !== 'undefined' && currentSubjectConfig && currentSubjectConfig.chapters && currentSubjectConfig.chapters[val]) {
-            const gid = currentSubjectConfig.chapters[val];
+          if (typeof currentSubjectConfig !== 'undefined' && currentSubjectConfig) {
             const sheetId = currentSubjectConfig.sheetId;
-            const apiUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&gid=${gid}&range=H2&_t=${Date.now()}`;
-            
-            fetch(apiUrl)
-              .then(res => res.text())
-              .then(text => {
-                try {
-                  const json = JSON.parse(text.substring(47).slice(0, -2));
-                  if (json.table.rows && json.table.rows.length > 0 && json.table.rows[0].c && json.table.rows[0].c[0]) {
-                    timerInput.value = json.table.rows[0].c[0].v || '';
-                  }
-                } catch(e) {
-                  // Ignore parsing errors, remains blank
-                }
-              })
-              .catch(e => {
-                // Ignore network errors, remains blank
-              })
-              .finally(() => {
-                timerInput.placeholder = originalPlaceholder;
-                timerInput.disabled = false;
-              });
+            const gid = currentSubjectConfig.chapters[val];
+            if (sheetId && gid) {
+               const apiUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tq=SELECT%20H%20LIMIT%201&headers=0&gid=${gid}&_t=${Date.now()}`;
+               fetch(apiUrl)
+                 .then(res => res.text())
+                 .then(text => {
+                    try {
+                      const json = JSON.parse(text.substring(47).slice(0, -2));
+                      if (json.table.rows.length > 0 && json.table.rows[0].c[0]) {
+                         timerInput.value = json.table.rows[0].c[0].v;
+                      }
+                    } catch(e){}
+                    timerInput.disabled = false;
+                    timerInput.placeholder = originalPlaceholder;
+                 })
+                 .catch(() => {
+                    timerInput.disabled = false;
+                    timerInput.placeholder = originalPlaceholder;
+                 });
+            } else {
+               timerInput.disabled = false;
+               timerInput.placeholder = originalPlaceholder;
+            }
           } else {
-            timerInput.placeholder = originalPlaceholder;
-            timerInput.disabled = false;
+             timerInput.disabled = false;
+             timerInput.placeholder = originalPlaceholder;
           }
         }
       }
-
+    } catch(e) {
+      console.error("Error auto-filling form:", e);
     }
+  }
 }
 
 async function syncStructEditFields() {
