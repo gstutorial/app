@@ -5635,7 +5635,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKtqgzs9IZYhHJDkzxmQgvMd6820QfBC1-m_1jD28H9ayfqwuYhFX5gh6IxwdGzaia/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxBrYmFy7MOdNH-dFkR-1ukt6TwHrCRp6xa4Dj_ngR9quWxZ5YzTvISfvVpfwgGwRT1/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -13255,17 +13255,23 @@ async function submitBulkData() {
   btn.disabled = true;
   btn.textContent = "Saving " + rows.length + " Questions...";
   
-  let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=manageQuestions';
-  url += '&subAction=bulkAdd';
-  url += '&sheetId=' + encodeURIComponent(currentSubjectConfig.sheetId);
-  url += '&gid=' + encodeURIComponent(currentSubjectConfig.chapters[currentTopicName]);
-  url += '&username=' + encodeURIComponent(currentUser.username);
-  url += '&token=' + encodeURIComponent(currentUser.token);
-  url += '&bulkData=' + encodeURIComponent(JSON.stringify(rows));
-  url += '&_t=' + Date.now();
+  // FIX: Package as a Form POST request to avoid URL length limitations entirely
+  const formData = new URLSearchParams();
+  formData.append('action', 'manageQuestions');
+  formData.append('subAction', 'bulkAdd');
+  formData.append('sheetId', currentSubjectConfig.sheetId);
+  formData.append('gid', currentSubjectConfig.chapters[currentTopicName]);
+  formData.append('username', currentUser.username);
+  formData.append('token', currentUser.token);
+  formData.append('bulkData', JSON.stringify(rows));
   
   try {
-    const res = await jsonpRequest(url, 'bulkCb');
+    const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: formData
+    });
+    const res = await response.json();
+    
     if (res && res.success) {
        closeBulkModal();
        showToast(rows.length + " Questions added successfully!");
