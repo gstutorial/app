@@ -5622,7 +5622,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzexLjSKvMUZXqlBgJwZZ8JrFYMqf-foft4PpX4D51o5FdULYSepKoAefc6IVP3afOJ/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwiaFYZ1C5BfQGDdnRAnUFkhFJJ6FhvcDeJpoMmPu6_d8W6XZSY7ICj7YC3qK9B28KA/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -13370,8 +13370,8 @@ function updateAdminControls() {
           <button class="btn-success" onclick="selectStructAction('reorder')" style="background: #8b5cf6;">↕️ Reorder</button>
         </div>
 
-        <div id="struct-form-container" style="display: none;">
-          <div id="struct-context-info" style="margin-bottom: 20px; color: #f59e0b; font-size: 0.95rem; text-align: center; background: rgba(245, 158, 11, 0.1); padding: 10px; border-radius: 8px;"></div>
+       <div id="struct-form-container" style="display: none;">
+          <div id="struct-context-info" style="display: none;"></div>
           
           <div class="form-group" style="margin-bottom: 15px;" id="struct-edit-select-group">
             <label style="color: #93c5fd;">Select Existing Item</label>
