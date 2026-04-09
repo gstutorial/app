@@ -5622,7 +5622,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzD1IV-M1Y3_Y9ku69oeZd9dgZxpBsS5cIPxXXxnpI2tCAICcvlLQVvhLV3n5_KdeD/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzexLjSKvMUZXqlBgJwZZ8JrFYMqf-foft4PpX4D51o5FdULYSepKoAefc6IVP3afOJ/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -7665,38 +7665,47 @@ async function loadClasses() {
     }
 
     // ========== LOAD SUBJECTS ==========
-    async function loadSubjects() {
-      try {
-        subjectGridEl.innerHTML = `
-          <div class="loading-container">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Loading subjects...</div>
-            <div class="loading-subtext">Please wait</div>
-          </div>
-        `;
+async function loadSubjects() {
+  try {
+    subjectGridEl.innerHTML = `
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading subjects...</div>
+        <div class="loading-subtext">Please wait</div>
+      </div>
+    `;
 
-        const allData = await loadAllConfigAtOnce();
+    const allData = await loadAllConfigAtOnce();
     const subjects = [];
+
     if (allData && allData.config) {
       const subjectMap = new Map();
       for (const key in allData.config) {
         if (key.startsWith(currentClass + '_')) {
-          const subject = key.split('_')[1];
-          subjectMap.set(subject, allData.config[key].icon); // Capture the real icon
+          const subjectName = key.split('_')[1];
+          if (!subjectMap.has(subjectName)) {
+            subjectMap.set(subjectName, { 
+              icon: allData.config[key].icon,
+              subtitle: allData.config[key].subtitle,
+              type: allData.config[key].type
+            });
+          }
         }
       }
+      
       Array.from(subjectMap.keys()).forEach(subject => {
-        const dbIcon = subjectMap.get(subject);
+        const dbData = subjectMap.get(subject);
         subjects.push({
           id: subject,
           name: subject.charAt(0).toUpperCase() + subject.slice(1),
-          icon: dbIcon || getSubjectIcon(subject), // Uses custom emoji, falls back to default if blank
-          desc: getSubjectDescription(subject) || 'Interactive Learning'
+          icon: dbData.icon || getSubjectIcon(subject), 
+          desc: dbData.subtitle || getSubjectDescription(subject) || 'Interactive Learning',
+          type: dbData.type
         });
       });
     }
 
-        renderSubjectGrid(subjects);
+    renderSubjectGrid(subjects);
 
       } catch (error) {
         console.error("Error loading subjects:", error);
@@ -7730,25 +7739,23 @@ async function loadClasses() {
         `;
 
        card.addEventListener("click", () => {
-          if (currentUser.role === 'Trial' && index > 0) {
-            window.showTrialPopup();
-            return; 
-          }
-         
-          currentSubject = subject.name;
-          const lowerName = subject.name.toLowerCase();
-          
-          // Route based on subject keywords
-          if (lowerName.includes('previous year') || lowerName.includes('question answer') || lowerName.includes('pdf')) {
-            showPyqContainer(currentSubject);
-          } else if (lowerName.includes('video') || lowerName.includes('lecture') || lowerName.includes('youtube')) {
-            showVideoContainer(currentSubject);
-          } else {
-            showQuizContainer(currentSubject);
-          }
-          resetInactivityTimer();
-        });
-
+      if (currentUser.role === 'Trial' && index > 0) {
+        window.showTrialPopup();
+        return;
+      }
+      currentSubject = subject.name;
+      
+      // Route precisely based on dropdown type selected at creation
+      if (subject.type === 'pdf') {
+        showPyqContainer(currentSubject);
+      } else if (subject.type === 'video') {
+        showVideoContainer(currentSubject);
+      } else {
+        showQuizContainer(currentSubject);
+      }
+      
+      resetInactivityTimer();
+    });
         // Add the card to the grid
         subjectGridEl.appendChild(card);
       });
