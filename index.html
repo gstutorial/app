@@ -12742,40 +12742,54 @@ function handleStructEditSelectChange() {
     }
 }
 
-function syncStructEditFields() {
+async function syncStructEditFields() {
   const val = document.getElementById('struct-edit-select').value;
   if (!val) return;
-  
-  if (structCurrentMode === 'class') {
-    if (document.getElementById('struct-class')) document.getElementById('struct-class').value = val;
-    if (typeof allData !== 'undefined' && allData.classes) {
-      const cls = allData.classes.find(c => c.name === val || c.id === val);
-      if (cls) {
-         if (document.getElementById('struct-class-icon')) document.getElementById('struct-class-icon').value = cls.icon || '';
-         if (document.getElementById('struct-class-subtitle')) document.getElementById('struct-class-subtitle').value = cls.description || '';
+
+  // 1. Update the name fields instantly
+  if (structCurrentMode === 'class' && document.getElementById('struct-class')) {
+    document.getElementById('struct-class').value = val;
+  } else if (structCurrentMode === 'subject' && document.getElementById('struct-subject')) {
+    document.getElementById('struct-subject').value = val;
+  } else if (structCurrentMode === 'chapter' && document.getElementById('struct-chapter')) {
+    document.getElementById('struct-chapter').value = val;
+    return; // Chapters don't have icons or subtitles to fetch
+  }
+
+  // 2. Fetch the actual database safely to guarantee we have the icons and subtitles
+  try {
+    const data = await loadAllConfigAtOnce();
+    if (!data) return;
+
+    if (structCurrentMode === 'class') {
+      if (data.classes) {
+        const cls = data.classes.find(c => c.name === val || c.id === val);
+        if (cls) {
+           if (document.getElementById('struct-class-icon')) document.getElementById('struct-class-icon').value = cls.icon || '';
+           if (document.getElementById('struct-class-subtitle')) document.getElementById('struct-class-subtitle').value = cls.description || '';
+        }
+      }
+    } 
+    else if (structCurrentMode === 'subject') {
+      if (data.config) {
+        let sub = null;
+        // Attempt exact match
+        if (typeof currentClass !== 'undefined' && currentClass) {
+          sub = data.config[`${currentClass}_${val.toLowerCase()}`];
+        }
+        // Fallback scan
+        if (!sub) {
+          const foundKey = Object.keys(data.config).find(k => k.endsWith(`_${val.toLowerCase()}`));
+          if (foundKey) sub = data.config[foundKey];
+        }
+        if (sub) {
+           if (document.getElementById('struct-subject-icon')) document.getElementById('struct-subject-icon').value = sub.icon || '';
+           if (document.getElementById('struct-subject-subtitle')) document.getElementById('struct-subject-subtitle').value = sub.subtitle || '';
+        }
       }
     }
-  } 
-  else if (structCurrentMode === 'subject') {
-    if (document.getElementById('struct-subject')) document.getElementById('struct-subject').value = val;
-    if (typeof allData !== 'undefined' && allData.config) {
-      let sub = null;
-      if (typeof currentClass !== 'undefined' && currentClass) {
-        sub = allData.config[`${currentClass}_${val.toLowerCase()}`];
-      }
-      // Fallback if currentClass isn't explicitly set yet
-      if (!sub) {
-        const foundKey = Object.keys(allData.config).find(k => k.endsWith(`_${val.toLowerCase()}`));
-        if (foundKey) sub = allData.config[foundKey];
-      }
-      if (sub) {
-         if (document.getElementById('struct-subject-icon')) document.getElementById('struct-subject-icon').value = sub.icon || '';
-         if (document.getElementById('struct-subject-subtitle')) document.getElementById('struct-subject-subtitle').value = sub.subtitle || '';
-      }
-    }
-  } 
-  else if (structCurrentMode === 'chapter') {
-    if (document.getElementById('struct-chapter')) document.getElementById('struct-chapter').value = val;
+  } catch(e) {
+    console.error("Error syncing fields:", e);
   }
 }
 
