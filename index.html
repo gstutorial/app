@@ -4521,8 +4521,21 @@ body.light-mode .pdf-name {
         <div id="admin-add-chapter-btn-container" class="admin-add-question" style="display: none; margin: 0; padding: 10px; flex: 1;">
            <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4); width: 100%; height: 100%; padding: 12px 10px;" onclick="openStructureManager('chapter')">⚙️ Manage</button>
         </div>
-        <div id="admin-add-question" class="admin-add-question" style="display: none; margin: 0; padding: 10px; flex: 1;">
-          <button id="add-question-btn" class="btn-success" style="width: 100%; height: 100%; padding: 12px 10px;">+ Add New</button>
+        <div id="admin-add-question" class="admin-add-question" style="display: none; margin: 0; padding: 10px; flex: 1; position: relative;">
+          
+          <button class="btn-success" style="width: 100%; height: 100%; padding: 12px 10px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="toggleAddMenu(event)">
+            + Add New <span style="font-size: 0.7em;">▼</span>
+          </button>
+          
+          <div id="add-new-menu" style="display: none; position: absolute; top: 100%; right: 0; background: #1e293b; border: 1px solid #334155; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 100; min-width: 220px; margin-top: 8px; overflow: hidden; text-align: left;">
+            <div onclick="document.getElementById('add-question-btn').click(); toggleAddMenu();" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">
+              ➕ Single Question
+            </div>
+            <div onclick="openBulkModal(); toggleAddMenu();" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">
+              📋 Bulk Paste Questions
+            </div>
+          </div>
+          <button id="add-question-btn" style="display: none;"></button>
         </div>
       </div>
 
@@ -5622,7 +5635,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwiaFYZ1C5BfQGDdnRAnUFkhFJJ6FhvcDeJpoMmPu6_d8W6XZSY7ICj7YC3qK9B28KA/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYwtJMVIbgCIrr2e8BWYIaOCIY8bbjsUwY50YbuWk7o2aEM1QD615FDhGByCQHoNYx/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -13166,9 +13179,87 @@ function updateAdminControls() {
     } else {
       questionDeleteIconEl.style.display = 'none';
     }
+    }
+  }
+
+// ========== BULK PASTE & DROPDOWN LOGIC ==========
+function toggleAddMenu(event) {
+  if (event) event.stopPropagation(); 
+  const menu = document.getElementById('add-new-menu');
+  if (menu.style.display === 'none' || menu.style.display === '') {
+    menu.style.display = 'block';
+  } else {
+    menu.style.display = 'none';
   }
 }
-  </script>
+
+window.addEventListener('click', function(event) {
+  const menu = document.getElementById('add-new-menu');
+  const container = document.getElementById('admin-add-question');
+  if (menu && menu.style.display === 'block') {
+    if (!container.contains(event.target)) {
+      menu.style.display = 'none';
+    }
+  }
+});
+
+function openBulkModal() {
+  if (isEditor() && !canAdd('question')) { window.showEditorPopup('Add Question'); return; }
+  if (!isAdmin() && !isEditor()) { alert("Admin/Editor access required"); return; }
+  if (!currentSubjectConfig || !currentTopicName) { alert("Please select a chapter first."); return; }
+  
+  document.getElementById('bulk-textarea').value = '';
+  document.getElementById('bulk-modal').style.display = 'flex';
+}
+
+function closeBulkModal() {
+  document.getElementById('bulk-modal').style.display = 'none';
+}
+
+async function submitBulkData() {
+  const text = document.getElementById('bulk-textarea').value;
+  if (!text.trim()) { alert("Please paste some data."); return; }
+  
+  let rows = text.trim().split('\n').map(row => row.split('\t'));
+  if (rows.length === 0) return;
+
+  if (rows[0][0] && rows[0][0].toString().toLowerCase().trim() === 'question') {
+    rows.shift();
+  }
+
+  if (rows.length === 0) {
+    alert("Only headers were found. Please paste the actual questions.");
+    return;
+  }
+  
+  const btn = document.getElementById('bulk-submit-btn');
+  btn.disabled = true;
+  btn.textContent = "Saving " + rows.length + " Questions...";
+  
+  let url = MASTER_CONFIG_APPS_SCRIPT_URL + '?action=manageQuestions';
+  url += '&subAction=bulkAdd';
+  url += '&sheetId=' + encodeURIComponent(currentSubjectConfig.sheetId);
+  url += '&gid=' + encodeURIComponent(currentSubjectConfig.chapters[currentChapter]);
+  url += '&username=' + encodeURIComponent(currentUser.username);
+  url += '&token=' + encodeURIComponent(currentUser.token);
+  url += '&bulkData=' + encodeURIComponent(JSON.stringify(rows));
+  url += '&_t=' + Date.now();
+  
+  try {
+    const res = await jsonpRequest(url, 'bulkCb');
+    if (res && res.success) {
+       closeBulkModal();
+       loadQuestions(currentChapter); 
+    } else {
+       alert("Error: " + (res.error || "Unknown"));
+    }
+  } catch(e) {
+    alert("Request failed: " + e.toString());
+  }
+  btn.disabled = false;
+  btn.textContent = "Save All Questions";
+}
+</script>
   <div id="edit-pdf-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center;">
     <div class="modal-content" style="background: var(--bg-color, #1e293b); padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; border: 1px solid #3b82f6;">
       <h3 style="margin-bottom: 15px; color: #3b82f6;">✏️ Edit PDF Details</h3>
@@ -13424,7 +13515,25 @@ function updateAdminControls() {
     <button onclick="closeSettingsModal()" style="width: 100%; padding: 12px; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Close</button>
   </div>
 </div>
-<div id="admin-structure-modal" class="modal" style="display: none; z-index: 10006;">
+<div id="bulk-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10006; justify-content: center; align-items: center; padding: 20px;">
+    <div class="modal-content" style="background: #1e293b; padding: 25px; border-radius: 12px; width: 100%; max-width: 800px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2 style="color: #60a5fa; margin: 0; font-size: 1.5rem;">Bulk Paste Questions</h2>
+        <button onclick="closeBulkModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;">&times;</button>
+      </div>
+      <div style="margin-bottom: 15px; color: #94a3b8; font-size: 0.9rem;">
+        Paste your questions directly from Excel, Word, or Google Sheets. The columns <b>must be tab-separated</b> in this exact order:<br>
+        <b style="color:#f87171;">Question | Option A | Option B | Option C | Option D | Answer | Explanation | Timer</b>
+      </div>
+      <textarea id="bulk-textarea" class="form-input" rows="12" placeholder="Paste data here..." style="font-family: monospace; white-space: pre; background: #0f172a; border: 1px solid #334155; color: #f8fafc; width: 100%; padding: 12px; border-radius: 6px; resize: vertical;"></textarea>
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn-secondary" onclick="closeBulkModal()" style="padding: 10px 20px; border-radius: 6px;">Cancel</button>
+        <button id="bulk-submit-btn" class="btn-success" onclick="submitBulkData()" style="padding: 10px 20px; border-radius: 6px; background: linear-gradient(to right, #10b981, #059669); color: white; border: none;">Save All Questions</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin-structure-modal" class="modal" style="display: none; z-index: 10006;">
     <div class="modal-content" style="max-width: 500px; padding: 25px;">
       <div class="modal-header" style="margin-bottom: 15px;">
         <h2 style="font-size: 1.5rem; color: #22c55e;" id="struct-modal-title">🏗️ Structure Manager</h2>
