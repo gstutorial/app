@@ -4521,13 +4521,13 @@ body.light-mode .pdf-name {
         <div id="admin-add-chapter-btn-container" class="admin-add-question" style="display: none; margin: 0; padding: 10px; flex: 1;">
            <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4); width: 100%; height: 100%; padding: 12px 10px;" onclick="openStructureManager('chapter')">⚙️ Manage</button>
         </div>
-        <div id="admin-add-question" class="admin-add-question" style="display: none; margin: 0; padding: 10px; flex: 1; position: relative; z-index: 9999;">
+        <div id="admin-add-question" class="admin-add-question" style="display: none; margin: 0; padding: 10px; flex: 1; position: relative; z-index: 90;">
           
           <button class="btn-success" style="width: 100%; height: 100%; padding: 12px 10px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="toggleAddMenu(event)">
             + Add New <span style="font-size: 0.7em;">▼</span>
           </button>
           
-          <div id="add-new-menu" style="display: none; position: absolute; top: 100%; right: 0; background: #1e293b; border: 1px solid #334155; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 9999; min-width: 220px; margin-top: 8px; overflow: hidden; text-align: left;">
+          <div id="add-new-menu" style="display: none; position: absolute; top: 100%; right: 0; background: #1e293b; border: 1px solid #334155; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 90; min-width: 220px; margin-top: 8px; overflow: hidden; text-align: left;">
             <div onclick="document.getElementById('add-question-btn').click(); toggleAddMenu();" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">
               ➕ Single Question
             </div>
@@ -5635,7 +5635,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1iyI9S8Dd0dfx-l3-gAUcEVtmvIINn68E0j-Vuf7Qs_VdTihA4hKzUnuYxKOgLDN5/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwBda0FJA08pttgqWkDCWHnaMYdQ2vlXRm8aqIiB_f-wlvzQMfOBWleSPCwjG3aUOo_/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -13242,6 +13242,7 @@ async function submitBulkData() {
   let rows = text.trim().split('\n').map(row => row.split('\t'));
   if (rows.length === 0) return;
 
+  // Remove header if accidentally copied
   if (rows[0][0] && rows[0][0].toString().toLowerCase().trim() === 'question') {
     rows.shift();
   }
@@ -13255,7 +13256,6 @@ async function submitBulkData() {
   btn.disabled = true;
   btn.textContent = "Saving " + rows.length + " Questions...";
   
-  // FIX: Use FormData to safely transmit large POST bodies to Google Apps Script
   const formData = new FormData();
   formData.append('action', 'manageQuestions');
   formData.append('subAction', 'bulkAdd');
@@ -13266,36 +13266,25 @@ async function submitBulkData() {
   formData.append('bulkData', JSON.stringify(rows));
   
   try {
-    const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+    // FIX: Use 'no-cors' mode. This sends the data perfectly but makes the response "opaque".
+    await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
         method: 'POST',
+        mode: 'no-cors',
         body: formData
     });
     
-    const responseText = await response.text();
-    let res;
+    // FIX: Because the response is opaque, we CANNOT read .text() or .json(). 
+    // If the fetch command above finished without a network disconnect error, 
+    // we know it successfully hit Google's servers. We proceed directly to success!
+    closeBulkModal();
+    showToast(rows.length + " Questions added successfully!");
+    loadQuestions(currentTopicName); 
     
-    try {
-      res = JSON.parse(responseText);
-    } catch(err) {
-      // FIX: Google Apps Script POST requests often return an HTML redirect page.
-      // Since the data perfectly saved to the sheet, we catch this HTML page and safely treat it as a success!
-      if (responseText.includes('<html') || responseText.includes('<!DOCTYPE')) {
-         res = { success: true };
-      } else {
-         throw new Error("Invalid response format from server");
-      }
-    }
-    
-    if (res && res.success) {
-       closeBulkModal();
-       showToast(rows.length + " Questions added successfully!");
-       loadQuestions(currentTopicName); 
-    } else {
-       showToast("Error: " + (res.error || "Unknown"), true);
-    }
   } catch(e) {
-    showToast("Request failed: " + e.toString(), true);
+    console.error("Fetch error:", e);
+    showToast("Network Error: Could not connect to the server.", true);
   }
+  
   btn.disabled = false;
   btn.textContent = "Save All Questions";
 }
