@@ -12544,12 +12544,28 @@ async function openStructureManager(mode) {
   }
 
     function selectStructAction(action) {
-      if (isEditor()) {
-        if (action === 'add' && !canAdd(structCurrentMode)) { window.showEditorPopup('Add ' + structCurrentMode); return; }
-        if (action === 'edit' && !canEdit(structCurrentMode)) { window.showEditorPopup('Edit ' + structCurrentMode); return; }
-        if (action === 'delete' && !canDelete(structCurrentMode)) { window.showEditorPopup('Delete ' + structCurrentMode); return; }
-        if (action === 'reorder' && !canEdit(structCurrentMode)) { window.showEditorPopup('Edit ' + structCurrentMode); return; }
-      }
+     if (isEditor()) {
+    if (action === 'add' && !canAdd(structCurrentMode)) { 
+        window.showEditorPopup('Add ' + structCurrentMode); 
+        closeStructureManager(); 
+        return; 
+    }
+    if (action === 'edit' && !canEdit(structCurrentMode)) { 
+        window.showEditorPopup('Edit ' + structCurrentMode); 
+        closeStructureManager(); 
+        return; 
+    }
+    if (action === 'delete' && !canDelete(structCurrentMode)) { 
+        window.showEditorPopup('Delete ' + structCurrentMode); 
+        closeStructureManager(); 
+        return; 
+    }
+    if (action === 'reorder' && !canEdit(structCurrentMode)) { 
+        window.showEditorPopup('Edit ' + structCurrentMode); 
+        closeStructureManager(); 
+        return; 
+    }
+  }
 
       structCurrentAction = action;
       document.getElementById('struct-action-buttons').style.display = 'none';
