@@ -4302,9 +4302,15 @@ body.light-mode .pdf-name {
         <div class="screen-title">Select Your Class</div>
         <div class="screen-subtitle">Choose your class and Start</div>
       </div>
-      <div id="admin-add-class-btn-container" class="admin-add-question" style="display: none; margin-bottom: 20px; padding: 12px;">
-       <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4);" onclick="openStructureManager('class')">⚙️ Manage Classes</button>
-    </div>
+      <div id="admin-add-class-btn-container" class="admin-add-question" style="display: none; margin-bottom: 20px; padding: 12px; position: relative;">
+   <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4); width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="toggleManageMenu('class', event)">⚙️ Manage Classes <span style="font-size: 0.7em;">▼</span></button>
+   <div id="manage-class-menu" style="display: none; position: absolute; top: 100%; right: 12px; left: 12px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 90; margin-top: 8px; overflow: hidden; text-align: left;">
+        <div onclick="openStructureManager('class'); selectStructAction('add'); toggleManageMenu('class');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">➕ Add Class</div>
+        <div onclick="openStructureManager('class'); selectStructAction('edit'); toggleManageMenu('class');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">✏️ Edit Class</div>
+        <div onclick="openStructureManager('class'); selectStructAction('reorder'); toggleManageMenu('class');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">↕️ Reorder Class</div>
+        <div onclick="openStructureManager('class'); selectStructAction('delete'); toggleManageMenu('class');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">🗑️ Delete Class</div>
+   </div>
+</div>
       <div class="class-grid" id="class-grid">
         <!-- Classes will be loaded dynamically -->
       </div>
@@ -4316,9 +4322,15 @@ body.light-mode .pdf-name {
         <div class="screen-title">Select Subject</div>
         <div class="screen-subtitle" id="current-class-display">Class</div>
       </div>
-      <div id="admin-add-subject-btn-container" class="admin-add-question" style="display: none; margin-bottom: 20px; padding: 12px;">
-       <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4);" onclick="openStructureManager('subject')">⚙️ Manage Subjects</button>
-    </div>
+      <div id="admin-add-subject-btn-container" class="admin-add-question" style="display: none; margin-bottom: 20px; padding: 12px; position: relative;">
+   <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4); width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="toggleManageMenu('subject', event)">⚙️ Manage Subjects <span style="font-size: 0.7em;">▼</span></button>
+   <div id="manage-subject-menu" style="display: none; position: absolute; top: 100%; right: 12px; left: 12px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 90; margin-top: 8px; overflow: hidden; text-align: left;">
+        <div onclick="openStructureManager('subject'); selectStructAction('add'); toggleManageMenu('subject');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">➕ Add Subject</div>
+        <div onclick="openStructureManager('subject'); selectStructAction('edit'); toggleManageMenu('subject');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">✏️ Edit Subject</div>
+        <div onclick="openStructureManager('subject'); selectStructAction('reorder'); toggleManageMenu('subject');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">↕️ Reorder Subject</div>
+        <div onclick="openStructureManager('subject'); selectStructAction('delete'); toggleManageMenu('subject');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">🗑️ Delete Subject</div>
+   </div>
+</div>
       <div class="subject-grid" id="subject-grid">
         <!-- Subjects will be loaded dynamically -->
       </div>
@@ -4518,9 +4530,15 @@ body.light-mode .pdf-name {
       </div>
 
       <div style="display: flex; gap: 10px; margin-bottom: 15px; width: 100%;">
-        <div id="admin-add-chapter-btn-container" class="admin-add-question" style="display: none; margin: 0; padding: 10px; flex: 1;">
-           <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4); width: 100%; height: 100%; padding: 12px 10px;" onclick="openStructureManager('chapter')">⚙️ Manage</button>
-        </div>
+        <div id="admin-add-chapter-btn-container" class="admin-add-question" style="display: none; margin: 0; padding: 10px; flex: 1; position: relative;">
+       <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4); width: 100%; height: 100%; padding: 12px 10px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="toggleManageMenu('chapter', event)">⚙️ Manage <span style="font-size: 0.7em;">▼</span></button>
+       <div id="manage-chapter-menu" style="display: none; position: absolute; top: 100%; right: 0; background: #1e293b; border: 1px solid #334155; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 90; min-width: 220px; margin-top: 8px; overflow: hidden; text-align: left;">
+        <div onclick="openStructureManager('chapter'); selectStructAction('add'); toggleManageMenu('chapter');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">➕ Add Chapter</div>
+        <div onclick="openStructureManager('chapter'); selectStructAction('edit'); toggleManageMenu('chapter');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">✏️ Edit Chapter</div>
+        <div onclick="openStructureManager('chapter'); selectStructAction('reorder'); toggleManageMenu('chapter');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">↕️ Reorder Chapter</div>
+        <div onclick="openStructureManager('chapter'); selectStructAction('delete'); toggleManageMenu('chapter');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">🗑️ Delete Chapter</div>
+       </div>
+    </div>
         <div id="admin-add-question" class="admin-add-question" style="display: none; margin: 0; padding: 10px; flex: 1; position: relative; z-index: 90;">
           
           <button class="btn-success" style="width: 100%; height: 100%; padding: 12px 10px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="toggleAddMenu(event)">
@@ -13193,14 +13211,32 @@ function toggleAddMenu(event) {
   }
 }
 
+function toggleManageMenu(type, event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById('manage-' + type + '-menu');
+  if (menu) {
+    menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
+  }
+}
+
 window.addEventListener('click', function(event) {
-  const menu = document.getElementById('add-new-menu');
-  const container = document.getElementById('admin-add-question');
-  if (menu && menu.style.display === 'block') {
-    if (!container.contains(event.target)) {
-      menu.style.display = 'none';
+  const addMenu = document.getElementById('add-new-menu');
+  const addContainer = document.getElementById('admin-add-question');
+  if (addMenu && addMenu.style.display === 'block') {
+    if (!addContainer.contains(event.target)) {
+      addMenu.style.display = 'none';
     }
   }
+
+  ['class', 'subject', 'chapter'].forEach(type => {
+    const manageMenu = document.getElementById('manage-' + type + '-menu');
+    const manageContainer = document.getElementById('admin-add-' + type + '-btn-container');
+    if (manageMenu && manageMenu.style.display === 'block') {
+      if (manageContainer && !manageContainer.contains(event.target)) {
+        manageMenu.style.display = 'none';
+      }
+    }
+  });
 });
 
 function openBulkModal() {
