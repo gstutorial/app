@@ -12545,26 +12545,10 @@ async function openStructureManager(mode) {
 
     function selectStructAction(action) {
      if (isEditor()) {
-    if (action === 'add' && !canAdd(structCurrentMode)) { 
-        window.showEditorPopup('Add ' + structCurrentMode); 
-        closeStructureManager(); 
-        return; 
-    }
-    if (action === 'edit' && !canEdit(structCurrentMode)) { 
-        window.showEditorPopup('Edit ' + structCurrentMode); 
-        closeStructureManager(); 
-        return; 
-    }
-    if (action === 'delete' && !canDelete(structCurrentMode)) { 
-        window.showEditorPopup('Delete ' + structCurrentMode); 
-        closeStructureManager(); 
-        return; 
-    }
-    if (action === 'reorder' && !canEdit(structCurrentMode)) { 
-        window.showEditorPopup('Edit ' + structCurrentMode); 
-        closeStructureManager(); 
-        return; 
-    }
+    if (action === 'add' && !canAdd(structCurrentMode)) { window.showEditorPopup('Add ' + structCurrentMode); document.getElementById('admin-structure-modal').style.display = 'none'; return; }
+    if (action === 'edit' && !canEdit(structCurrentMode)) { window.showEditorPopup('Edit ' + structCurrentMode); document.getElementById('admin-structure-modal').style.display = 'none'; return; }
+    if (action === 'delete' && !canDelete(structCurrentMode)) { window.showEditorPopup('Delete ' + structCurrentMode); document.getElementById('admin-structure-modal').style.display = 'none'; return; }
+    if (action === 'reorder' && !canEdit(structCurrentMode)) { window.showEditorPopup('Edit ' + structCurrentMode); document.getElementById('admin-structure-modal').style.display = 'none'; return; }
   }
 
       structCurrentAction = action;
