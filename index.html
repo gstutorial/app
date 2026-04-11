@@ -7520,23 +7520,37 @@ function calculateDaysRemaining(lastDateStr) {
   
   lastDate.setHours(23, 59, 59, 999);
   
-  // --- ANTI TIME-TRAVEL SECURITY ---
+  // --- ANTI TIME-TRAVEL SECURITY (V2 ULTIMATE) ---
   let currentDeviceTime = Date.now();
-  let highestKnownTime = parseInt(localStorage.getItem('gs_highest_time')) || 0;
   
-  // 1. Update the highest known reality if the clock is moving forward normally
+  // 1. HARD LIMIT: The app knows it was created in April 2026. 
+  // If the phone says it is 2024 or 2025, they are 100% cheating.
+  const APP_RELEASE_DATE = new Date('2026-04-01').getTime();
+  if (currentDeviceTime < APP_RELEASE_DATE) {
+    currentDeviceTime = APP_RELEASE_DATE; 
+  }
+
+  let highestKnownTime = parseInt(localStorage.getItem('gs_highest_time')) || APP_RELEASE_DATE;
+  
+  // 2. Update the highest reality memory if time is moving forward
   if (currentDeviceTime > highestKnownTime) {
     localStorage.setItem('gs_highest_time', currentDeviceTime);
     highestKnownTime = currentDeviceTime;
   }
   
-  // 2. Determine the True Time
+  // 3. Determine True Time
   let trueTime = currentDeviceTime + serverTimeOffset;
   
-  // 3. If server sync failed (0) AND their clock is older than a time the app already saw, they cheated!
+  // 4. Offline Time-Travel Trap
   if (serverTimeOffset === 0 && currentDeviceTime < highestKnownTime) {
-    // Force the clock forward to the highest known reality
     trueTime = highestKnownTime;
+  }
+
+  // 5. SSL / Captive Portal Trap (Network is ON, but Time Sync failed)
+  // If they have Wi-Fi ON but Time Sync failed, their date is so wrong that Google blocked the connection.
+  if (serverTimeOffset === 0 && navigator.onLine) {
+     // Force trueTime 1 year into the future to instantly trigger the Expiry Window instead of a crash!
+     trueTime = highestKnownTime + (1000 * 60 * 60 * 24 * 365); 
   }
   
   const now = new Date(trueTime);
