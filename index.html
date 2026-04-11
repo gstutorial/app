@@ -8711,11 +8711,11 @@ function stopInactivityTracker() {
           ];
 
           const rightColumn = [
-            `Class: ${currentClass === 'JE' ? 'Junior Engineer' : 'Class ' + currentClass}`,
-            `Subject: ${currentSubject}`,
-            `Date: ${date}`,
-            `Time: ${stats.timeTaken || "N/A"}`
-          ];
+  `Class: ${currentClass}`,
+  `Subject: ${currentSubject}`,
+  `Date: ${date}`,
+  `Time: ${time}`
+];
 
           let yPos = 115;
           for (let i = 0; i < 4; i++) {
@@ -9159,7 +9159,7 @@ function stopInactivityTracker() {
 
 function showSubjectSelection(className) {
       currentClass = className;
-      currentClassDisplayEl.textContent = className === 'JE' ? 'Junior Engineer' : `Class ${className}`;
+      currentClassDisplayEl.textContent = className;
       pathClassLink.textContent = currentClassDisplayEl.textContent;
 
       classSelectionEl.style.display = "none";
@@ -9184,7 +9184,7 @@ function showSubjectSelection(className) {
     function showQuizContainer(subjectName) {
       currentSubject = subjectName;
       pathSubjectEl.textContent = subjectName;
-      pathClassLink.textContent = currentClass === 'JE' ? 'Junior Engineer' : `Class ${currentClass}`;
+      pathClassLink.textContent = currentClass;
       currentPathEl.style.display = "flex";
 
       subjectSelectionEl.style.display = "none";
@@ -11621,12 +11621,12 @@ if (isScreenVisible('video-container')) {
             `Ch: ${currentTopicName.substring(0, 60)}`
           ];
 
-          const rightColumn = [
-            `Class: ${currentClass === 'JE' ? 'Junior Engineer' : 'Class ' + currentClass}`,
-            `Subject: ${currentSubject}`,
-            `Date: ${date}`,
-            `Time: ${time}`
-          ];
+         const rightColumn = [
+  `Class: ${currentClass}`,
+  `Subject: ${currentSubject}`,
+  `Date: ${date}`,
+  `Time: ${time}`
+];
 
           let yPos = 115;
           for (let i = 0; i < 4; i++) {
