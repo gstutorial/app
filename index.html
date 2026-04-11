@@ -7520,8 +7520,26 @@ function calculateDaysRemaining(lastDateStr) {
   
   lastDate.setHours(23, 59, 59, 999);
   
-  // FIX: Use synchronized server time instead of the hackable device time
-  const now = new Date(Date.now() + serverTimeOffset);
+  // --- ANTI TIME-TRAVEL SECURITY ---
+  let currentDeviceTime = Date.now();
+  let highestKnownTime = parseInt(localStorage.getItem('gs_highest_time')) || 0;
+  
+  // 1. Update the highest known reality if the clock is moving forward normally
+  if (currentDeviceTime > highestKnownTime) {
+    localStorage.setItem('gs_highest_time', currentDeviceTime);
+    highestKnownTime = currentDeviceTime;
+  }
+  
+  // 2. Determine the True Time
+  let trueTime = currentDeviceTime + serverTimeOffset;
+  
+  // 3. If server sync failed (0) AND their clock is older than a time the app already saw, they cheated!
+  if (serverTimeOffset === 0 && currentDeviceTime < highestKnownTime) {
+    // Force the clock forward to the highest known reality
+    trueTime = highestKnownTime;
+  }
+  
+  const now = new Date(trueTime);
   const diffTime = lastDate - now;
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
