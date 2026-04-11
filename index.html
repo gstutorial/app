@@ -5685,7 +5685,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxbHFROQ5GygM0VHHTOYWM8brmdtn0LN7L6Cwgv78HvqoumxyPPPymCQzURR5XgLehQ/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzL4Ez4sQkP-dmRxoJHBVEh9AYUJnHh7YYomxWB25h8hcHvvE2SEkAjNtBHHEmbzYci/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -7500,7 +7500,9 @@ function toggleContactDev() {
   }
 }
 
-// 2. Calculate Days Remaining
+// GLOBAL VARIABLE FOR SECURITY TIME SYNC
+let serverTimeOffset = 0;
+
 function calculateDaysRemaining(lastDateStr) {
   if (!lastDateStr || lastDateStr.toString().trim() === '') return 'lifetime';
   
@@ -7517,11 +7519,12 @@ function calculateDaysRemaining(lastDateStr) {
   if (!lastDate || isNaN(lastDate.getTime())) return 'lifetime';
   
   lastDate.setHours(23, 59, 59, 999);
-  const now = new Date();
+  
+  // FIX: Use synchronized server time instead of the hackable device time
+  const now = new Date(Date.now() + serverTimeOffset);
   const diffTime = lastDate - now;
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
-
 // 3. Show Subscription Popup
 function showSubscriptionPopup() {
   if (!currentUser) return;
@@ -12451,6 +12454,17 @@ if (isScreenVisible('video-container')) {
       // Activate the back button router
       setupMobileBackButton();
 
+      // FIX: Fetch unbreakable server time during startup to prevent local device date manipulation
+      try {
+        const res = await fetch(window.location.href.split('?')[0] + '?_=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+        const serverDate = new Date(res.headers.get('Date'));
+        if (!isNaN(serverDate.getTime())) {
+          serverTimeOffset = serverDate.getTime() - Date.now();
+        }
+      } catch (e) {
+        console.log("Time sync failed, using strict backend rules.");
+      }
+
       // 1. Get initial configurations
       await loadTelegramConfig();
       await getUserIP();
@@ -12555,7 +12569,6 @@ if (isScreenVisible('video-container')) {
 
       resetFailedAttempts();
     }
-
     // Start the app and load configs
     window.addEventListener('DOMContentLoaded', initializeApp);
    // ========== SECURE STRUCTURE MANAGER JS ==========
