@@ -4302,15 +4302,19 @@ body.light-mode .pdf-name {
         <div class="screen-title">Select Your Class</div>
         <div class="screen-subtitle">Choose your class and Start</div>
       </div>
-      <div id="admin-add-class-btn-container" class="admin-add-question" style="display: none; margin-bottom: 20px; padding: 12px; position: relative;">
-   <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4); width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="toggleManageMenu('class', event)">⚙️ Manage Classes <span style="font-size: 0.7em;">▼</span></button>
-   <div id="manage-class-menu" style="display: none; position: absolute; top: 100%; right: 12px; left: 12px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 90; margin-top: 8px; overflow: hidden; text-align: left;">
-        <div onclick="openStructureManager('class'); selectStructAction('add'); toggleManageMenu('class');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">➕ Add Class</div>
-        <div onclick="openStructureManager('class'); selectStructAction('edit'); toggleManageMenu('class');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">✏️ Edit Class</div>
-        <div onclick="openStructureManager('class'); selectStructAction('reorder'); toggleManageMenu('class');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">↕️ Reorder Class</div>
-        <div onclick="openStructureManager('class'); selectStructAction('delete'); toggleManageMenu('class');" style="padding: 14px 16px; color: #fff; background: #ef4444; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">🗑️ Delete Class</div>
-   </div>
-</div>
+      <div id="admin-add-class-btn-container" style="display: none; margin-bottom: 20px; width: 100%;">
+        <div style="display: flex; align-items: stretch; background: #1e293b; border-radius: 12px; padding: 6px; box-shadow: inset 0 2px 6px rgba(0,0,0,0.4); border: 1px solid #334155; width: 100%; box-sizing: border-box;">
+          <div style="margin: 0; padding: 0; flex: 1; position: relative; background: transparent;">
+            <button class="modern-tab-btn" style="border-radius: 8px;" onclick="toggleManageMenu('class', event)">⚙️ Manage Classes <span style="font-size: 0.7em;">▼</span></button>
+            <div id="manage-class-menu" style="display: none; position: absolute; top: calc(100% + 10px); left: 0; right: 0; background: #1e293b; border: 1px solid #334155; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 9999; overflow: hidden; text-align: left;">
+              <div onclick="openStructureManager('class'); selectStructAction('add'); toggleManageMenu('class');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">➕ Add Class</div>
+              <div onclick="openStructureManager('class'); selectStructAction('edit'); toggleManageMenu('class');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">✏️ Edit Class</div>
+              <div onclick="openStructureManager('class'); selectStructAction('reorder'); toggleManageMenu('class');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">↕️ Reorder Class</div>
+              <div onclick="openStructureManager('class'); selectStructAction('delete'); toggleManageMenu('class');" style="padding: 14px 16px; color: #fff; background: #ef4444; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='transparent'">🗑️ Delete Class</div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="class-grid" id="class-grid">
         <!-- Classes will be loaded dynamically -->
       </div>
@@ -4322,15 +4326,19 @@ body.light-mode .pdf-name {
         <div class="screen-title">Select Subject</div>
         <div class="screen-subtitle" id="current-class-display">Class</div>
       </div>
-      <div id="admin-add-subject-btn-container" class="admin-add-question" style="display: none; margin-bottom: 20px; padding: 12px; position: relative;">
-   <button class="btn-success" style="background: linear-gradient(to right, #8b5cf6, #6366f1); box-shadow: 0 8px 18px rgba(139, 92, 246, 0.4); width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="toggleManageMenu('subject', event)">⚙️ Manage Subjects <span style="font-size: 0.7em;">▼</span></button>
-   <div id="manage-subject-menu" style="display: none; position: absolute; top: 100%; right: 12px; left: 12px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 90; margin-top: 8px; overflow: hidden; text-align: left;">
-        <div onclick="openStructureManager('subject'); selectStructAction('add'); toggleManageMenu('subject');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">➕ Add Subject</div>
-        <div onclick="openStructureManager('subject'); selectStructAction('edit'); toggleManageMenu('subject');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">✏️ Edit Subject</div>
-        <div onclick="openStructureManager('subject'); selectStructAction('reorder'); toggleManageMenu('subject');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">↕️ Reorder Subject</div>
-        <div onclick="openStructureManager('subject'); selectStructAction('delete'); toggleManageMenu('subject');" style="padding: 14px 16px; color: #fff; background: #ef4444; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">🗑️ Delete Subject</div>
-   </div>
-</div>
+      <div id="admin-add-subject-btn-container" style="display: none; margin-bottom: 20px; width: 100%;">
+        <div style="display: flex; align-items: stretch; background: #1e293b; border-radius: 12px; padding: 6px; box-shadow: inset 0 2px 6px rgba(0,0,0,0.4); border: 1px solid #334155; width: 100%; box-sizing: border-box;">
+          <div style="margin: 0; padding: 0; flex: 1; position: relative; background: transparent;">
+            <button class="modern-tab-btn" style="border-radius: 8px;" onclick="toggleManageMenu('subject', event)">⚙️ Manage Subjects <span style="font-size: 0.7em;">▼</span></button>
+            <div id="manage-subject-menu" style="display: none; position: absolute; top: calc(100% + 10px); left: 0; right: 0; background: #1e293b; border: 1px solid #334155; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 9999; overflow: hidden; text-align: left;">
+              <div onclick="openStructureManager('subject'); selectStructAction('add'); toggleManageMenu('subject');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">➕ Add Subject</div>
+              <div onclick="openStructureManager('subject'); selectStructAction('edit'); toggleManageMenu('subject');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">✏️ Edit Subject</div>
+              <div onclick="openStructureManager('subject'); selectStructAction('reorder'); toggleManageMenu('subject');" style="padding: 14px 16px; color: #f8fafc; cursor: pointer; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">↕️ Reorder Subject</div>
+              <div onclick="openStructureManager('subject'); selectStructAction('delete'); toggleManageMenu('subject');" style="padding: 14px 16px; color: #fff; background: #ef4444; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='transparent'">🗑️ Delete Subject</div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="subject-grid" id="subject-grid">
         <!-- Subjects will be loaded dynamically -->
       </div>
