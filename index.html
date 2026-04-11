@@ -4565,9 +4565,9 @@ body.light-mode .pdf-name {
       color: #4ade80 !important;
     }
   </style>
-  <div id="admin-quiz-controls-container" style="display: none; align-items: stretch; margin-bottom: 15px; background: #1e293b; border-radius: 12px; padding: 6px; box-shadow: inset 0 2px 6px rgba(0,0,0,0.4); border: 1px solid #334155; width: 100%;">
+  <div id="admin-quiz-controls-container" style="display: none; position: relative; z-index: 999; align-items: stretch; margin-bottom: 15px; background: #1e293b; border-radius: 12px; padding: 6px; box-shadow: inset 0 2px 6px rgba(0,0,0,0.4); border: 1px solid #334155; width: 100%;">
 
-    <div id="admin-add-chapter-btn-container" style="display: none; margin: 0; padding: 0; flex: 1; position: relative; border-right: 1px solid #334155; background: transparent;">
+    <div id="admin-add-chapter-btn-container" style="display: none; margin: 0; padding: 0; flex: 1; position: relative; z-index: 999; border-right: 1px solid #334155; background: transparent;">
        <button class="modern-tab-btn" style="border-radius: 8px 0 0 8px;" onclick="toggleManageMenu('chapter', event)">⚙️ Manage <span style="font-size: 0.7em;">▼</span></button>
 
        <div id="manage-chapter-menu" style="display: none; position: absolute; top: calc(100% + 10px); left: 0; right: auto; background: #1e293b; border: 1px solid #334155; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 9999; min-width: 220px; overflow: hidden; text-align: left;">
@@ -4578,7 +4578,7 @@ body.light-mode .pdf-name {
        </div>
     </div>
 
-    <div id="admin-add-question" style="display: none; margin: 0; padding: 0; flex: 1; position: relative; z-index: 90; background: transparent; border: none;">
+    <div id="admin-add-question" style="display: none; margin: 0; padding: 0; flex: 1; position: relative; z-index: 999; background: transparent; border: none;">
       <button class="modern-tab-btn" style="border-radius: 0 8px 8px 0;" onclick="toggleAddMenu(event)">➕ Add New <span style="font-size: 0.7em;">▼</span></button>
 
       <div id="add-new-menu" style="display: none; position: absolute; top: calc(100% + 10px); right: 0; left: auto; background: #1e293b; border: 1px solid #334155; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 9999; min-width: 220px; overflow: hidden; text-align: left;">
