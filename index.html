@@ -8130,50 +8130,30 @@ function validateUserAccount(user) {
     return { valid: false, error: 'unknown' };
   }
 
-  // --- SUBSCRIPTION EXPIRY CHECK ---
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
+  // --- SUBSCRIPTION EXPIRY CHECK (NOW SECURED BY ANTI-TIME TRAVEL) ---
   if (user.lastDate && user.lastDate.toString().trim() !== '') {
-    try {
-      let lastDateValue = user.lastDate;
-      let lastDate = null;
-      
-      if (typeof lastDateValue === "string" && lastDateValue.startsWith("Date(")) {
-        const parts = lastDateValue.replace("Date(", "").replace(")", "").split(",").map(Number);
-        lastDate = new Date(parts[0], parts[1], parts[2]);
-      } else if (typeof lastDateValue === "string") {
-        lastDate = new Date(lastDateValue);
-      } else if (typeof lastDateValue === "number") {
-        lastDate = new Date(Math.round((lastDateValue - 25569) * 86400 * 1000));
-      }
-
-      if (lastDate && !isNaN(lastDate.getTime())) {
-        lastDate.setHours(23, 59, 59, 999);
-        if (lastDate < today) {
-          return { valid: false, error: 'expired' };
-        }
-      }
-    } catch (e) {
-      console.error("Date parsing error on frontend", e);
-    }
+     const daysRemaining = calculateDaysRemaining(user.lastDate);
+     // If the secure math returns a negative number, instantly block access!
+     if (daysRemaining !== 'lifetime' && daysRemaining < 0) {
+         return { valid: false, error: 'expired' };
+     }
   }
 
   // --- FIX 1: NORMALIZE ROLE CASE SENSITIVITY ---
   const normalizedRole = user.role ? user.role.trim().charAt(0).toUpperCase() + user.role.trim().slice(1).toLowerCase() : '';
   user.role = normalizedRole;
 
- const validRoles = ['Admin', 'Teacher', 'User', 'Student', 'Editor', 'Trial'];
-    if (!validRoles.includes(user.role)) {
-      return { valid: false, error: 'invalid_role' };
-    }
+  const validRoles = ['Admin', 'Teacher', 'User', 'Student', 'Editor', 'Trial'];
+  if (!validRoles.includes(user.role)) {
+    return { valid: false, error: 'invalid_role' };
+  }
 
-    // --- FIX: Force userClassValue to be a String so .split() never fails ---
-    const userClassValue = (user.class !== undefined && user.class !== null) ? String(user.class) : "";
-    const assignedClasses = userClassValue
-      .split(',')
-      .map(c => c.trim())
-      .filter(c => c && c.toLowerCase() !== 'none' && c.toLowerCase() !== 'null');
+  // --- FIX: Force userClassValue to be a String so .split() never fails ---
+  const userClassValue = (user.class !== undefined && user.class !== null) ? String(user.class) : "";
+  const assignedClasses = userClassValue
+    .split(',')
+    .map(c => c.trim())
+    .filter(c => c && c.toLowerCase() !== 'none' && c.toLowerCase() !== 'null');
 
   if (user.role === 'Admin') {
     return { valid: true, assignedClasses: [] };
@@ -12076,25 +12056,33 @@ if (isScreenVisible('video-container')) {
     window.restartQuiz = restartQuiz;
 
     // ========== EVENT LISTENERS ==========
-   // Variable to hold the countdown timer so we can stop it when needed
-    let lockoutTimerInterval = null;
+// Variable to hold the countdown timer so we can stop it when needed
+let lockoutTimerInterval = null;
 
-    loginFormEl.addEventListener("submit", async function(e) {
-      e.preventDefault();
+loginFormEl.addEventListener("submit", async function(e) {
+  e.preventDefault();
 
-      // Clear any existing timer if they try to submit again
-      if (lockoutTimerInterval) clearInterval(lockoutTimerInterval);
+  // Clear any existing timer if they try to submit again
+  if (lockoutTimerInterval) clearInterval(lockoutTimerInterval);
 
-      const username = usernameEl.value.trim();
-      const password = passwordEl.value.trim();
+  const username = usernameEl.value.trim();
+  const password = passwordEl.value.trim();
 
-      if (!username || !password) {
-        loginErrorEl.textContent = "Enter both username and password";
-        loginErrorEl.style.display = "block";
-        return;
-      }
+  // --- NEW: PRE-LOGIN TIME TRAVEL TRAP ---
+  const APP_RELEASE_DATE = new Date('2026-04-01').getTime();
+  if (Date.now() < APP_RELEASE_DATE) {
+      loginErrorEl.innerHTML = "Device Date is incorrect. Please set your phone clock to the real time to log in.";
+      loginErrorEl.style.display = "block";
+      return;
+  }
 
-      loginErrorEl.style.display = "none";
+  if (!username || !password) {
+    loginErrorEl.textContent = "Enter both username and password";
+    loginErrorEl.style.display = "block";
+    return;
+  }
+
+  loginErrorEl.style.display = "none";
   const originalText = "Login"; // Keep the original text safe
   
   loginBtnEl.classList.add('saving');
@@ -12109,208 +12097,210 @@ if (isScreenVisible('video-container')) {
     const user = result.user;
     login(user, false);
         
-        // Remove loading state on success
-        loginBtnEl.classList.remove('saving');
-        loginBtnEl.innerHTML = originalText;
-        loginBtnEl.disabled = false;
+    // Remove loading state on success
+    loginBtnEl.classList.remove('saving');
+    loginBtnEl.innerHTML = originalText;
+    loginBtnEl.disabled = false;
         
-      } else {
-        // --- LIVE COUNTDOWN LOGIC ---
-        if (result?.isLocked && result?.remainingSeconds) {
-          
-          let timeLeft = result.remainingSeconds;
-          loginBtnEl.classList.remove('saving'); // Remove the spinner
-          
-          // Function to update the text every second
-          const updateCountdownUI = () => {
-            const mins = Math.floor(timeLeft / 60);
-            const secs = timeLeft % 60;
-            const timeString = `${mins}:${secs.toString().padStart(2, '0')}`;
-            
-            // FIX: Explicitly set the warning text and force it to display!
-            loginErrorEl.innerHTML = `Too many failed attempts.<br>Account locked. Try again in <b>${timeString}</b>`;
-            loginErrorEl.style.display = "block";
-            loginErrorEl.style.color = "#ef4444"; // Force red text
-            loginErrorEl.style.marginBottom = "15px"; // Give it space above the button
-            
-            loginBtnEl.innerHTML = `Locked (${timeString})`;
-            loginBtnEl.disabled = true; // Keep button disabled
-          };
+  } else {
+    // --- LIVE COUNTDOWN LOGIC ---
+    if (result?.isLocked && result?.remainingSeconds) {
+      
+      let timeLeft = result.remainingSeconds;
+      loginBtnEl.classList.remove('saving'); // Remove the spinner
+      
+      // Function to update the text every second
+      const updateCountdownUI = () => {
+        const mins = Math.floor(timeLeft / 60);
+        const secs = timeLeft % 60;
+        const timeString = `${mins}:${secs.toString().padStart(2, '0')}`;
+        
+        // FIX: Explicitly set the warning text and force it to display!
+        loginErrorEl.innerHTML = `Too many failed attempts.<br>Account locked. Try again in <b>${timeString}</b>`;
+        loginErrorEl.style.display = "block";
+        loginErrorEl.style.color = "#ef4444"; // Force red text
+        loginErrorEl.style.marginBottom = "15px"; // Give it space above the button
+        
+        loginBtnEl.innerHTML = `Locked (${timeString})`;
+        loginBtnEl.disabled = true; // Keep button disabled
+      };
 
-          // Run immediately once, then start the 1-second interval
-          updateCountdownUI();
-          
-          lockoutTimerInterval = setInterval(() => {
-            timeLeft--;
-            if (timeLeft <= 0) {
-              // Timer finished! Unlock the UI.
-              clearInterval(lockoutTimerInterval);
-              loginErrorEl.textContent = "Lockout expired. You can try logging in now.";
-              loginErrorEl.style.color = "#10b981"; // Make text green to indicate success
-              loginBtnEl.innerHTML = originalText;
-              loginBtnEl.disabled = false;
-            } else {
-              updateCountdownUI();
-            }
-          }, 1000);
-
-        } else {
-          // Normal error (like wrong password, 3 attempts left)
-          loginErrorEl.textContent = result?.error || 'Invalid username or password';
-          loginErrorEl.style.display = "block";
-          loginErrorEl.style.color = "#ef4444"; // reset to red if it was green
-          
-          // Reset the button so they can try again
-          loginBtnEl.classList.remove('saving');
+      // Run immediately once, then start the 1-second interval
+      updateCountdownUI();
+      
+      lockoutTimerInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+          // Timer finished! Unlock the UI.
+          clearInterval(lockoutTimerInterval);
+          loginErrorEl.textContent = "Lockout expired. You can try logging in now.";
+          loginErrorEl.style.color = "#10b981"; // Make text green to indicate success
           loginBtnEl.innerHTML = originalText;
           loginBtnEl.disabled = false;
+        } else {
+          updateCountdownUI();
         }
-      }
-    });
-    passwordToggleEl.addEventListener("click", togglePasswordVisibility);
-    
-    backToClassesBtn.addEventListener("click", function(e) {
-      e.preventDefault();
-      showClassSelection();
-      resetInactivityTimer();
-    });
-    
-    backToLoginBtnEl.addEventListener("click", function(e) {
-      e.preventDefault();
-      accountConfigErrorEl.style.display = "none";
-      subscriptionExpiredEl.style.display = "none";
-      loginContainerEl.style.display = "flex";
-      resetInactivityTimer();
-    });
-    
-    backToLoginFromExpiredBtn.addEventListener("click", function(e) {
-      e.preventDefault();
-      subscriptionExpiredEl.style.display = "none";
-      accountConfigErrorEl.style.display = "none";
-      loginContainerEl.style.display = "flex";
-      resetInactivityTimer();
-    });
+      }, 1000);
 
-        startBtnEl.addEventListener("click", function(e) {
-      e.preventDefault();
-      const chapter = topicSelectEl.value;
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-      removeTimerNotification();
-      resetQuizState();
-
-      startBtnEl.classList.add('saving');
-      startBtnEl.innerHTML = 'Loading...';
-      startBtnEl.disabled = true;
-
-      loadQuestionsFromGoogleSheet(chapter).then(() => {
-        isQuizActive = true;
-        quizStartTime = Date.now();
-        startBtnEl.classList.remove('saving');
-        startBtnEl.innerHTML = 'Start';
-        startBtnEl.disabled = false;
-      }).catch(() => {
-        startBtnEl.classList.remove('saving');
-        startBtnEl.innerHTML = 'Start';
-        startBtnEl.disabled = false;
-      });
-      resetInactivityTimer();
-    });
-
-
-    nextBtn.addEventListener("click", function(e) {
-      e.preventDefault();
-      goToNextQuestion();
-    });
-    
-    previousBtn.addEventListener("click", function(e) {
-      e.preventDefault();
-      goToPreviousQuestion();
-    });
-    
-    const navHeaderToggle = document.getElementById("nav-header-toggle");
-    if (navHeaderToggle) {
-      navHeaderToggle.addEventListener("click", function(e) {
-        e.preventDefault();
-        toggleQuestionNavigation();
-      });
-    }
-    
-    randomToggleEl.addEventListener("change", function() {
-      resetInactivityTimer();
-    });
-
-   // Intercept chapter dropdown changes
-    topicSelectEl.addEventListener('change', function() {
-      if (currentUser && currentUser.role === 'Trial' && this.selectedIndex > 1) {
-        window.showTrialPopup();
-        this.selectedIndex = 0; 
-        startBtnEl.disabled = true;
-      } else {
-        // Enable if valid chapter is selected, disable if they went back to "Select Chapter"
-        startBtnEl.disabled = (this.selectedIndex === 0);
-      }
-    });
-    // Setup image URL toggle
-    if (showImageUrlsCheckbox) {
-      showImageUrlsCheckbox.addEventListener('change', toggleImageUrlFields);
-    }
-
-    setupQuestionWhatsAppSupport();
-    setupEditIcon();
-    setupDeleteIcon();
-
-    if (addQuestionBtn) {
-      addQuestionBtn.addEventListener("click", function() {
-        if (isEditor() && !canAdd('question')) { window.showEditorPopup('Add Question'); return; } // NEW
-        if (!isAdmin() && !isEditor()) {
-          alert("Admin/Editor access required");
-          return;
-        }
+    } else {
+      // Normal error (like wrong password, 3 attempts left)
+      loginErrorEl.textContent = result?.error || 'Invalid username or password';
+      loginErrorEl.style.display = "block";
+      loginErrorEl.style.color = "#ef4444"; // reset to red if it was green
       
-        if (!currentSubjectConfig || !currentTopicName) {
-          alert("Please select a chapter first.");
-          return;
-        }
-        console.log('Opening new question editor');
-        openNewQuestionEditor();
-      });
+      // Reset the button so they can try again
+      loginBtnEl.classList.remove('saving');
+      loginBtnEl.innerHTML = originalText;
+      loginBtnEl.disabled = false;
     }
+  }
+});
 
-    document.querySelectorAll('.modal-close').forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.getElementById('question-editor-modal').style.display = 'none';
-      });
-    });
+passwordToggleEl.addEventListener("click", togglePasswordVisibility);
 
-    document.getElementById('editor-cancel-btn').addEventListener('click', function() {
-      document.getElementById('question-editor-modal').style.display = 'none';
-    });
+backToClassesBtn.addEventListener("click", function(e) {
+  e.preventDefault();
+  showClassSelection();
+  resetInactivityTimer();
+});
 
-    document.getElementById('editor-save-btn').addEventListener('click', saveQuestionChanges);
+backToLoginBtnEl.addEventListener("click", function(e) {
+  e.preventDefault();
+  accountConfigErrorEl.style.display = "none";
+  subscriptionExpiredEl.style.display = "none";
+  loginContainerEl.style.display = "flex";
+  resetInactivityTimer();
+});
 
-    document.getElementById('editor-question-type').addEventListener('change', function(e) {
-      toggleQuestionTypeSections(e.target.value);
-    });
+backToLoginFromExpiredBtn.addEventListener("click", function(e) {
+  e.preventDefault();
+  subscriptionExpiredEl.style.display = "none";
+  accountConfigErrorEl.style.display = "none";
+  loginContainerEl.style.display = "flex";
+  resetInactivityTimer();
+});
 
-    window.addEventListener('click', function(e) {
-      const modal = document.getElementById('question-editor-modal');
-      if (e.target === modal) {
-        modal.style.display = 'none';
-      }
-    });
+startBtnEl.addEventListener("click", function(e) {
+  e.preventDefault();
+  const chapter = topicSelectEl.value;
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  removeTimerNotification();
+  resetQuizState();
 
-    document.addEventListener('click', (e) => {
-      if (questionImageEl.classList.contains('zoomed') && !e.target.closest('#question-image-container')) {
-        questionImageEl.classList.remove('zoomed', 'touch-zoom');
-      }
-    });
+  startBtnEl.classList.add('saving');
+  startBtnEl.innerHTML = 'Loading...';
+  startBtnEl.disabled = true;
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') questionImageEl.classList.remove('zoomed', 'touch-zoom');
-    });
+  loadQuestionsFromGoogleSheet(chapter).then(() => {
+    isQuizActive = true;
+    quizStartTime = Date.now();
+    startBtnEl.classList.remove('saving');
+    startBtnEl.innerHTML = 'Start';
+    startBtnEl.disabled = false;
+  }).catch(() => {
+    startBtnEl.classList.remove('saving');
+    startBtnEl.innerHTML = 'Start';
+    startBtnEl.disabled = false;
+  });
+  resetInactivityTimer();
+});
+
+
+nextBtn.addEventListener("click", function(e) {
+  e.preventDefault();
+  goToNextQuestion();
+});
+
+previousBtn.addEventListener("click", function(e) {
+  e.preventDefault();
+  goToPreviousQuestion();
+});
+
+const navHeaderToggle = document.getElementById("nav-header-toggle");
+if (navHeaderToggle) {
+  navHeaderToggle.addEventListener("click", function(e) {
+    e.preventDefault();
+    toggleQuestionNavigation();
+  });
+}
+
+randomToggleEl.addEventListener("change", function() {
+  resetInactivityTimer();
+});
+
+// Intercept chapter dropdown changes
+topicSelectEl.addEventListener('change', function() {
+  if (currentUser && currentUser.role === 'Trial' && this.selectedIndex > 1) {
+    window.showTrialPopup();
+    this.selectedIndex = 0; 
+    startBtnEl.disabled = true;
+  } else {
+    // Enable if valid chapter is selected, disable if they went back to "Select Chapter"
+    startBtnEl.disabled = (this.selectedIndex === 0);
+  }
+});
+
+// Setup image URL toggle
+if (showImageUrlsCheckbox) {
+  showImageUrlsCheckbox.addEventListener('change', toggleImageUrlFields);
+}
+
+setupQuestionWhatsAppSupport();
+setupEditIcon();
+setupDeleteIcon();
+
+if (addQuestionBtn) {
+  addQuestionBtn.addEventListener("click", function() {
+    if (isEditor() && !canAdd('question')) { window.showEditorPopup('Add Question'); return; } // NEW
+    if (!isAdmin() && !isEditor()) {
+      alert("Admin/Editor access required");
+      return;
+    }
+    
+    if (!currentSubjectConfig || !currentTopicName) {
+      alert("Please select a chapter first.");
+      return;
+    }
+    console.log('Opening new question editor');
+    openNewQuestionEditor();
+  });
+}
+
+document.querySelectorAll('.modal-close').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.getElementById('question-editor-modal').style.display = 'none';
+  });
+});
+
+document.getElementById('editor-cancel-btn').addEventListener('click', function() {
+  document.getElementById('question-editor-modal').style.display = 'none';
+});
+
+document.getElementById('editor-save-btn').addEventListener('click', saveQuestionChanges);
+
+document.getElementById('editor-question-type').addEventListener('change', function(e) {
+  toggleQuestionTypeSections(e.target.value);
+});
+
+window.addEventListener('click', function(e) {
+  const modal = document.getElementById('question-editor-modal');
+  if (e.target === modal) {
+    modal.style.display = 'none';
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (questionImageEl.classList.contains('zoomed') && !e.target.closest('#question-image-container')) {
+    questionImageEl.classList.remove('zoomed', 'touch-zoom');
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') questionImageEl.classList.remove('zoomed', 'touch-zoom');
+});
 
     // ========== SIDE MENU TOGGLE ==========
     function toggleMenu() {
