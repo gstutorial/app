@@ -4070,7 +4070,7 @@ body.light-mode .pdf-name {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 </head>
 <body>
-  <div id="toast-notification" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 8px; color: white; font-weight: 500; z-index: 10000; opacity: 0; transition: opacity 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+  <div id="toast-notification" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 8px; color: white; font-weight: 500; z-index: 10000; opacity: 0; transition: opacity 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.3); text-align: center; width: max-content; max-width: 90%;">
     <span id="toast-message"></span>
   </div>
   <!-- Image Preloading Overlay -->
@@ -5894,7 +5894,7 @@ window.showToast = function(message, bgColor = "#22c55e") {
   if (!toast) {
     toast = document.createElement("div");
     toast.id = "toast-notification";
-    toast.style.cssText = "display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 8px; color: white; font-weight: 500; z-index: 10000; opacity: 0; transition: opacity 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.3);";
+    toast.style.cssText = "display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 8px; color: white; font-weight: 500; z-index: 10000; opacity: 0; transition: opacity 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.3); text-align: center; width: max-content; max-width: 90%;";
     
     toastMsg = document.createElement("span");
     toastMsg.id = "toast-message";
@@ -13496,7 +13496,7 @@ async function submitBulkData() {
     </div>
   </div>
 
-  <div id="toast-notification" style="display:none; position:fixed; bottom:40px; left:50%; transform:translateX(-50%); background:#1e293b; color:#e5e7eb; padding:16px 32px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.6); z-index:999999; font-weight:600; text-align:center; transition: opacity 0.3s ease; font-size: 1.05rem; border-left: 6px solid #3b82f6; border-right: 1px solid #334155; border-top: 1px solid #334155; border-bottom: 1px solid #334155; min-width: 300px;">
+  <div id="toast-notification" style="display:none; position:fixed; bottom:40px; left:50%; transform:translateX(-50%); background:#1e293b; color:#e5e7eb; padding:16px 32px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.6); z-index:999999; font-weight:600; text-align:center; transition: opacity 0.3s ease; font-size: 1.05rem; border-left: 6px solid #3b82f6; border-right: 1px solid #334155; border-top: 1px solid #334155; border-bottom: 1px solid #334155; width: max-content; max-width: 90%;">
     <span id="toast-message">Message</span>
   </div>
     </div>
