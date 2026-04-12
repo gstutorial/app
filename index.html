@@ -20,15 +20,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   
   <style>
-    /* Custom Kick Modal Light Mode */
-body.light-mode .kick-title-light { color: #111827 !important; }
-body.light-mode .kick-desc-light { color: #4b5563 !important; }
-body.light-mode .kick-cancel-btn { border-color: #d1d5db !important; color: #4b5563 !important; }
-body.light-mode .kick-cancel-btn:hover { background: #f3f4f6 !important; }
-    .modal {
+   /* --- MODAL BASE STYLES --- */
+.modal {
   display: none;
   position: fixed;
-  z-index: 2000; 
+  z-index: 2000; /* Standard layer for Admin Panel */
   left: 0;
   top: 0;
   width: 100%;
@@ -38,6 +34,18 @@ body.light-mode .kick-cancel-btn:hover { background: #f3f4f6 !important; }
   justify-content: center;
   align-items: center;
 }
+
+/* NEW: Specific layer for the Kick Confirmation to ensure it is ABOVE the Admin Panel */
+#confirm-kick-modal {
+  z-index: 3000 !important;
+  background-color: rgba(0, 0, 0, 0.4) !important; /* Lighter overlay so it doesn't look 'dull' */
+}
+
+/* Custom Kick Modal Light Mode */
+body.light-mode .kick-title-light { color: #111827 !important; }
+body.light-mode .kick-desc-light { color: #4b5563 !important; }
+body.light-mode .kick-cancel-btn { border-color: #d1d5db !important; color: #4b5563 !important; }
+body.light-mode .kick-cancel-btn:hover { background: #f3f4f6 !important; }
 .pdf-item {
   background: rgba(15, 23, 42, 0.7);
   border-radius: 12px;
@@ -5160,20 +5168,20 @@ body.light-mode .video-title {
   </div>
 
   <div id="confirm-kick-modal" class="modal" style="display: none; z-index: 3000;">
-    <div class="modal-content" style="max-width: 350px; padding: 25px; text-align: center; border-top: 4px solid #ef4444;">
-      <div style="font-size: 3rem; margin-bottom: 10px;">⚠️</div>
-      <h3 style="color: #e5e7eb; margin-bottom: 10px; font-size: 1.3rem;" class="kick-title-light">Confirm Kick Out</h3>
-      <p style="color: #9ca3af; margin-bottom: 25px; font-size: 0.95rem;" class="kick-desc-light">
-        Are you sure you want to force <strong id="kick-target-name" style="color: #ef4444; font-size: 1.1rem;"></strong> to log out?<br><br>Their session will be terminated immediately.
-      </p>
-      <div style="display: flex; gap: 10px; justify-content: center;">
-        <button onclick="closeKickConfirmModal()" style="padding: 10px 15px; border-radius: 8px; border: 1px solid #4b5563; background: transparent; color: #d1d5db; cursor: pointer; flex: 1; font-weight: 600; transition: all 0.2s;" class="kick-cancel-btn">Cancel</button>
-        <button id="confirm-kick-btn" onclick="executeForceKick()" style="padding: 10px 15px; border-radius: 8px; border: none; background: linear-gradient(to right, #ef4444, #dc2626); color: white; cursor: pointer; flex: 1.2; display: flex; justify-content: center; align-items: center; gap: 8px; font-weight: bold; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);">
-          Yes, Kick Out
-        </button>
-      </div>
+  <div class="modal-content" style="max-width: 350px; padding: 25px; text-align: center; border-top: 4px solid #ef4444; position: relative;">
+    <div style="font-size: 3rem; margin-bottom: 10px;">⚠️</div>
+    <h3 style="color: #e5e7eb; margin-bottom: 10px; font-size: 1.3rem;" class="kick-title-light">Confirm Kick Out</h3>
+    <p style="color: #9ca3af; margin-bottom: 25px; font-size: 0.95rem;" class="kick-desc-light">
+      Are you sure you want to force <strong id="kick-target-name" style="color: #ef4444; font-size: 1.1rem;"></strong> to log out?<br><br>Their session will be terminated immediately.
+    </p>
+    <div style="display: flex; gap: 10px; justify-content: center;">
+      <button onclick="closeKickConfirmModal()" style="padding: 10px 15px; border-radius: 8px; border: 1px solid #4b5563; background: transparent; color: #d1d5db; cursor: pointer; flex: 1; font-weight: 600; transition: all 0.2s;" class="kick-cancel-btn">Cancel</button>
+      <button id="confirm-kick-btn" onclick="executeForceKick()" style="padding: 10px 15px; border-radius: 8px; border: none; background: linear-gradient(to right, #ef4444, #dc2626); color: white; cursor: pointer; flex: 1.2; display: flex; justify-content: center; align-items: center; gap: 8px; font-weight: bold; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);">
+        Yes, Kick Out
+      </button>
     </div>
   </div>
+</div>
   
  <div id="profile-modal" class="modal" style="display: none;">
   <div class="modal-content" style="max-width: 400px; padding: 20px;">
@@ -6903,65 +6911,60 @@ function toggleUserDetails(idx) {
 }
 
 // ========== CUSTOM FORCE KICK LOGIC ==========
-let userToKick = null; // Stores the username temporarily for the modal
+let userToKick = null;
 
-// 1. Opens the beautiful custom popup with background dimming
+// 1. Opens the confirmation popup and dims the background list
 function forceLogoutUser(targetUsername) {
   userToKick = targetUsername;
   const nameEl = document.getElementById('kick-target-name');
   if (nameEl) nameEl.textContent = targetUsername;
   
   const modal = document.getElementById('confirm-kick-modal');
-  const adminPanel = document.querySelector('#admin-cp-modal .modal-content');
+  // Target the specific content box of the admin panel to dim it
+  const adminContent = document.querySelector('#admin-cp-modal .modal-content');
   
   if (modal) {
     modal.style.display = 'flex';
-    // Slightly fade the background admin panel so focus is on the confirmation
-    if (adminPanel) adminPanel.style.opacity = '0.4'; 
+    if (adminContent) {
+        adminContent.style.transition = 'opacity 0.3s ease';
+        adminContent.style.opacity = '0.3';
+    }
   }
 }
 
-// 2. Closes the confirmation popup and restores background brightness
+// 2. Closes the confirmation popup and restores brightness
 function closeKickConfirmModal() {
   const modal = document.getElementById('confirm-kick-modal');
-  const adminPanel = document.querySelector('#admin-cp-modal .modal-content');
+  const adminContent = document.querySelector('#admin-cp-modal .modal-content');
   
   if (modal) {
     modal.style.display = 'none';
-    if (adminPanel) adminPanel.style.opacity = '1'; // Restore brightness
+    if (adminContent) adminContent.style.opacity = '1';
   }
   userToKick = null;
 }
 
-// 3. Executes the backend kick request with loading animation
+// 3. Sends the kick request to the server with loading animation
 async function executeForceKick() {
   if (!userToKick) return;
-  
   const btn = document.getElementById('confirm-kick-btn');
   const originalText = 'Yes, Kick Out';
   
-  // Start Loading Animation (Mirroring login button style)
-  if (btn) {
-    btn.innerHTML = '<div class="loading-spinner-small" style="width: 16px; height: 16px; border-width: 2px;"></div> Kicking...';
-    btn.disabled = true;
-    btn.style.opacity = '0.7';
-    btn.style.cursor = 'not-allowed';
-  }
+  // Show spinner immediately
+  btn.innerHTML = '<div class="loading-spinner-small" style="width: 16px; height: 16px; border-width: 2px;"></div> Kicking...';
+  btn.disabled = true;
 
   try {
     let url = AUTH_APPS_SCRIPT_URL + '?action=forceLogoutUser&username=' + encodeURIComponent(currentUser.username) + '&token=' + encodeURIComponent(currentUser.token) + '&targetUser=' + encodeURIComponent(userToKick) + '&_t=' + Date.now();
-    
     const data = await jsonpRequest(url, 'forceLogCb');
     
     if (data && data.success) {
-      if(typeof window.showToast === 'function') {
-        window.showToast(`✅ ${userToKick} has been kicked out.`);
-      }
-      closeKickConfirmModal(); // Close beautiful popup
-      loadAdminControlPanelData(); // Refresh the subscriber list
+      if(typeof window.showToast === 'function') window.showToast(`✅ ${userToKick} has been kicked out.`);
+      closeKickConfirmModal();
+      loadAdminControlPanelData(); // Refresh the active user list
     } else {
       if(typeof window.showToast === 'function') {
-        window.showToast(`❌ ${data.error || 'Failed to force logout'}`, "#ef4444");
+        window.showToast(`❌ ${data.error || 'Failed'}`, "#ef4444");
       }
       resetKickButton(btn, originalText);
     }
@@ -6973,7 +6976,7 @@ async function executeForceKick() {
   }
 }
 
-// 4. Helper Function: Resets the button if the request fails
+// 4. Helper to reset button if request fails
 function resetKickButton(btn, text) {
   if (!btn) return;
   btn.innerHTML = text;
