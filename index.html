@@ -6694,49 +6694,47 @@ function updateAdminControls() {
 function parseLoginDate(dateString) {
   if (!dateString || dateString === 'Never' || dateString.trim() === '') return new Date(0);
   try {
-    // 1. Check if it's a standard ISO date (e.g. 2026-04-12T13:30:00.000Z)
+    // 1. Handle native ISO from Google Sheets if it converted the cell
     if (dateString.includes('T') || dateString.includes('Z')) {
         let parsed = new Date(dateString);
         if (!isNaN(parsed.getTime())) return parsed;
     }
 
-    // 2. Aggressively parse the Indian Format: DD/MM/YYYY (handles with OR without commas)
-    let cleanStr = dateString.trim();
-    let parts = cleanStr.split(/[\s,]+/); 
+    // 2. Powerful Indian Format Parser (Handles weird commas, spaces, 12h/24h)
+    let cleanStr = dateString.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+    let parts = cleanStr.split(' ');
     
     if (parts.length >= 1) {
-        let dParts = parts[0].split(/[\/\-]/); // Split by / or -
+        let datePart = parts[0]; 
+        let timePart = parts[1] || "00:00:00";
+        let ampm = (parts[2] || parts[1] || '').toLowerCase();
+
+        let dParts = datePart.split(/[\/\-]/);
         if (dParts.length === 3) {
             let p1 = parseInt(dParts[0], 10);
             let p2 = parseInt(dParts[1], 10);
             let p3 = parseInt(dParts[2], 10);
             
             let day = p1, month = p2, year = p3;
-            
-            // Auto-detect format (YYYY-MM-DD vs DD-MM-YYYY)
             if (p1 > 1000) { year = p1; month = p2; day = p3; }
-            else if (p2 > 12) { day = p2; month = p1; } // If middle is > 12, it must be MM/DD/YYYY
+            else if (p2 > 12) { day = p2; month = p1; } 
             
             month = month - 1; // JS Months are 0-11
             if (year < 100) year += 2000;
             
-            let h = 0, m = 0, s = 0;
-            if (parts[1]) {
-                let tParts = parts[1].split(':');
-                h = parseInt(tParts[0], 10) || 0;
-                m = parseInt(tParts[1], 10) || 0;
-                s = parseInt(tParts[2], 10) || 0;
-                
-                let ampm = (parts[2] || parts[1] || '').toLowerCase();
-                if (ampm.includes('pm') && h < 12) h += 12;
-                if (ampm.includes('am') && h === 12) h = 0;
-            }
+            let tParts = timePart.split(':');
+            let h = parseInt(tParts[0], 10) || 0;
+            let m = parseInt(tParts[1], 10) || 0;
+            let s = parseInt(tParts[2], 10) || 0;
+            
+            if (ampm.includes('pm') && h < 12) h += 12;
+            if (ampm.includes('am') && h === 12) h = 0;
             
             let finalDate = new Date(year, month, day, h, m, s);
             
-            // Failsafe: If date is somehow in the future, the browser flipped Month/Day. Swap them back.
+            // Failsafe: if the parsed date is massively in the future, browser flipped Month/Day
             let now = new Date();
-            if (finalDate.getTime() > now.getTime() + 60000) {
+            if (finalDate.getTime() > now.getTime() + 86400000) { 
                finalDate = new Date(year, day - 1, month + 1, h, m, s);
             }
             return finalDate;
@@ -6751,11 +6749,15 @@ function parseLoginDate(dateString) {
 }
 
 function getSessionDuration(fromDate) {
+  if (fromDate.getTime() === 0) return 'N/A';
+  
   let now = new Date();
   let diffMs = now.getTime() - fromDate.getTime();
   
-  // Prevent negative math if server time is a few seconds ahead
-  if (diffMs < 0) diffMs = 0; 
+  // THE FIX: Use Absolute Math! 
+  // If your server clock is ahead of your device clock, diffMs is negative.
+  // Math.abs() converts it to a positive number so it never gets stuck at 0.
+  diffMs = Math.abs(diffMs);
   
   let sec = Math.floor(diffMs / 1000);
   let mins = Math.floor(sec / 60);
@@ -6765,7 +6767,7 @@ function getSessionDuration(fromDate) {
   if (days > 0) return `${days} day${days > 1 ? 's' : ''}`;
   if (hrs > 0) return `${hrs} hr${hrs > 1 ? 's' : ''}`;
   if (mins > 0) return `${mins} min.`;
-  return `${sec} sec.`; // Now safely shows seconds instead of "Just now"
+  return `${sec} sec.`;
 }
 
 function formatUIDate(dateObj) {
