@@ -8705,22 +8705,33 @@ let lastActivityTimestamp = Date.now();
 let inactivityInterval = null;
 
 function autoLogout() {
-// ... rest of your autoLogout code ...
-  if (currentUser) {
-    // 1. Force close ALL modals immediately
-    document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
-    
-    // 2. Securely log out
-    logout();
-    
-    // 3. Show alert
+  // 1. Notify the server that this user is now offline (Fire and Forget)
+  // This is CRITICAL so the Admin Control Panel shows them as Offline
+  if (typeof currentUser !== 'undefined' && currentUser && currentUser.token) {
+    try {
+      const url = AUTH_APPS_SCRIPT_URL + '?action=logoutUser&username=' + encodeURIComponent(currentUser.username) + '&token=' + encodeURIComponent(currentUser.token) + '&_t=' + Date.now();
+      // Send the request in the background
+      fetch(url, { mode: 'no-cors' }).catch(e => console.log('Auto-logout ping failed'));
+    } catch(e) {
+      console.log("Auto-logout server notification error");
+    }
+  }
+
+  // 2. Force close ALL modals (Admin Panel, Confirmations, etc.) immediately
+  document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+
+  // 3. Clear local data and redirect to login screen
+  logout(); 
+  
+  // 4. Show the notification
+  if (typeof window.showCustomAlert === 'function') {
     window.showCustomAlert("Session Expired", "You have been automatically logged out due to 10 minutes of inactivity.", () => {});
+  } else if (typeof window.showToast === 'function') {
+    window.showToast("⚠️ Logged out due to 10 mins inactivity", "#ef4444");
+  } else {
+    alert("Logged out due to 10 minutes of inactivity.");
   }
 }
-    // SETTINGS & PASSWORD CHANGE LOGIC
-// ==========================================
-    
-// Collapsible Sidebar Menu function
 function toggleAccountSettings() {
   const content = document.getElementById('account-settings-content');
   const icon = document.getElementById('account-settings-toggle-icon');
