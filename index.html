@@ -6625,7 +6625,14 @@ async function authenticateWithAppsScript(username, password) {
 
    
    // ========== UPDATE ADMIN CONTROLS AND WHATSAPP VISIBILITY ==========
-   function updateAdminControls() {
+function updateAdminControls() {
+  // --- NEW: Toggle Admin Control Panel Button ---
+  const adminCpBtn = document.getElementById('adminCpBtn');
+  if (adminCpBtn) {
+    adminCpBtn.style.display = isAdmin() ? 'flex' : 'none';
+  }
+  // ----------------------------------------------
+
   // ==========================================
   // 1. YOUR EXISTING CODE
   // ==========================================
@@ -6681,9 +6688,75 @@ async function authenticateWithAppsScript(username, password) {
     addChapterBtn.style.display = isAdminOrEditor ? 'block' : 'none';
   }
 }
-            function openAdminControlPanel() {
+
+// --- NEW HELPER FUNCTIONS FOR DATE, TIME, AND SORTING ---
+function parseLoginDate(dateString) {
+  if (!dateString || dateString === 'Never') return new Date(0);
+  try {
+    if (dateString.includes('/')) {
+      let parts = dateString.split(',');
+      let dParts = parts[0].trim().split('/');
+      let tStr = parts[1] ? parts[1].trim() : "00:00:00";
+      if (dParts.length === 3) {
+        let day = parseInt(dParts[0]);
+        let month = parseInt(dParts[1]) - 1;
+        let year = parseInt(dParts[2]);
+        let timeParts = tStr.match(/(\d+):(\d+):(\d+)\s*(am|pm|AM|PM)?/i);
+        let h = 0, m = 0, s = 0;
+        if (timeParts) {
+          h = parseInt(timeParts[1]);
+          m = parseInt(timeParts[2]);
+          s = parseInt(timeParts[3]);
+          let ampm = timeParts[4] ? timeParts[4].toLowerCase() : null;
+          if (ampm === 'pm' && h < 12) h += 12;
+          if (ampm === 'am' && h === 12) h = 0;
+        }
+        return new Date(year, month, day, h, m, s);
+      }
+    }
+    let fallback = new Date(dateString);
+    return isNaN(fallback.getTime()) ? new Date(0) : fallback;
+  } catch(e) {
+    return new Date(0);
+  }
+}
+
+function getSessionDuration(fromDate) {
+  let now = new Date();
+  let diffMs = now - fromDate;
+  if (diffMs < 0) return "Just now";
+  let mins = Math.floor(diffMs / 60000);
+  let hrs = Math.floor(mins / 60);
+  let days = Math.floor(hrs / 24);
+  
+  if (days > 0) return `${days}d ${hrs % 24}h`;
+  if (hrs > 0) return `${hrs}h ${mins % 60}m`;
+  return `${mins}m`;
+}
+
+function formatUIDate(dateObj) {
+  if (dateObj.getTime() === 0) return { date: 'Never', time: 'N/A' };
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  let d = dateObj.getDate().toString().padStart(2, '0');
+  let m = months[dateObj.getMonth()];
+  let y = dateObj.getFullYear().toString().slice(-2);
+  
+  let hours = dateObj.getHours();
+  let minutes = dateObj.getMinutes().toString().padStart(2, '0');
+  let ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  
+  return {
+    date: `${d}-${m}-${y}`,
+    time: `${hours}:${minutes} ${ampm}`
+  };
+}
+
+// ========== ADMIN CONTROL PANEL LOGIC ==========
+function openAdminControlPanel() {
   document.getElementById('admin-cp-modal').style.display = 'flex';
-  if (sideMenu && sideMenu.classList.contains('open')) toggleMenu();
+  if (typeof sideMenu !== 'undefined' && sideMenu && sideMenu.classList.contains('open')) toggleMenu();
   loadAdminControlPanelData();
 }
 
@@ -6705,11 +6778,23 @@ async function loadAdminControlPanelData() {
         return;
       }
       
+      data.users.forEach(u => {
+        u.parsedDate = parseLoginDate(u.lastLogin);
+      });
+      
+      data.users.sort((a, b) => b.parsedDate - a.parsedDate);
+      
       let html = '';
       data.users.forEach((u, idx) => {
         const statusEmoji = u.isOnline ? '🟢' : '🔴';
         const statusText = u.isOnline ? 'Online' : 'Offline';
         
+        const formatted = formatUIDate(u.parsedDate);
+        const durationText = u.parsedDate.getTime() === 0 ? 'N/A' : getSessionDuration(u.parsedDate);
+        const sessionDisplay = u.isOnline 
+          ? `<span style="color: #4ade80;">Current running: ${durationText}</span>` 
+          : `<span style="color: #9ca3af;">Offline since: ${durationText} ago</span>`;
+
         html += `
           <div class="cp-user-item" onclick="toggleUserDetails(${idx})">
             <div style="font-weight: 600; color: #e5e7eb;">${u.username}</div>
@@ -6719,9 +6804,12 @@ async function loadAdminControlPanelData() {
             <p><strong>Name:</strong> ${u.name}</p>
             <p><strong>Username:</strong> ${u.username}</p>
             <p><strong>Status:</strong> ${statusEmoji} ${statusText}</p>
-            <p><strong>Last Login:</strong> ${u.lastLogin}</p>
+            <hr style="border-color: rgba(75, 85, 99, 0.3); margin: 10px 0;">
+            <p><strong>Date:</strong> ${formatted.date}</p>
+            <p><strong>Time:</strong> ${formatted.time}</p>
+            <p><strong>Session:</strong> ${sessionDisplay}</p>
             <p><strong>IP Address:</strong> ${u.ip}</p>
-            ${u.isOnline ? `<button class="force-logout-btn" onclick="forceLogoutUser('${u.username}')">Kick User Out</button>` : ''}
+            ${u.isOnline ? `<button class="force-logout-btn" onclick="forceLogoutUser('${u.username}')" style="margin-top: 12px;">Kick User Out</button>` : ''}
           </div>
         `;
       });
@@ -6752,13 +6840,25 @@ async function forceLogoutUser(targetUsername) {
     const data = await jsonpRequest(url, 'forceLogCb');
     
     if (data && data.success) {
-      window.showToast(`✅ ${targetUsername} has been kicked out.`);
-      loadAdminControlPanelData(); // refresh list to show them as offline
+      if(typeof window.showToast === 'function') {
+        window.showToast(`✅ ${targetUsername} has been kicked out.`);
+      } else {
+        alert(`${targetUsername} has been kicked out.`);
+      }
+      loadAdminControlPanelData(); 
     } else {
-      window.showToast(`❌ ${data.error || 'Failed to force logout'}`, "#ef4444");
+      if(typeof window.showToast === 'function') {
+        window.showToast(`❌ ${data.error || 'Failed to force logout'}`, "#ef4444");
+      } else {
+        alert(`Error: ${data.error || 'Failed to force logout'}`);
+      }
     }
   } catch (e) {
-    window.showToast("❌ Network error", "#ef4444");
+    if(typeof window.showToast === 'function') {
+      window.showToast("❌ Network error", "#ef4444");
+    } else {
+      alert("Network error");
+    }
   }
 }
     // ========== NAVIGATION FUNCTIONS ==========
