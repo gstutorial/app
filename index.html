@@ -6694,34 +6694,37 @@ function updateAdminControls() {
 function parseLoginDate(dateString) {
   if (!dateString || dateString === 'Never' || dateString.trim() === '') return new Date(0);
   try {
-    // 1. Try standard browser parsing first
+    // 1. ALWAYS parse the DD/MM/YYYY format FIRST so the browser doesn't think 12/04 is December 4th!
+    if (dateString.includes(',')) {
+      let parts = dateString.split(',');
+      let datePart = parts[0].trim();
+      let timePart = parts[1] ? parts[1].trim() : "00:00:00";
+
+      let dParts = datePart.split(/[\/\-]/); // Split by / or -
+      if (dParts.length >= 3) {
+        let day = parseInt(dParts[0], 10);
+        let month = parseInt(dParts[1], 10) - 1; // JS months are 0-11
+        let year = parseInt(dParts[2], 10);
+        if (year < 100) year += 2000; // Handle 2-digit years
+
+        let timeParts = timePart.match(/(\d+):(\d+)(?::(\d+))?\s*(am|pm|AM|PM)?/i);
+        let h = 0, m = 0, s = 0;
+        if (timeParts) {
+          h = parseInt(timeParts[1], 10);
+          m = parseInt(timeParts[2], 10);
+          s = timeParts[3] ? parseInt(timeParts[3], 10) : 0;
+          let ampm = timeParts[4] ? timeParts[4].toLowerCase() : null;
+          if (ampm === 'pm' && h < 12) h += 12;
+          if (ampm === 'am' && h === 12) h = 0;
+        }
+        return new Date(year, month, day, h, m, s);
+      }
+    }
+    
+    // 2. Fallback to standard parsing only if no comma is found
     let parsed = new Date(dateString);
     if (!isNaN(parsed.getTime())) return parsed;
-
-    // 2. If it fails, aggressively parse the DD/MM/YYYY format
-    let parts = dateString.split(',');
-    let datePart = parts[0].trim();
-    let timePart = parts[1] ? parts[1].trim() : "00:00:00";
-
-    let dParts = datePart.split(/[\/\-]/); // Split by / or -
-    if (dParts.length >= 3) {
-      let day = parseInt(dParts[0]);
-      let month = parseInt(dParts[1]) - 1; // JS months are 0-11
-      let year = parseInt(dParts[2]);
-      if (year < 100) year += 2000; // Handle 2-digit years
-
-      let timeParts = timePart.match(/(\d+):(\d+)(?::(\d+))?\s*(am|pm|AM|PM)?/i);
-      let h = 0, m = 0, s = 0;
-      if (timeParts) {
-        h = parseInt(timeParts[1]);
-        m = parseInt(timeParts[2]);
-        s = timeParts[3] ? parseInt(timeParts[3]) : 0;
-        let ampm = timeParts[4] ? timeParts[4].toLowerCase() : null;
-        if (ampm === 'pm' && h < 12) h += 12;
-        if (ampm === 'am' && h === 12) h = 0;
-      }
-      return new Date(year, month, day, h, m, s);
-    }
+    
     return new Date(0);
   } catch(e) {
     return new Date(0);
@@ -6730,8 +6733,10 @@ function parseLoginDate(dateString) {
 
 function getSessionDuration(fromDate) {
   let now = new Date();
-  let diffMs = now - fromDate;
-  if (diffMs < 0) return "Just now";
+  let diffMs = now.getTime() - fromDate.getTime();
+  
+  // If server time is seconds ahead of device time, treat it as 0 to avoid negative math
+  if (diffMs < 0) diffMs = 0; 
   
   let mins = Math.floor(diffMs / 60000);
   let hrs = Math.floor(mins / 60);
@@ -6742,6 +6747,8 @@ function getSessionDuration(fromDate) {
   if (mins > 0) return `${mins} min.`;
   return "Just now";
 }
+
+// ... keep your existing formatUIDate and the rest of the Admin Control Panel logic below here ...
 
 function formatUIDate(dateObj) {
   if (dateObj.getTime() === 0) return { date: 'Never', time: 'N/A' };
