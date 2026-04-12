@@ -4064,6 +4064,56 @@ body.light-mode .pdf-name {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+    /* ===== ADMIN CONTROL PANEL STYLES ===== */
+.admin-cp-btn {
+  padding: 12px 14px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 10px;
+  color: #c4b5fd;
+  font-weight: 600;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 8px;
+}
+.admin-cp-btn:hover { background: rgba(139, 92, 246, 0.2); }
+body.light-mode .admin-cp-btn { color: #7c3aed; background: rgba(139, 92, 246, 0.1); }
+.cp-user-item {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+body.light-mode .cp-user-item { background: #f9fafb; border-color: #e5e7eb; }
+.cp-user-item:hover { border-color: #8b5cf6; transform: translateY(-2px); }
+.cp-user-details {
+  display: none;
+  background: rgba(2, 6, 23, 0.8);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 2px;
+  margin-bottom: 15px;
+}
+body.light-mode .cp-user-details { background: #ffffff; border-color: #d1d5db; }
+.cp-user-details p { margin: 5px 0; font-size: 0.9rem; color: #cbd5e1; }
+body.light-mode .cp-user-details p { color: #4b5563; }
+.force-logout-btn {
+  background: linear-gradient(to right, #ef4444, #dc2626);
+  color: white; border: none; border-radius: 6px;
+  padding: 8px 16px; font-size: 0.85rem; font-weight: bold;
+  cursor: pointer; margin-top: 10px; width: 100%;
+}
 
   </style>
 
@@ -4172,6 +4222,11 @@ body.light-mode .pdf-name {
       <div class="current-user-label">Currently logged in</div>
       <div class="current-user-name" id="sideUsername">Guest</div>
     </div>
+    
+    <div class="admin-cp-btn" id="adminCpBtn" onclick="openAdminControlPanel()">
+      🛡️ Control Panel
+    </div>
+
     <div class="logout-side" id="sideLogoutBtn">
       🔓 Logout
     </div>
@@ -5073,6 +5128,17 @@ body.light-mode .video-title {
       </div>
     </div>
   </div>
+  <div id="admin-cp-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 500px; padding: 20px;">
+      <div class="modal-header" style="margin-bottom: 15px;">
+        <h2 style="font-size: 1.5rem; background: linear-gradient(90deg, #8b5cf6 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Admin Control Panel</h2>
+        <button class="modal-close" onclick="closeAdminControlPanel()">&times;</button>
+      </div>
+      <div class="modal-body" id="admin-cp-body" style="max-height: 60vh; overflow-y: auto;">
+        <div style="text-align: center; color: #9ca3af;">Loading users...</div>
+      </div>
+    </div>
+  </div>
  <div id="profile-modal" class="modal" style="display: none;">
   <div class="modal-content" style="max-width: 400px; padding: 20px;">
     <div class="modal-header" style="margin-bottom: 15px;">
@@ -5685,7 +5751,7 @@ if (isAdmin() || isEditor()) {
     const version = Date.now();
     
     // ========== APPS SCRIPT CONFIGURATION ==========
-    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJfjYAte5Nkx9FZHmtgCFyicS-GQGvSa82sAhdjCumI3Q6xVjCRFOVVeELU0dSwAfJyw/exec';
+    const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1_creouSpVakGR0KyMAZAh9la6Ch_OGQnqYPGqpxdNtfwQuelYWwBV-AGlw8pzTM1Xg/exec';
     const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzL4Ez4sQkP-dmRxoJHBVEh9AYUJnHh7YYomxWB25h8hcHvvE2SEkAjNtBHHEmbzYci/exec';
 
     // ========== CACHE CONFIGURATION ==========
@@ -6398,10 +6464,11 @@ async function authenticateWithAppsScript(username, password) {
   const performAuth = async () => {
     try {
       // 1. Pack the data securely into a FormData object (Request Body)
-      const formData = new FormData();
-      formData.append('action', 'authenticate');
-      formData.append('username', username);
-      formData.append('password', password); // This should be the hashed password
+          const formData = new FormData();
+          formData.append('action', 'authenticate');
+          formData.append('username', username);
+          formData.append('password', password);
+          formData.append('ip', typeof userIP !== 'undefined' ? userIP : 'Unknown');
 
       // 2. Setup an AbortController for the 15-second timeout
       const controller = new AbortController();
@@ -6612,6 +6679,86 @@ async function authenticateWithAppsScript(username, password) {
   const addChapterBtn = document.getElementById('admin-add-chapter-btn-container');
   if (addChapterBtn) {
     addChapterBtn.style.display = isAdminOrEditor ? 'block' : 'none';
+  }
+}
+            function openAdminControlPanel() {
+  document.getElementById('admin-cp-modal').style.display = 'flex';
+  if (sideMenu && sideMenu.classList.contains('open')) toggleMenu();
+  loadAdminControlPanelData();
+}
+
+function closeAdminControlPanel() {
+  document.getElementById('admin-cp-modal').style.display = 'none';
+}
+
+async function loadAdminControlPanelData() {
+  const bodyEl = document.getElementById('admin-cp-body');
+  bodyEl.innerHTML = '<div style="text-align: center; color: #9ca3af;"><div class="loading-spinner-small"></div> Loading active subscriptions...</div>';
+  
+  try {
+    let url = AUTH_APPS_SCRIPT_URL + '?action=getAdminControlPanelData&username=' + encodeURIComponent(currentUser.username) + '&token=' + encodeURIComponent(currentUser.token) + '&_t=' + Date.now();
+    const data = await jsonpRequest(url, 'adminCpCb');
+    
+    if (data && data.success) {
+      if (data.users.length === 0) {
+        bodyEl.innerHTML = '<div style="text-align: center; color: #9ca3af;">No active subscriptions found.</div>';
+        return;
+      }
+      
+      let html = '';
+      data.users.forEach((u, idx) => {
+        const statusEmoji = u.isOnline ? '🟢' : '🔴';
+        const statusText = u.isOnline ? 'Online' : 'Offline';
+        
+        html += `
+          <div class="cp-user-item" onclick="toggleUserDetails(${idx})">
+            <div style="font-weight: 600; color: #e5e7eb;">${u.username}</div>
+            <div style="font-size: 1.2rem;">${statusEmoji}</div>
+          </div>
+          <div class="cp-user-details" id="cp-details-${idx}">
+            <p><strong>Name:</strong> ${u.name}</p>
+            <p><strong>Username:</strong> ${u.username}</p>
+            <p><strong>Status:</strong> ${statusEmoji} ${statusText}</p>
+            <p><strong>Last Login:</strong> ${u.lastLogin}</p>
+            <p><strong>IP Address:</strong> ${u.ip}</p>
+            ${u.isOnline ? `<button class="force-logout-btn" onclick="forceLogoutUser('${u.username}')">Kick User Out</button>` : ''}
+          </div>
+        `;
+      });
+      bodyEl.innerHTML = html;
+    } else {
+      bodyEl.innerHTML = `<div style="text-align: center; color: #ef4444;">❌ ${data.error || 'Failed to load'}</div>`;
+    }
+  } catch (e) {
+    bodyEl.innerHTML = '<div style="text-align: center; color: #ef4444;">❌ Network error</div>';
+  }
+}
+
+function toggleUserDetails(idx) {
+  const el = document.getElementById('cp-details-' + idx);
+  if (el.style.display === 'block') {
+    el.style.display = 'none';
+  } else {
+    document.querySelectorAll('.cp-user-details').forEach(d => d.style.display = 'none');
+    el.style.display = 'block';
+  }
+}
+
+async function forceLogoutUser(targetUsername) {
+  if (!confirm(`Are you sure you want to FORCE KICK ${targetUsername}? They will be logged out immediately.`)) return;
+  
+  try {
+    let url = AUTH_APPS_SCRIPT_URL + '?action=forceLogoutUser&username=' + encodeURIComponent(currentUser.username) + '&token=' + encodeURIComponent(currentUser.token) + '&targetUser=' + encodeURIComponent(targetUsername) + '&_t=' + Date.now();
+    const data = await jsonpRequest(url, 'forceLogCb');
+    
+    if (data && data.success) {
+      window.showToast(`✅ ${targetUsername} has been kicked out.`);
+      loadAdminControlPanelData(); // refresh list to show them as offline
+    } else {
+      window.showToast(`❌ ${data.error || 'Failed to force logout'}`, "#ef4444");
+    }
+  } catch (e) {
+    window.showToast("❌ Network error", "#ef4444");
   }
 }
     // ========== NAVIGATION FUNCTIONS ==========
@@ -8268,51 +8415,59 @@ async function forceAppRefresh() {
     } // <--- Notice how the closing bracket is DOWN HERE now!
 
     // ========== LOGOUT FUNCTION ==========
-    function logout() {
-      stopInactivityTracker();
-      if (timerInterval) clearInterval(timerInterval);
-      
-      if (cooldownTimer) clearInterval(cooldownTimer);
-      if (sessionMonitorInterval) clearInterval(sessionMonitorInterval);
-      imageCache.clear();
-      clearSession();
-      ALL_CONFIG_CACHE = null;
-      ALL_CONFIG_CACHE_TIME = null;
+async function logout() {
+  // NEW: Notify backend to destroy session & mark offline immediately
+  if (typeof currentUser !== 'undefined' && currentUser) {
+    try {
+      const url = AUTH_APPS_SCRIPT_URL + '?action=logoutUser&username=' + encodeURIComponent(currentUser.username) + '&token=' + encodeURIComponent(currentUser.token) + '&_t=' + Date.now();
+      await fetch(url, { mode: 'no-cors' }); // Silent off-record ping
+    } catch(e) {}
+  }
 
-      hasSentLoginNotification = false;
-      hasSentQuizResultNotification = false;
-      currentQuizSessionId = null;
-      isQuizActive = false;
+  stopInactivityTracker();
+  if (typeof timerInterval !== 'undefined' && timerInterval) clearInterval(timerInterval);
+  
+  if (typeof cooldownTimer !== 'undefined' && cooldownTimer) clearInterval(cooldownTimer);
+  if (typeof sessionMonitorInterval !== 'undefined' && sessionMonitorInterval) clearInterval(sessionMonitorInterval);
+  imageCache.clear();
+  clearSession();
+  ALL_CONFIG_CACHE = null;
+  ALL_CONFIG_CACHE_TIME = null;
 
-      
-      resetQuizState();
-      resetFailedAttempts();
+  hasSentLoginNotification = false;
+  hasSentQuizResultNotification = false;
+  currentQuizSessionId = null;
+  isQuizActive = false;
 
-      currentUser = null;
+  
+  resetQuizState();
+  resetFailedAttempts();
 
-      fixedHeaderEl.style.display = "none";
-      classSelectionEl.style.display = "none";
-      subjectSelectionEl.style.display = "none";
-      quizContainerEl.style.display = "none";
-      pyqContainerEl.style.display = "none";
-      accountConfigErrorEl.style.display = "none";
-      subscriptionExpiredEl.style.display = "none";
-      loginContainerEl.style.display = "flex";
-      document.getElementById('force-refresh-btn').style.display = "flex";
+  currentUser = null;
 
-      loginFormEl.reset();
-      passwordEl.type = 'password';
-      passwordToggleEl.textContent = '👁️';
-      loginErrorEl.textContent = "";
-      loginErrorEl.style.display = "none";
+  fixedHeaderEl.style.display = "none";
+  classSelectionEl.style.display = "none";
+  subjectSelectionEl.style.display = "none";
+  quizContainerEl.style.display = "none";
+  pyqContainerEl.style.display = "none";
+  accountConfigErrorEl.style.display = "none";
+  subscriptionExpiredEl.style.display = "none";
+  loginContainerEl.style.display = "flex";
+  document.getElementById('force-refresh-btn').style.display = "flex";
 
-      usernameEl.focus();
-      
-      sideMenu.classList.remove('open');
-      menuOverlay.classList.remove('open');
-    }
+  loginFormEl.reset();
+  passwordEl.type = 'password';
+  passwordToggleEl.textContent = '👁️';
+  loginErrorEl.textContent = "";
+  loginErrorEl.style.display = "none";
 
-   let lastActivityTimestamp = Date.now();
+  usernameEl.focus();
+  
+  sideMenu.classList.remove('open');
+  menuOverlay.classList.remove('open');
+}
+
+let lastActivityTimestamp = Date.now();
 let inactivityInterval = null;
 
 function autoLogout() {
@@ -8327,7 +8482,6 @@ function autoLogout() {
     window.showCustomAlert("Session Expired", "You have been automatically logged out due to 10 minutes of inactivity.", () => {});
   }
 }
-
     // SETTINGS & PASSWORD CHANGE LOGIC
 // ==========================================
     
@@ -13221,9 +13375,15 @@ function updateAdminControls() {
   if (!currentUser) return;
   const role = currentUser.role || '';
   const perms = (currentUser.permission || '').toLowerCase();
- const userClasses = (currentUser.class || '').split(',').map(c => c.trim());
+  const userClasses = (currentUser.class || '').split(',').map(c => c.trim());
   
   const isAdmin = role === 'Admin';
+
+  // --- NEW: Toggle Admin Control Panel Button ---
+  const adminCpBtn = document.getElementById('adminCpBtn');
+  if (adminCpBtn) adminCpBtn.style.display = isAdmin ? 'flex' : 'none';
+  // ----------------------------------------------
+
   const isEditor = role === 'Editor';
   const hasManagePerms = isEditor && (perms.includes('add') || perms.includes('edit') || perms.includes('delete'));
   
@@ -13272,8 +13432,8 @@ function updateAdminControls() {
     } else {
       questionDeleteIconEl.style.display = 'none';
     }
-    }
   }
+}
 
 function toggleAddMenu(event) {
   if (event) event.stopPropagation();
