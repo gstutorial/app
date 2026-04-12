@@ -25,6 +25,19 @@ body.light-mode .kick-title-light { color: #111827 !important; }
 body.light-mode .kick-desc-light { color: #4b5563 !important; }
 body.light-mode .kick-cancel-btn { border-color: #d1d5db !important; color: #4b5563 !important; }
 body.light-mode .kick-cancel-btn:hover { background: #f3f4f6 !important; }
+    .modal {
+  display: none;
+  position: fixed;
+  z-index: 2000; 
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  justify-content: center;
+  align-items: center;
+}
 .pdf-item {
   background: rgba(15, 23, 42, 0.7);
   border-radius: 12px;
@@ -5146,7 +5159,7 @@ body.light-mode .video-title {
     </div>
   </div>
 
-  <div id="confirm-kick-modal" class="modal" style="display: none; z-index: 2000;">
+  <div id="confirm-kick-modal" class="modal" style="display: none; z-index: 3000;">
     <div class="modal-content" style="max-width: 350px; padding: 25px; text-align: center; border-top: 4px solid #ef4444;">
       <div style="font-size: 3rem; margin-bottom: 10px;">⚠️</div>
       <h3 style="color: #e5e7eb; margin-bottom: 10px; font-size: 1.3rem;" class="kick-title-light">Confirm Kick Out</h3>
@@ -6892,20 +6905,31 @@ function toggleUserDetails(idx) {
 // ========== CUSTOM FORCE KICK LOGIC ==========
 let userToKick = null; // Stores the username temporarily for the modal
 
-// 1. Opens the beautiful custom popup (Replaces the old browser confirm)
+// 1. Opens the beautiful custom popup with background dimming
 function forceLogoutUser(targetUsername) {
   userToKick = targetUsername;
   const nameEl = document.getElementById('kick-target-name');
   if (nameEl) nameEl.textContent = targetUsername;
   
   const modal = document.getElementById('confirm-kick-modal');
-  if (modal) modal.style.display = 'flex';
+  const adminPanel = document.querySelector('#admin-cp-modal .modal-content');
+  
+  if (modal) {
+    modal.style.display = 'flex';
+    // Slightly fade the background admin panel so focus is on the confirmation
+    if (adminPanel) adminPanel.style.opacity = '0.4'; 
+  }
 }
 
-// 2. Closes the confirmation popup
+// 2. Closes the confirmation popup and restores background brightness
 function closeKickConfirmModal() {
   const modal = document.getElementById('confirm-kick-modal');
-  if (modal) modal.style.display = 'none';
+  const adminPanel = document.querySelector('#admin-cp-modal .modal-content');
+  
+  if (modal) {
+    modal.style.display = 'none';
+    if (adminPanel) adminPanel.style.opacity = '1'; // Restore brightness
+  }
   userToKick = null;
 }
 
