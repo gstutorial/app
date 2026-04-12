@@ -23,7 +23,7 @@
   .modal {
   display: none;
   position: fixed;
-  z-index: 2000; /* Standard layer */
+  z-index: 2000;
   left: 0;
   top: 0;
   width: 100%;
@@ -34,10 +34,10 @@
   align-items: center;
 }
 
-/* NEW: This forces the Kick Modal to be on a higher 'floor' than the Admin Panel */
+/* MANDATORY FIX: Force this specific modal to the top layer */
 #confirm-kick-modal {
-  z-index: 9999 !important;
-  background-color: rgba(0, 0, 0, 0.4) !important;
+  z-index: 99999 !important; /* Extremely high value */
+  background-color: rgba(0, 0, 0, 0.5) !important; /* Darken the existing admin panel */
 }
 
 /* Custom Kick Modal Light Mode */
@@ -5166,7 +5166,7 @@ body.light-mode .video-title {
     </div>
   </div>
 
-  <div id="confirm-kick-modal" class="modal" style="display: none; z-index: 9999 !important;">
+  <div id="confirm-kick-modal" class="modal" style="display: none; z-index: 99999 !important;">
   <div class="modal-content" style="max-width: 350px; padding: 25px; text-align: center; border-top: 4px solid #ef4444; position: relative;">
     <div style="font-size: 3rem; margin-bottom: 10px;">⚠️</div>
     <h3 style="color: #e5e7eb; margin-bottom: 10px; font-size: 1.3rem;" class="kick-title-light">Confirm Kick Out</h3>
@@ -6912,41 +6912,44 @@ function toggleUserDetails(idx) {
 // ========== CUSTOM FORCE KICK LOGIC ==========
 let userToKick = null;
 
-// 1. Opens the custom popup and dims the Admin Panel list
 function forceLogoutUser(targetUsername) {
   userToKick = targetUsername;
   const nameEl = document.getElementById('kick-target-name');
   if (nameEl) nameEl.textContent = targetUsername;
   
   const modal = document.getElementById('confirm-kick-modal');
-  // Specifically target the content box (the white/dark card) of the Admin Panel
-  const adminPanelContent = document.querySelector('#admin-cp-modal .modal-content');
+  const adminContent = document.querySelector('#admin-cp-modal .modal-content');
   
   if (modal) {
+    // 1. Show the modal
     modal.style.display = 'flex';
-    if (adminPanelContent) {
-        adminPanelContent.style.transition = 'all 0.3s ease';
-        adminPanelContent.style.opacity = '0.3'; // Dim the background list
-        adminPanelContent.style.transform = 'scale(0.98)'; // Slight shrink effect
+    
+    // 2. Heavy dimming on the Admin Panel content
+    if (adminContent) {
+      adminContent.style.transition = "all 0.3s ease";
+      adminContent.style.opacity = "0.15"; // Make it very faint
+      adminContent.style.filter = "blur(5px)"; // Blur it so the popup is the only clear thing
+      adminContent.style.pointerEvents = "none"; // Disable clicking behind the popup
     }
   }
 }
 
-// 2. Closes the popup and restores the Admin Panel
 function closeKickConfirmModal() {
   const modal = document.getElementById('confirm-kick-modal');
-  const adminPanelContent = document.querySelector('#admin-cp-modal .modal-content');
+  const adminContent = document.querySelector('#admin-cp-modal .modal-content');
   
   if (modal) {
     modal.style.display = 'none';
-    if (adminPanelContent) {
-        adminPanelContent.style.opacity = '1';
-        adminPanelContent.style.transform = 'scale(1)';
+    
+    // Restore the Admin Panel
+    if (adminContent) {
+      adminContent.style.opacity = "1";
+      adminContent.style.filter = "none";
+      adminContent.style.pointerEvents = "auto";
     }
   }
   userToKick = null;
 }
-
 // 3. Sends the kick request to the server with loading animation
 async function executeForceKick() {
   if (!userToKick) return;
