@@ -6823,15 +6823,13 @@ async function loadAdminControlPanelData() {
         const statusEmoji = u.isOnline ? '🟢' : '🔴';
         const statusText = u.isOnline ? 'Online' : 'Offline';
         
-        const formatted = formatUIDate(u.parsedDate);
+       const formatted = formatUIDate(u.parsedDate);
         const durationText = u.parsedDate.getTime() === 0 ? 'N/A' : getSessionDuration(u.parsedDate);
         
-        // Clean display text logic
-        let offlineText = durationText === 'N/A' ? 'Offline: N/A' : `Offline: ${durationText} ago`;
-        
+        // Custom display: Calculates time passed since the last login timestamp
         const sessionDisplay = u.isOnline 
           ? `<span style="color: #4ade80;">Current running: ${durationText}</span>` 
-          : `<span style="color: #9ca3af;">${offlineText}</span>`;
+          : `<span style="color: #9ca3af;">Offline: ${durationText === 'N/A' ? 'N/A' : durationText + ' ago'}</span>`;
 
         html += `
           <div class="cp-user-item" onclick="toggleUserDetails(${idx})">
@@ -8552,21 +8550,24 @@ async function forceAppRefresh() {
       }
     } // <--- Notice how the closing bracket is DOWN HERE now!
 
-    // ========== LOGOUT FUNCTION ==========
-async function logout() {
-  // NEW: Notify backend to destroy session & mark offline immediately
+   // ========== LOGOUT FUNCTION ==========
+function logout() {
+  // 1. Immediately stop all trackers BEFORE doing anything else
+  stopInactivityTracker();
+  if (typeof timerInterval !== 'undefined' && timerInterval) clearInterval(timerInterval);
+  if (typeof cooldownTimer !== 'undefined' && cooldownTimer) clearInterval(cooldownTimer);
+  if (typeof sessionMonitorInterval !== 'undefined' && sessionMonitorInterval) clearInterval(sessionMonitorInterval);
+
+  // 2. Notify backend to destroy session WITHOUT waiting (Fire and Forget)
   if (typeof currentUser !== 'undefined' && currentUser) {
     try {
       const url = AUTH_APPS_SCRIPT_URL + '?action=logoutUser&username=' + encodeURIComponent(currentUser.username) + '&token=' + encodeURIComponent(currentUser.token) + '&_t=' + Date.now();
-      await fetch(url, { mode: 'no-cors' }); // Silent off-record ping
+      // Notice there is NO 'await' here. It sends the ping in the background instantly.
+      fetch(url, { mode: 'no-cors' }).catch(e => console.log('Silent logout ping failed'));
     } catch(e) {}
   }
-
-  stopInactivityTracker();
-  if (typeof timerInterval !== 'undefined' && timerInterval) clearInterval(timerInterval);
   
-  if (typeof cooldownTimer !== 'undefined' && cooldownTimer) clearInterval(cooldownTimer);
-  if (typeof sessionMonitorInterval !== 'undefined' && sessionMonitorInterval) clearInterval(sessionMonitorInterval);
+  // 3. Clear all local data
   imageCache.clear();
   clearSession();
   ALL_CONFIG_CACHE = null;
@@ -8577,12 +8578,12 @@ async function logout() {
   currentQuizSessionId = null;
   isQuizActive = false;
 
-  
   resetQuizState();
   resetFailedAttempts();
 
   currentUser = null;
 
+  // 4. Update UI instantly
   fixedHeaderEl.style.display = "none";
   classSelectionEl.style.display = "none";
   subjectSelectionEl.style.display = "none";
@@ -8591,7 +8592,9 @@ async function logout() {
   accountConfigErrorEl.style.display = "none";
   subscriptionExpiredEl.style.display = "none";
   loginContainerEl.style.display = "flex";
-  document.getElementById('force-refresh-btn').style.display = "flex";
+  
+  const forceRefreshBtn = document.getElementById('force-refresh-btn');
+  if (forceRefreshBtn) forceRefreshBtn.style.display = "flex";
 
   loginFormEl.reset();
   passwordEl.type = 'password';
@@ -8601,14 +8604,15 @@ async function logout() {
 
   usernameEl.focus();
   
-  sideMenu.classList.remove('open');
-  menuOverlay.classList.remove('open');
+  if (typeof sideMenu !== 'undefined' && sideMenu) sideMenu.classList.remove('open');
+  if (typeof menuOverlay !== 'undefined' && menuOverlay) menuOverlay.classList.remove('open');
 }
 
 let lastActivityTimestamp = Date.now();
 let inactivityInterval = null;
 
 function autoLogout() {
+// ... rest of your autoLogout code ...
   if (currentUser) {
     // 1. Force close ALL modals immediately
     document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
