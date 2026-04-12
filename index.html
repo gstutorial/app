@@ -4217,15 +4217,16 @@ body.light-mode .cp-user-details p { color: #4b5563; }
       <span>🌙 Dark / ☀️ Light</span>
       <span id="themeIcon">🌙</span>
     </div>
+    <div class="admin-cp-btn" id="adminCpBtn" onclick="openAdminControlPanel()">
+      🛡️ Control Panel
+    </div>
 
     <div class="current-user">
       <div class="current-user-label">Currently logged in</div>
       <div class="current-user-name" id="sideUsername">Guest</div>
     </div>
     
-    <div class="admin-cp-btn" id="adminCpBtn" onclick="openAdminControlPanel()">
-      🛡️ Control Panel
-    </div>
+    
 
     <div class="logout-side" id="sideLogoutBtn">
       🔓 Logout
@@ -6689,33 +6690,39 @@ function updateAdminControls() {
   }
 }
 
-// --- NEW HELPER FUNCTIONS FOR DATE, TIME, AND SORTING ---
+// --- BULLETPROOF HELPER FUNCTIONS FOR DATE, TIME, AND SORTING ---
 function parseLoginDate(dateString) {
-  if (!dateString || dateString === 'Never') return new Date(0);
+  if (!dateString || dateString === 'Never' || dateString.trim() === '') return new Date(0);
   try {
-    if (dateString.includes('/')) {
-      let parts = dateString.split(',');
-      let dParts = parts[0].trim().split('/');
-      let tStr = parts[1] ? parts[1].trim() : "00:00:00";
-      if (dParts.length === 3) {
-        let day = parseInt(dParts[0]);
-        let month = parseInt(dParts[1]) - 1;
-        let year = parseInt(dParts[2]);
-        let timeParts = tStr.match(/(\d+):(\d+):(\d+)\s*(am|pm|AM|PM)?/i);
-        let h = 0, m = 0, s = 0;
-        if (timeParts) {
-          h = parseInt(timeParts[1]);
-          m = parseInt(timeParts[2]);
-          s = parseInt(timeParts[3]);
-          let ampm = timeParts[4] ? timeParts[4].toLowerCase() : null;
-          if (ampm === 'pm' && h < 12) h += 12;
-          if (ampm === 'am' && h === 12) h = 0;
-        }
-        return new Date(year, month, day, h, m, s);
+    // 1. Try standard browser parsing first
+    let parsed = new Date(dateString);
+    if (!isNaN(parsed.getTime())) return parsed;
+
+    // 2. If it fails, aggressively parse the DD/MM/YYYY format
+    let parts = dateString.split(',');
+    let datePart = parts[0].trim();
+    let timePart = parts[1] ? parts[1].trim() : "00:00:00";
+
+    let dParts = datePart.split(/[\/\-]/); // Split by / or -
+    if (dParts.length >= 3) {
+      let day = parseInt(dParts[0]);
+      let month = parseInt(dParts[1]) - 1; // JS months are 0-11
+      let year = parseInt(dParts[2]);
+      if (year < 100) year += 2000; // Handle 2-digit years
+
+      let timeParts = timePart.match(/(\d+):(\d+)(?::(\d+))?\s*(am|pm|AM|PM)?/i);
+      let h = 0, m = 0, s = 0;
+      if (timeParts) {
+        h = parseInt(timeParts[1]);
+        m = parseInt(timeParts[2]);
+        s = timeParts[3] ? parseInt(timeParts[3]) : 0;
+        let ampm = timeParts[4] ? timeParts[4].toLowerCase() : null;
+        if (ampm === 'pm' && h < 12) h += 12;
+        if (ampm === 'am' && h === 12) h = 0;
       }
+      return new Date(year, month, day, h, m, s);
     }
-    let fallback = new Date(dateString);
-    return isNaN(fallback.getTime()) ? new Date(0) : fallback;
+    return new Date(0);
   } catch(e) {
     return new Date(0);
   }
@@ -6725,13 +6732,15 @@ function getSessionDuration(fromDate) {
   let now = new Date();
   let diffMs = now - fromDate;
   if (diffMs < 0) return "Just now";
+  
   let mins = Math.floor(diffMs / 60000);
   let hrs = Math.floor(mins / 60);
   let days = Math.floor(hrs / 24);
   
-  if (days > 0) return `${days}d ${hrs % 24}h`;
-  if (hrs > 0) return `${hrs}h ${mins % 60}m`;
-  return `${mins}m`;
+  if (days > 0) return `${days} day${days > 1 ? 's' : ''}`;
+  if (hrs > 0) return `${hrs} hr${hrs > 1 ? 's' : ''}`;
+  if (mins > 0) return `${mins} min.`;
+  return "Just now";
 }
 
 function formatUIDate(dateObj) {
@@ -6791,9 +6800,11 @@ async function loadAdminControlPanelData() {
         
         const formatted = formatUIDate(u.parsedDate);
         const durationText = u.parsedDate.getTime() === 0 ? 'N/A' : getSessionDuration(u.parsedDate);
+        
+        // Custom display: "1 min. ago", "1 hr ago", etc.
         const sessionDisplay = u.isOnline 
           ? `<span style="color: #4ade80;">Current running: ${durationText}</span>` 
-          : `<span style="color: #9ca3af;">Offline since: ${durationText} ago</span>`;
+          : `<span style="color: #9ca3af;">Offline: ${durationText === 'N/A' ? 'N/A' : durationText + ' ago'}</span>`;
 
         html += `
           <div class="cp-user-item" onclick="toggleUserDetails(${idx})">
