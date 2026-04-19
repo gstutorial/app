@@ -5816,7 +5816,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1_creouSpVakGR0KyMAZAh9la6Ch_OGQnqYPGqpxdNtfwQuelYWwBV-AGlw8pzTM1Xg/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziSX9twRxDRYdNkKplbe5a9wCEK_VX2Jz0om9cLfcyik24oMKUlybJ0ZV9m3qCPnc3/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzlnT3MHhDHo9KFhLopZSkI5aBYGtcT6PEDsR-drvhj1jsm6waccptzey7cVIdgPCjd/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -5834,8 +5834,10 @@ if (isAdmin() || isEditor()) {
     let questionsLoaded = false;
     let attempted = 0;
     let userAnswers = [];
-    let userMarks = [];
-    let timeRemaining = 0;
+let userMarks = [];
+let subjectiveUserTexts = [];
+let subjectiveUserImages = [];
+let timeRemaining = 0;
     let timerInterval = null;
     let currentTopicName = "";
     let timerDuration = 0;
@@ -5846,8 +5848,10 @@ if (isAdmin() || isEditor()) {
     let isReattemptMode = false;
     let incorrectQuestionIndices = [];
     let reattemptQuestions = [];
-    let reattemptUserAnswers = [];
-    let reattemptUserMarks = [];
+let reattemptUserAnswers = [];
+let reattemptUserMarks = [];
+let reattemptSubjectiveUserTexts = [];
+let reattemptSubjectiveUserImages = [];
     let reattemptStatusBanner = null;
     let isQuizActive = false;
     
@@ -10332,7 +10336,9 @@ if (isScreenVisible('video-container')) {
       questionsLoaded = false;
       attempted = 0;
       userAnswers = [];
-      userMarks = [];
+  userMarks = [];
+  subjectiveUserTexts = [];
+  subjectiveUserImages = [];
       timeRemaining = 0;
       timerDuration = 0;
       currentTopicName = "";
@@ -10342,9 +10348,11 @@ if (isScreenVisible('video-container')) {
       isReattemptMode = false;
       isQuizActive = false;
       incorrectQuestionIndices = [];
-      reattemptQuestions = [];
-      reattemptUserAnswers = [];
-      reattemptUserMarks = [];
+  reattemptQuestions = [];
+  reattemptUserAnswers = [];
+  reattemptUserMarks = [];
+  reattemptSubjectiveUserTexts = [];
+  reattemptSubjectiveUserImages = [];
 
       hasSentQuizResultNotification = false;
       currentQuizSessionId = Date.now().toString();
@@ -11335,6 +11343,27 @@ if (isScreenVisible('video-container')) {
         if (typeof clearSubjectiveInputs === 'function') clearSubjectiveInputs();
         // ----------------------------
 
+        if (subjectiveUserTexts[currentIndex] || subjectiveUserImages[currentIndex]) {
+            const textInput = document.getElementById('subjective-answer-text');
+            const previewContainer = document.getElementById('subjective-image-preview-container');
+            const preview = document.getElementById('subjective-image-preview');
+            const geminiBtn = document.getElementById('check-gemini-btn');
+            const clearBtn = document.getElementById('subjective-clear-image');
+            if (textInput && subjectiveUserTexts[currentIndex]) {
+                textInput.value = subjectiveUserTexts[currentIndex];
+                textInput.disabled = true;
+            } else if (textInput) {
+                textInput.disabled = true;
+            }
+            if (subjectiveUserImages[currentIndex]) {
+                preview.src = "data:image/jpeg;base64," + subjectiveUserImages[currentIndex];
+                previewContainer.style.display = 'block';
+                currentSubjectiveImageBase64 = subjectiveUserImages[currentIndex];
+                if (clearBtn) clearBtn.style.display = 'none';
+            }
+            if (geminiBtn) geminiBtn.disabled = true;
+        }
+
         subjectiveCorrectBtn.classList.remove('selected-correct', 'selected-incorrect');
         subjectiveIncorrectBtn.classList.remove('selected-correct', 'selected-incorrect');
         
@@ -11936,11 +11965,15 @@ if (isScreenVisible('video-container')) {
       totalMarks = 0;
       currentIndex = 0;
       userAnswers = [];
-      userMarks = [];
-      incorrectQuestionIndices = [];
-      reattemptQuestions = [];
-      reattemptUserAnswers = [];
-      reattemptUserMarks = [];
+  userMarks = [];
+  subjectiveUserTexts = [];
+  subjectiveUserImages = [];
+  incorrectQuestionIndices = [];
+  reattemptQuestions = [];
+  reattemptUserAnswers = [];
+  reattemptUserMarks = [];
+  reattemptSubjectiveUserTexts = [];
+  reattemptSubjectiveUserImages = [];
       totalScoreValueEl.textContent = "0";
 
       finishBtn.textContent = "Submit";
@@ -13880,6 +13913,10 @@ function clearSubjectiveInputs() {
   const previewContainer = document.getElementById('subjective-image-preview-container');
   const feedback = document.getElementById('gemini-feedback');
   
+  // Elements added to ensure proper reset between questions
+  const clearBtn = document.getElementById('subjective-clear-image');
+  const geminiBtn = document.getElementById('check-gemini-btn');
+  
   if (textInput) {
     textInput.value = '';
     textInput.disabled = false;
@@ -13890,6 +13927,11 @@ function clearSubjectiveInputs() {
   if (preview) { preview.src = ''; }
   if (previewContainer) { previewContainer.style.display = 'none'; }
   if (feedback) { feedback.style.display = 'none'; feedback.innerHTML = ''; }
+  
+  // Re-enable buttons for the new question
+  if (clearBtn) { clearBtn.style.display = 'block'; }
+  if (geminiBtn) { geminiBtn.disabled = false; }
+  
   currentSubjectiveImageBase64 = null;
 }
 
@@ -13965,6 +14007,8 @@ async function checkWithGemini() {
       formData.append('userImageBase64', currentSubjectiveImageBase64);
   }
 
+  let evaluationSuccess = false; // Flag to prevent re-enabling the button if successful
+
   try {
       const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
           method: 'POST',
@@ -13978,10 +14022,25 @@ async function checkWithGemini() {
       const data = await response.json();
 
       if (data.success) {
+          evaluationSuccess = true;
           const feedbackBox = document.getElementById('gemini-feedback');
           feedbackBox.style.display = "block";
           feedbackBox.innerHTML = `<strong>AI Feedback:</strong><br>${data.explanation}<br><br><strong>Marks Awarded:</strong> ${data.marksAwarded} / ${maxMarks}`;
           
+          // --- NEW: STORE ANSWERS AND LOCK UI ---
+          if (typeof isIncorrectReviewMode !== 'undefined' && isIncorrectReviewMode) {
+              reattemptSubjectiveUserTexts[currentIndex] = answerText;
+              reattemptSubjectiveUserImages[currentIndex] = currentSubjectiveImageBase64;
+          } else {
+              subjectiveUserTexts[currentIndex] = answerText;
+              subjectiveUserImages[currentIndex] = currentSubjectiveImageBase64;
+          }
+          
+          document.getElementById('subjective-answer-text').disabled = true;
+          const clearBtn = document.getElementById('subjective-clear-image');
+          if (clearBtn) clearBtn.style.display = 'none';
+          // --------------------------------------
+
           if (data.isCorrect || data.marksAwarded > 0) {
               document.getElementById('subjective-correct-btn').click();
           } else {
@@ -14006,7 +14065,12 @@ async function checkWithGemini() {
       window.showCustomAlert("Error", "Network error while contacting AI. Check console for details.");
   } finally {
       btn.innerHTML = originalHtml;
-      btn.disabled = false;
+      
+      // Only re-enable the button if the evaluation failed or errored out
+      // If it succeeded, it stays disabled to prevent re-answering
+      if (!evaluationSuccess) {
+          btn.disabled = false;
+      }
   }
 }
   </script>
