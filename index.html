@@ -4720,18 +4720,36 @@ body.light-mode .cp-user-details p { color: #4b5563; }
         <!-- Options container for MCQ -->
         <ul id="options-list" class="options"></ul>
         
-        <!-- Subjective container - hidden by default -->
-        <div id="subjective-container" class="subjective-container" style="display: none;">
+       <div id="subjective-container" class="subjective-container" style="display: none;">
           <div class="subjective-title">📝 Subjective Question</div>
-          <div class="subjective-buttons">
+          
+          <div id="subjective-input-area" style="margin-bottom: 15px;">
+            <textarea id="subjective-answer-text" rows="4" class="form-input" placeholder="Type your answer here..." style="width: 100%; margin-bottom: 10px;"></textarea>
+            
+            <div class="image-upload-container" style="margin: 0; padding: 10px; margin-bottom: 10px;">
+              <div class="upload-area" id="subjective-upload-area" onclick="document.getElementById('subjective-image-input').click()" style="padding: 10px;">
+                <div class="upload-text" style="font-size: 0.9rem;">📷 Upload Answer Image</div>
+              </div>
+              <input type="file" id="subjective-image-input" accept="image/*" style="display: none;" onchange="handleSubjectiveImageUpload(event)">
+              <img id="subjective-image-preview" class="upload-preview" src="" style="max-height: 150px; display: none; margin-top: 10px;">
+              <button id="subjective-clear-image" class="upload-clear-btn" style="display: none; margin-top: 10px; width: 100%;" onclick="clearSubjectiveImage()">Clear Image</button>
+            </div>
+            
+            <button id="check-gemini-btn" onclick="checkWithGemini()" class="btn-primary" style="width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(to right, #8b5cf6, #3b82f6);">
+              <img src="gemini.png" alt="Gemini" style="width: 24px; height: 24px;" onerror="this.style.display='none'"> Check with AI
+            </button>
+            
+            <div id="gemini-feedback" style="display: none; margin-top: 15px; padding: 10px; border-radius: 8px; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); color: #c4b5fd; font-size: 0.9rem;">
+            </div>
+          </div>
+
+          <div class="subjective-buttons" id="subjective-manual-buttons" style="display: flex;">
             <button class="subjective-btn correct" id="subjective-correct-btn">✅ Attempted Correctly</button>
             <button class="subjective-btn incorrect" id="subjective-incorrect-btn">❌ Attempted Incorrectly</button>
           </div>
         </div>
         
         <div id="feedback" class="feedback"></div>
-      </div>
-
       <!-- BUTTON LAYOUT -->
       <div class="controls">
         <div class="left-controls">
@@ -5795,7 +5813,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1_creouSpVakGR0KyMAZAh9la6Ch_OGQnqYPGqpxdNtfwQuelYWwBV-AGlw8pzTM1Xg/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzL4Ez4sQkP-dmRxoJHBVEh9AYUJnHh7YYomxWB25h8hcHvvE2SEkAjNtBHHEmbzYci/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYddKkmkolMgiZ6GQfBGszgdmY8u-_mPo3tzk9EexfAwrMlDE3vmezgqiGvLUqN67B/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -10570,6 +10588,13 @@ if (isScreenVisible('video-container')) {
       if (q.isSubjective) {
         optionsListEl.style.display = 'none';
         subjectiveContainerEl.style.display = 'block';
+
+        // --- ADDED FOR AI FEATURE (Hides input during review) ---
+        if (document.getElementById('subjective-input-area')) {
+            document.getElementById('subjective-input-area').style.display = 'none';
+        }
+        // --------------------------------------------------------
+
         subjectiveCorrectBtn.classList.remove('selected-correct', 'selected-incorrect');
         subjectiveIncorrectBtn.classList.remove('selected-correct', 'selected-incorrect');
         
@@ -10686,6 +10711,14 @@ if (isScreenVisible('video-container')) {
       if (q.isSubjective) {
         optionsListEl.style.display = 'none';
         subjectiveContainerEl.style.display = 'block';
+
+        // --- ADDED FOR AI FEATURE ---
+        if (document.getElementById('subjective-input-area')) {
+            document.getElementById('subjective-input-area').style.display = 'block';
+        }
+        if (typeof clearSubjectiveInputs === 'function') clearSubjectiveInputs();
+        // ----------------------------
+
         subjectiveCorrectBtn.classList.remove('selected-correct', 'selected-incorrect');
         subjectiveIncorrectBtn.classList.remove('selected-correct', 'selected-incorrect');
         
@@ -11286,6 +11319,14 @@ if (isScreenVisible('video-container')) {
       if (q.isSubjective) {
         optionsListEl.style.display = 'none';
         subjectiveContainerEl.style.display = 'block';
+        
+        // --- ADDED FOR AI FEATURE ---
+        if (document.getElementById('subjective-input-area')) {
+            document.getElementById('subjective-input-area').style.display = 'block';
+        }
+        if (typeof clearSubjectiveInputs === 'function') clearSubjectiveInputs();
+        // ----------------------------
+
         subjectiveCorrectBtn.classList.remove('selected-correct', 'selected-incorrect');
         subjectiveIncorrectBtn.classList.remove('selected-correct', 'selected-incorrect');
         
@@ -13820,6 +13861,113 @@ async function submitBulkData() {
   
   btn.disabled = false;
   btn.textContent = "Save All Questions";
+}
+    let currentSubjectiveImageBase64 = null;
+
+function handleSubjectiveImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('subjective-image-preview').src = e.target.result;
+    document.getElementById('subjective-image-preview').style.display = 'block';
+    document.getElementById('subjective-clear-image').style.display = 'block';
+    document.getElementById('subjective-upload-area').style.display = 'none';
+    currentSubjectiveImageBase64 = e.target.result.split(',')[1];
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearSubjectiveImage() {
+  const input = document.getElementById('subjective-image-input');
+  if (input) input.value = '';
+  const preview = document.getElementById('subjective-image-preview');
+  if (preview) { preview.src = ''; preview.style.display = 'none'; }
+  const clearBtn = document.getElementById('subjective-clear-image');
+  if (clearBtn) clearBtn.style.display = 'none';
+  const uploadArea = document.getElementById('subjective-upload-area');
+  if (uploadArea) uploadArea.style.display = 'block';
+  currentSubjectiveImageBase64 = null;
+  
+  const textInput = document.getElementById('subjective-answer-text');
+  if (textInput) textInput.value = '';
+}
+
+function checkWithGemini() {
+  if (hasAnswered || !isQuizActive) return;
+  const q = questions[currentIndex];
+  const answerText = document.getElementById('subjective-answer-text').value.trim();
+  
+  if (!answerText && !currentSubjectiveImageBase64) {
+    window.showCustomAlert("Wait", "Please type your answer or upload an image first.");
+    return;
+  }
+  
+  const btn = document.getElementById('check-gemini-btn');
+  const originalHtml = btn.innerHTML;
+  btn.innerHTML = "⏳ Checking with AI...";
+  btn.disabled = true;
+  
+  const expectedAnswer = q.answer || q.explanation || "No expected answer provided.";
+  const maxMarks = q.marks || 1;
+  const questionText = q.question || "Look at the question image.";
+
+  const callbackName = 'geminiCallback_' + Math.round(100000 * Math.random());
+  
+  window[callbackName] = function(response) {
+      btn.innerHTML = originalHtml;
+      btn.disabled = false;
+      document.body.removeChild(script);
+      delete window[callbackName];
+
+      if (response.success) {
+          const feedbackBox = document.getElementById('gemini-feedback');
+          feedbackBox.style.display = "block";
+          feedbackBox.innerHTML = `<strong>AI Feedback:</strong><br>${response.explanation}<br><br><strong>Marks Awarded:</strong> ${response.marksAwarded} / ${maxMarks}`;
+          
+          if (response.isCorrect || response.marksAwarded > 0) {
+              document.getElementById('subjective-correct-btn').click();
+          } else {
+              document.getElementById('subjective-incorrect-btn').click();
+          }
+          
+          userMarks[currentIndex] = response.marksAwarded;
+          score = userMarks.reduce((a, b) => a + (b || 0), 0);
+          if (document.getElementById('total-score-value')) {
+             document.getElementById('total-score-value').textContent = score;
+          }
+      } else {
+          console.error("Gemini Backend Error:", response.error);
+          window.showCustomAlert("Error", "AI Evaluation failed. Please evaluate manually.");
+      }
+  };
+
+  const script = document.createElement('script');
+  
+  // Construct the URL safely. Note: Base64 images can be long, so POST is typically better,
+  // but since your architecture heavily relies on JSONP (GET), we will attempt it.
+  // If the image string is too long for a GET request, it may fail.
+  let url = MASTER_CONFIG_URL + "?action=evaluateWithGemini&callback=" + callbackName +
+            "&question=" + encodeURIComponent(questionText) +
+            "&expected=" + encodeURIComponent(expectedAnswer) +
+            "&maxMarks=" + encodeURIComponent(maxMarks) +
+            "&userText=" + encodeURIComponent(answerText);
+            
+  if (currentSubjectiveImageBase64) {
+      url += "&userImageBase64=" + encodeURIComponent(currentSubjectiveImageBase64);
+  }
+
+  script.src = url;
+  
+  script.onerror = function() {
+      btn.innerHTML = originalHtml;
+      btn.disabled = false;
+      document.body.removeChild(script);
+      delete window[callbackName];
+      window.showCustomAlert("Error", "Network error while contacting AI.");
+  };
+
+  document.body.appendChild(script);
 }
 </script>
   <div id="edit-pdf-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center;">
