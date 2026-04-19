@@ -11301,46 +11301,60 @@ if (isScreenVisible('video-container')) {
       // Update icons visibility
       updateAdminControls();
 
-      // NEW: INJECT MCQ GEMINI BUTTON (USING gemini.png BELOW WHATSAPP ICON)
+      // NEW: INJECT MCQ GEMINI BUTTON WITH ANIMATION RING AND ABSOLUTE POSITIONING
+      let mcqGeminiRing = document.getElementById('mcq-gemini-ring');
       let mcqGeminiBtn = document.getElementById('mcq-gemini-icon');
-      let mcqGeminiBr = document.getElementById('mcq-gemini-br');
       
-      if (!mcqGeminiBtn) {
+      if (!mcqGeminiRing) {
           const whatsappIcon = document.getElementById('question-whatsapp-icon');
           if (whatsappIcon) {
-              // 1. Create a line break to force the new icon onto the next line
-              mcqGeminiBr = document.createElement('br');
-              mcqGeminiBr.id = 'mcq-gemini-br';
-              whatsappIcon.parentNode.insertBefore(mcqGeminiBr, whatsappIcon.nextSibling);
-
-              // 2. Create the Gemini image icon
+              // Create a relative wrapper around the WhatsApp icon
+              const wrapper = document.createElement('div');
+              wrapper.style.cssText = "display: inline-flex; justify-content: center; position: relative;";
+              whatsappIcon.parentNode.insertBefore(wrapper, whatsappIcon);
+              wrapper.appendChild(whatsappIcon);
+              
+              // Create the spinning ring container (Absolute positioned so it doesn't push text down)
+              mcqGeminiRing = document.createElement('div');
+              mcqGeminiRing.id = 'mcq-gemini-ring';
+              mcqGeminiRing.style.cssText = "position: absolute; top: 120%; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid transparent; z-index: 10;";
+              
               mcqGeminiBtn = document.createElement('img');
               mcqGeminiBtn.id = 'mcq-gemini-icon';
-              mcqGeminiBtn.src = 'gemini.png'; // Uses your custom image
-              // Styling to center it exactly below the WhatsApp icon
-              mcqGeminiBtn.style.cssText = "width: 26px; height: 26px; cursor: pointer; display: inline-block; margin-top: 10px;";
+              mcqGeminiBtn.src = 'gemini.png';
+              mcqGeminiBtn.style.cssText = "width: 24px; height: 24px; cursor: pointer; object-fit: contain;";
               mcqGeminiBtn.title = "Ask AI to verify and explain";
               
-              // Insert it right after the line break
-              mcqGeminiBr.parentNode.insertBefore(mcqGeminiBtn, mcqGeminiBr.nextSibling);
+              mcqGeminiRing.appendChild(mcqGeminiBtn);
+              wrapper.appendChild(mcqGeminiRing);
+
+              // Inject CSS for the spin animation into the document head
+              if (!document.getElementById('gemini-spin-style')) {
+                  const style = document.createElement('style');
+                  style.id = 'gemini-spin-style';
+                  style.innerHTML = `@keyframes geminiSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
+                  document.head.appendChild(style);
+              }
           }
       }
 
       // Toggle visibility depending on question type
-      if (mcqGeminiBtn) {
+      if (mcqGeminiRing) {
           if (q.isSubjective) {
-              mcqGeminiBtn.style.display = 'none'; // Hide on Subjective (has large button below)
-              if (mcqGeminiBr) mcqGeminiBr.style.display = 'none';
+              mcqGeminiRing.style.display = 'none'; // Hide on Subjective
           } else {
-              mcqGeminiBtn.style.display = 'inline-block'; // Show on MCQ
-              if (mcqGeminiBr) mcqGeminiBr.style.display = 'inline';
+              mcqGeminiRing.style.display = 'flex'; // Show on MCQ
+              // Reset ring state for new question
+              mcqGeminiRing.style.border = "2px solid transparent";
+              mcqGeminiRing.style.animation = "none";
               
-              // Only trigger the AI check if the icon is clicked
               mcqGeminiBtn.onclick = () => checkMCQWithGemini();
           }
+          
+          // Clear any old AI feedback when changing questions
+          const oldAiFeedback = document.getElementById('mcq-ai-feedback-box');
+          if (oldAiFeedback) oldAiFeedback.remove();
       }
-
-      // Handle question image
 
       // Handle question image
       if (q.imageUrl && q.imageUrl.trim() && q.imageUrl.trim() !== 'null' && q.imageUrl.trim() !== 'undefined') {
@@ -14128,6 +14142,7 @@ async function checkMCQWithGemini() {
     const currentAnswers = isReattempt ? reattemptUserAnswers : userAnswers;
     const selectedAnswerIndex = currentAnswers[currentIndex];
 
+    // Show popup ONLY if they haven't selected an option yet
     if (selectedAnswerIndex === undefined || selectedAnswerIndex === null) {
         window.showCustomAlert("Wait", "Please select an option first before asking AI to explain.");
         return;
@@ -14145,10 +14160,21 @@ async function checkMCQWithGemini() {
     const expectedExp = q.explanation || "";
     const userSelectedText = q.options[selectedAnswerIndex];
 
+    // START ANIMATION RING
     const btn = document.getElementById('mcq-gemini-icon');
-    const originalColor = btn.style.color;
-    btn.style.color = "#ccc";
-    btn.style.pointerEvents = "none";
+    const ring = document.getElementById('mcq-gemini-ring');
+    
+    if (ring) {
+        ring.style.borderTop = "2px solid #a855f7";
+        ring.style.borderRight = "2px solid #a855f7";
+        ring.style.borderBottom = "2px solid rgba(168, 85, 247, 0.2)";
+        ring.style.borderLeft = "2px solid rgba(168, 85, 247, 0.2)";
+        ring.style.animation = "geminiSpin 1s linear infinite";
+    }
+    if (btn) {
+        btn.style.pointerEvents = "none";
+        btn.style.opacity = "0.7";
+    }
 
     const promptQ = `MCQ Question: ${questionText}\nOptions:\n${optionsText}`;
     const promptExpected = `Admin claims the Correct Option is: ${expectedAnswerText}. Admin Explanation: ${expectedExp} (Verify if the Admin is factually correct!)`;
@@ -14171,16 +14197,51 @@ async function checkMCQWithGemini() {
         const data = await response.json();
 
         if (data.success) {
-            window.showCustomAlert("AI Deep Verification", `<div style="text-align:left; font-size:14px; line-height:1.5;">${data.explanation}</div>`);
+            // STOP ANIMATION - SHOW GREEN SUCCESS RING
+            if (ring) {
+                ring.style.border = "2px solid #22c55e";
+                ring.style.animation = "none";
+            }
+            
+            // INJECT INLINE AI FEEDBACK (Instead of Popup)
+            const feedbackEl = document.getElementById('feedback');
+            if (feedbackEl) {
+                let aiFeedbackDiv = document.getElementById('mcq-ai-feedback-box');
+                if (!aiFeedbackDiv) {
+                    aiFeedbackDiv = document.createElement('div');
+                    aiFeedbackDiv.id = 'mcq-ai-feedback-box';
+                    aiFeedbackDiv.style.cssText = "margin-bottom: 12px; padding: 12px; background: rgba(168, 85, 247, 0.1); border-left: 4px solid #a855f7; border-radius: 4px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #e2e8f0;";
+                    
+                    // Insert it directly inside the feedback area
+                    if (feedbackEl.firstChild) {
+                        feedbackEl.insertBefore(aiFeedbackDiv, feedbackEl.firstChild);
+                    } else {
+                        feedbackEl.appendChild(aiFeedbackDiv);
+                    }
+                }
+                aiFeedbackDiv.innerHTML = `<strong style="color: #a855f7;">AI Verification:</strong><br>${data.explanation}`;
+            }
+
         } else {
+            // STOP ANIMATION - SHOW RED ERROR RING
+            if (ring) {
+                ring.style.border = "2px solid #ef4444";
+                ring.style.animation = "none";
+            }
             window.showCustomAlert("Error", "AI Evaluation failed: " + (data.details || data.error || ""));
         }
     } catch (error) {
         console.error(error);
+        if (ring) {
+            ring.style.border = "2px solid #ef4444";
+            ring.style.animation = "none";
+        }
         window.showCustomAlert("Error", "Network error contacting AI.");
     } finally {
-        btn.style.color = originalColor;
-        btn.style.pointerEvents = "auto";
+        if (btn) {
+            btn.style.opacity = "1";
+            btn.style.pointerEvents = "auto";
+        }
     }
 }
   </script>
