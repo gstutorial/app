@@ -11301,25 +11301,41 @@ if (isScreenVisible('video-container')) {
       // Update icons visibility
       updateAdminControls();
 
-      // NEW: INJECT MCQ GEMINI BUTTON
+      // NEW: INJECT MCQ GEMINI BUTTON (USING gemini.png BELOW WHATSAPP ICON)
       let mcqGeminiBtn = document.getElementById('mcq-gemini-icon');
+      let mcqGeminiBr = document.getElementById('mcq-gemini-br');
+      
       if (!mcqGeminiBtn) {
           const whatsappIcon = document.getElementById('question-whatsapp-icon');
           if (whatsappIcon) {
-              mcqGeminiBtn = document.createElement('i');
+              // 1. Create a line break to force the new icon onto the next line
+              mcqGeminiBr = document.createElement('br');
+              mcqGeminiBr.id = 'mcq-gemini-br';
+              whatsappIcon.parentNode.insertBefore(mcqGeminiBr, whatsappIcon.nextSibling);
+
+              // 2. Create the Gemini image icon
+              mcqGeminiBtn = document.createElement('img');
               mcqGeminiBtn.id = 'mcq-gemini-icon';
-              mcqGeminiBtn.className = 'fas fa-robot'; 
-              mcqGeminiBtn.style.cssText = "color: #a855f7; cursor: pointer; margin-left: 15px; font-size: 1.2rem;";
+              mcqGeminiBtn.src = 'gemini.png'; // Uses your custom image
+              // Styling to center it exactly below the WhatsApp icon
+              mcqGeminiBtn.style.cssText = "width: 26px; height: 26px; cursor: pointer; display: inline-block; margin-top: 10px;";
               mcqGeminiBtn.title = "Ask AI to verify and explain";
-              whatsappIcon.parentNode.insertBefore(mcqGeminiBtn, whatsappIcon.nextSibling);
+              
+              // Insert it right after the line break
+              mcqGeminiBr.parentNode.insertBefore(mcqGeminiBtn, mcqGeminiBr.nextSibling);
           }
       }
 
+      // Toggle visibility depending on question type
       if (mcqGeminiBtn) {
           if (q.isSubjective) {
-              mcqGeminiBtn.style.display = 'none'; // Hide on Subjective, since it has a big button below
+              mcqGeminiBtn.style.display = 'none'; // Hide on Subjective (has large button below)
+              if (mcqGeminiBr) mcqGeminiBr.style.display = 'none';
           } else {
-              mcqGeminiBtn.style.display = 'inline-block';
+              mcqGeminiBtn.style.display = 'inline-block'; // Show on MCQ
+              if (mcqGeminiBr) mcqGeminiBr.style.display = 'inline';
+              
+              // Only trigger the AI check if the icon is clicked
               mcqGeminiBtn.onclick = () => checkMCQWithGemini();
           }
       }
