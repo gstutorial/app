@@ -5813,7 +5813,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1_creouSpVakGR0KyMAZAh9la6Ch_OGQnqYPGqpxdNtfwQuelYWwBV-AGlw8pzTM1Xg/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8SsJCekOS3rlh2GJXZP1n4VgkQ3egoTvk__n5x4syKx8_YTgsHFB9Zt2Bcq1zxTVw/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxVDXeHz1ZxJ5Jt64J2fadndeLVvivJ02tFeR4zi33jXt57nyPbHryTky39yKOCFrSH/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -13930,6 +13930,10 @@ async function checkWithGemini() {
           body: formData
       });
 
+      if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+      }
+
       const data = await response.json();
 
       if (data.success) {
@@ -13944,17 +13948,21 @@ async function checkWithGemini() {
           }
           
           userMarks[currentIndex] = data.marksAwarded;
-          score = userMarks.reduce((a, b) => a + (b || 0), 0);
-          if (document.getElementById('total-score-value')) {
-             document.getElementById('total-score-value').textContent = score;
+          // Safely update score
+          if (typeof score !== 'undefined') {
+              score = userMarks.reduce((a, b) => a + (b || 0), 0);
+              if (document.getElementById('total-score-value')) {
+                 document.getElementById('total-score-value').textContent = score;
+              }
           }
       } else {
-          console.error("Gemini Backend Error:", data.error);
-          window.showCustomAlert("Error", "AI Evaluation failed. " + (data.error || ""));
+          // ENHANCED ERROR LOGGING
+          console.error("Gemini Backend Error:", data.error, data.details);
+          window.showCustomAlert("Error", "AI Evaluation failed: " + (data.details || data.error || ""));
       }
   } catch (error) {
       console.error("Network error:", error);
-      window.showCustomAlert("Error", "Network error while contacting AI.");
+      window.showCustomAlert("Error", "Network error while contacting AI. Check console for details.");
   } finally {
       btn.innerHTML = originalHtml;
       btn.disabled = false;
