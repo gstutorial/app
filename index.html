@@ -5813,7 +5813,7 @@ if (isAdmin() || isEditor()) {
     
     // ========== APPS SCRIPT CONFIGURATION ==========
     const AUTH_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1_creouSpVakGR0KyMAZAh9la6Ch_OGQnqYPGqpxdNtfwQuelYWwBV-AGlw8pzTM1Xg/exec';
-    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzGq5VDdp1tGS8KW5oND36PaRGFAyFERmUJTUg14tLtpLVbpX18m-C1K6a6-diT8wNt/exec';
+    const MASTER_CONFIG_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPUwG2yZUf8_8ZEZEiTXKjf7MmLF4BEhtz0tH7vkhYsJBwyBhmI8vU9D5GLA919_BS/exec';
 
     // ========== CACHE CONFIGURATION ==========
     let ALL_CONFIG_CACHE = null;
@@ -13893,7 +13893,7 @@ function clearSubjectiveImage() {
   if (textInput) textInput.value = '';
 }
 
-function checkWithGemini() {
+async function checkWithGemini() {
   if (hasAnswered || !isQuizActive) return;
   const q = questions[currentIndex];
   const answerText = document.getElementById('subjective-answer-text').value.trim();
@@ -13912,64 +13912,55 @@ function checkWithGemini() {
   const maxMarks = q.marks || 1;
   const questionText = q.question || "Look at the question image.";
 
-  const callbackName = 'geminiCallback_' + Math.round(100000 * Math.random());
+  // FIX: Use FormData & POST instead of GET to allow massive image strings
+  const formData = new FormData();
+  formData.append('action', 'evaluateWithGemini');
+  formData.append('question', encodeURIComponent(questionText));
+  formData.append('expected', encodeURIComponent(expectedAnswer));
+  formData.append('maxMarks', encodeURIComponent(maxMarks));
+  formData.append('userText', encodeURIComponent(answerText));
   
-  window[callbackName] = function(response) {
-      btn.innerHTML = originalHtml;
-      btn.disabled = false;
-      document.body.removeChild(script);
-      delete window[callbackName];
+  if (currentSubjectiveImageBase64) {
+      formData.append('userImageBase64', currentSubjectiveImageBase64);
+  }
 
-      if (response.success) {
+  try {
+      const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+          method: 'POST',
+          body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
           const feedbackBox = document.getElementById('gemini-feedback');
           feedbackBox.style.display = "block";
-          feedbackBox.innerHTML = `<strong>AI Feedback:</strong><br>${response.explanation}<br><br><strong>Marks Awarded:</strong> ${response.marksAwarded} / ${maxMarks}`;
+          feedbackBox.innerHTML = `<strong>AI Feedback:</strong><br>${data.explanation}<br><br><strong>Marks Awarded:</strong> ${data.marksAwarded} / ${maxMarks}`;
           
-          if (response.isCorrect || response.marksAwarded > 0) {
+          if (data.isCorrect || data.marksAwarded > 0) {
               document.getElementById('subjective-correct-btn').click();
           } else {
               document.getElementById('subjective-incorrect-btn').click();
           }
           
-          userMarks[currentIndex] = response.marksAwarded;
+          userMarks[currentIndex] = data.marksAwarded;
           score = userMarks.reduce((a, b) => a + (b || 0), 0);
           if (document.getElementById('total-score-value')) {
              document.getElementById('total-score-value').textContent = score;
           }
       } else {
-          console.error("Gemini Backend Error:", response.error);
-          window.showCustomAlert("Error", "AI Evaluation failed. Please evaluate manually.");
+          console.error("Gemini Backend Error:", data.error);
+          window.showCustomAlert("Error", "AI Evaluation failed. " + (data.error || ""));
       }
-  };
-
-  const script = document.createElement('script');
-  
-  // Construct the URL safely. Note: Base64 images can be long, so POST is typically better,
-  // but since your architecture heavily relies on JSONP (GET), we will attempt it.
-  // If the image string is too long for a GET request, it may fail.
-  let url = MASTER_CONFIG_APPS_SCRIPT_URL + "?action=evaluateWithGemini&callback=" + callbackName +
-            "&question=" + encodeURIComponent(questionText) +
-            "&expected=" + encodeURIComponent(expectedAnswer) +
-            "&maxMarks=" + encodeURIComponent(maxMarks) +
-            "&userText=" + encodeURIComponent(answerText);
-            
-  if (currentSubjectiveImageBase64) {
-      url += "&userImageBase64=" + encodeURIComponent(currentSubjectiveImageBase64);
-  }
-
-  script.src = url;
-  
-  script.onerror = function() {
+  } catch (error) {
+      console.error("Network error:", error);
+      window.showCustomAlert("Error", "Network error while contacting AI.");
+  } finally {
       btn.innerHTML = originalHtml;
       btn.disabled = false;
-      document.body.removeChild(script);
-      delete window[callbackName];
-      window.showCustomAlert("Error", "Network error while contacting AI.");
-  };
-
-  document.body.appendChild(script);
+  }
 }
-</script>
+  </script>
   <div id="edit-pdf-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center;">
     <div class="modal-content" style="background: var(--bg-color, #1e293b); padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; border: 1px solid #3b82f6;">
       <h3 style="margin-bottom: 15px; color: #3b82f6;">✏️ Edit PDF Details</h3>
