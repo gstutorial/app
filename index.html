@@ -4724,15 +4724,18 @@ body.light-mode .cp-user-details p { color: #4b5563; }
           <div class="subjective-title">📝 Subjective Question</div>
           
           <div id="subjective-input-area" style="margin-bottom: 15px;">
-            <textarea id="subjective-answer-text" rows="4" class="form-input" placeholder="Type your answer here..." style="width: 100%; margin-bottom: 10px;"></textarea>
-            
-            <div class="image-upload-container" style="margin: 0; padding: 10px; margin-bottom: 10px;">
-              <div class="upload-area" id="subjective-upload-area" onclick="document.getElementById('subjective-image-input').click()" style="padding: 10px;">
-                <div class="upload-text" style="font-size: 0.9rem;">📷 Upload Answer Image</div>
+            <div style="position: relative; box-sizing: border-box; margin-bottom: 10px;">
+              <textarea id="subjective-answer-text" rows="4" placeholder="Type your answer here..." style="width: 100%; padding: 12px 46px 12px 12px; border-radius: 6px; border: 1px solid rgba(75, 85, 99, 0.9); background: #111827; color: #e5e7eb; font-size: 16px; font-family: inherit; resize: vertical; margin: 0; box-sizing: border-box;"></textarea>
+              
+              <div onclick="document.getElementById('subjective-image-input').click()" class="icon-upload-btn" style="top: 12px; transform: none;" title="Upload Answer Image">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
               </div>
-              <input type="file" id="subjective-image-input" accept="image/*" style="display: none;" onchange="handleSubjectiveImageUpload(event)">
-              <img id="subjective-image-preview" class="upload-preview" src="" style="max-height: 150px; display: none; margin-top: 10px;">
-              <button id="subjective-clear-image" class="upload-clear-btn" style="display: none; margin-top: 10px; width: 100%;" onclick="clearSubjectiveImage()">Clear Image</button>
+            </div>
+            <input type="file" id="subjective-image-input" accept="image/*" style="display: none;" onchange="handleSubjectiveImageUpload(event)">
+            
+            <div id="subjective-image-preview-container" style="display: none; position: relative; margin-bottom: 10px; text-align: center; background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 10px;">
+                <img id="subjective-image-preview" src="" style="max-height: 150px; border-radius: 6px;">
+                <button id="subjective-clear-image" class="upload-clear-btn" style="margin-top: 10px; width: 100%;" onclick="clearSubjectiveImage()">Clear Image</button>
             </div>
             
             <button id="check-gemini-btn" onclick="checkWithGemini()" class="btn-primary" style="width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(to right, #8b5cf6, #3b82f6);">
@@ -4743,7 +4746,7 @@ body.light-mode .cp-user-details p { color: #4b5563; }
             </div>
           </div>
 
-          <div class="subjective-buttons" id="subjective-manual-buttons" style="display: flex;">
+          <div class="subjective-buttons" id="subjective-manual-buttons" style="display: none;">
             <button class="subjective-btn correct" id="subjective-correct-btn">✅ Attempted Correctly</button>
             <button class="subjective-btn incorrect" id="subjective-incorrect-btn">❌ Attempted Incorrectly</button>
           </div>
@@ -10833,7 +10836,12 @@ if (isScreenVisible('video-container')) {
       }
 
       previousBtn.disabled = (currentIndex === 0);
-      nextBtn.disabled = false;
+      if (isReviewMode || isIncorrectReviewMode) {
+        nextBtn.disabled = false;
+      } else {
+        // FIX: Next button is ALWAYS active for Subjective (so they can skip), but LOCKED for MCQ until answered
+        nextBtn.disabled = q.isSubjective ? false : (reattemptUserAnswers[currentIndex] === undefined);
+      }
       finishBtn.disabled = false;
       updateQuestionNavigation();
       resetInactivityTimer();
@@ -11403,15 +11411,14 @@ if (isScreenVisible('video-container')) {
         });
       }
 
-      previousBtn.disabled = (currentIndex === 0);
-      
-      if (isReviewMode || isIncorrectReviewMode) {
-        nextBtn.disabled = false;
-      } else {
-        nextBtn.disabled = true;
-      }
-      
-      finishBtn.disabled = false;
+     previousBtn.disabled = (currentIndex === 0);
+    if (isReviewMode || isIncorrectReviewMode) {
+      nextBtn.disabled = false;
+    } else {
+      // Allows user to skip subjective questions without answering
+      nextBtn.disabled = q.isSubjective ? false : true;
+    }
+    finishBtn.disabled = false;
 
       if (userAnswers[currentIndex] !== undefined) {
         if (q.isSubjective) {
@@ -13864,15 +13871,45 @@ async function submitBulkData() {
 }
     let currentSubjectiveImageBase64 = null;
 
+let currentSubjectiveImageBase64 = null;
+
+function clearSubjectiveInputs() {
+  const textInput = document.getElementById('subjective-answer-text');
+  const fileInput = document.getElementById('subjective-image-input');
+  const preview = document.getElementById('subjective-image-preview');
+  const previewContainer = document.getElementById('subjective-image-preview-container');
+  const feedback = document.getElementById('gemini-feedback');
+  
+  if (textInput) {
+    textInput.value = '';
+    textInput.disabled = false;
+    textInput.placeholder = "Type your answer here...";
+    textInput.style.opacity = '1';
+  }
+  if (fileInput) fileInput.value = '';
+  if (preview) { preview.src = ''; }
+  if (previewContainer) { previewContainer.style.display = 'none'; }
+  if (feedback) { feedback.style.display = 'none'; feedback.innerHTML = ''; }
+  currentSubjectiveImageBase64 = null;
+}
+
 function handleSubjectiveImageUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = function(e) {
     document.getElementById('subjective-image-preview').src = e.target.result;
-    document.getElementById('subjective-image-preview').style.display = 'block';
-    document.getElementById('subjective-clear-image').style.display = 'block';
-    document.getElementById('subjective-upload-area').style.display = 'none';
+    document.getElementById('subjective-image-preview-container').style.display = 'block';
+    
+    // Automatically disable and clear text area so user can only use one
+    const textArea = document.getElementById('subjective-answer-text');
+    if (textArea) {
+        textArea.value = '';
+        textArea.disabled = true;
+        textArea.placeholder = "Image attached. Clear image to type text.";
+        textArea.style.opacity = "0.5";
+    }
+    
     currentSubjectiveImageBase64 = e.target.result.split(',')[1];
   };
   reader.readAsDataURL(file);
@@ -13881,16 +13918,20 @@ function handleSubjectiveImageUpload(event) {
 function clearSubjectiveImage() {
   const input = document.getElementById('subjective-image-input');
   if (input) input.value = '';
+  const previewContainer = document.getElementById('subjective-image-preview-container');
+  if (previewContainer) previewContainer.style.display = 'none';
   const preview = document.getElementById('subjective-image-preview');
-  if (preview) { preview.src = ''; preview.style.display = 'none'; }
-  const clearBtn = document.getElementById('subjective-clear-image');
-  if (clearBtn) clearBtn.style.display = 'none';
-  const uploadArea = document.getElementById('subjective-upload-area');
-  if (uploadArea) uploadArea.style.display = 'block';
-  currentSubjectiveImageBase64 = null;
+  if (preview) preview.src = '';
   
-  const textInput = document.getElementById('subjective-answer-text');
-  if (textInput) textInput.value = '';
+  // Re-enable text area
+  const textArea = document.getElementById('subjective-answer-text');
+  if (textArea) {
+      textArea.disabled = false;
+      textArea.placeholder = "Type your answer here...";
+      textArea.style.opacity = "1";
+  }
+  
+  currentSubjectiveImageBase64 = null;
 }
 
 async function checkWithGemini() {
@@ -13905,7 +13946,7 @@ async function checkWithGemini() {
   
   const btn = document.getElementById('check-gemini-btn');
   const originalHtml = btn.innerHTML;
-  btn.innerHTML = "⏳ Checking with AI...";
+  btn.innerHTML = `<svg class="loading-spinner-small" style="width:20px;height:20px;margin-right:8px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);border-top:2px solid #fff;animation:spin 1s linear infinite;" viewBox="0 0 24 24"></svg> Checking...`;
   btn.disabled = true;
   
   const expectedAnswer = q.answer || q.explanation || "No expected answer provided.";
