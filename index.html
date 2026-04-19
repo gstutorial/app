@@ -11301,6 +11301,31 @@ if (isScreenVisible('video-container')) {
       // Update icons visibility
       updateAdminControls();
 
+      // NEW: INJECT MCQ GEMINI BUTTON
+      let mcqGeminiBtn = document.getElementById('mcq-gemini-icon');
+      if (!mcqGeminiBtn) {
+          const whatsappIcon = document.getElementById('question-whatsapp-icon');
+          if (whatsappIcon) {
+              mcqGeminiBtn = document.createElement('i');
+              mcqGeminiBtn.id = 'mcq-gemini-icon';
+              mcqGeminiBtn.className = 'fas fa-robot'; 
+              mcqGeminiBtn.style.cssText = "color: #a855f7; cursor: pointer; margin-left: 15px; font-size: 1.2rem;";
+              mcqGeminiBtn.title = "Ask AI to verify and explain";
+              whatsappIcon.parentNode.insertBefore(mcqGeminiBtn, whatsappIcon.nextSibling);
+          }
+      }
+
+      if (mcqGeminiBtn) {
+          if (q.isSubjective) {
+              mcqGeminiBtn.style.display = 'none'; // Hide on Subjective, since it has a big button below
+          } else {
+              mcqGeminiBtn.style.display = 'inline-block';
+              mcqGeminiBtn.onclick = () => checkMCQWithGemini();
+          }
+      }
+
+      // Handle question image
+
       // Handle question image
       if (q.imageUrl && q.imageUrl.trim() && q.imageUrl.trim() !== 'null' && q.imageUrl.trim() !== 'undefined') {
         const imageUrl = convertImageUrl(q.imageUrl.trim());
@@ -11369,23 +11394,43 @@ if (isScreenVisible('video-container')) {
           subjectiveIncorrectBtn.classList.add('selected-incorrect');
         }
         
-        subjectiveCorrectBtn.onclick = () => {
-          if (hasAnswered || !isQuizActive) return;
+       subjectiveCorrectBtn.onclick = (e) => {
+          const isReattempt = (typeof isIncorrectReviewMode !== 'undefined' && isIncorrectReviewMode);
+          if (hasAnswered || (!isQuizActive && !isReattempt)) return;
           resetInactivityTimer();
           subjectiveCorrectBtn.classList.add('selected-correct');
           subjectiveIncorrectBtn.classList.remove('selected-incorrect');
-          userAnswers[currentIndex] = 'correct';
-          userMarks[currentIndex] = q.marks || 1;
+          
+          const currentAnswers = isReattempt ? reattemptUserAnswers : userAnswers;
+          const currentMarks = isReattempt ? reattemptUserMarks : userMarks;
+          
+          currentAnswers[currentIndex] = 'correct';
+          
+          // Only give full marks if a human clicked the button (e.isTrusted).
+          // If Gemini triggers the click, preserve Gemini's partial marks!
+          if (e && e.isTrusted) {
+             currentMarks[currentIndex] = q.marks || 1;
+          }
+          
           handleSubjectiveAnswer('correct');
         };
         
-        subjectiveIncorrectBtn.onclick = () => {
-          if (hasAnswered || !isQuizActive) return;
+        subjectiveIncorrectBtn.onclick = (e) => {
+          const isReattempt = (typeof isIncorrectReviewMode !== 'undefined' && isIncorrectReviewMode);
+          if (hasAnswered || (!isQuizActive && !isReattempt)) return;
           resetInactivityTimer();
           subjectiveIncorrectBtn.classList.add('selected-incorrect');
           subjectiveCorrectBtn.classList.remove('selected-correct');
-          userAnswers[currentIndex] = 'incorrect';
-          userMarks[currentIndex] = 0;
+          
+          const currentAnswers = isReattempt ? reattemptUserAnswers : userAnswers;
+          const currentMarks = isReattempt ? reattemptUserMarks : userMarks;
+
+          currentAnswers[currentIndex] = 'incorrect';
+          
+          if (e && e.isTrusted) {
+             currentMarks[currentIndex] = 0;
+          }
+          
           handleSubjectiveAnswer('incorrect');
         };
       } else {
@@ -13972,7 +14017,9 @@ function clearSubjectiveImage() {
 }
 
 async function checkWithGemini() {
-  if (hasAnswered || !isQuizActive) return;
+  const isReattempt = (typeof isIncorrectReviewMode !== 'undefined' && isIncorrectReviewMode);
+  if (hasAnswered || (!isQuizActive && !isReattempt)) return;
+
   const q = questions[currentIndex];
   const answerText = document.getElementById('subjective-answer-text').value.trim();
   
@@ -13990,7 +14037,6 @@ async function checkWithGemini() {
   const maxMarks = q.marks || 1;
   const questionText = q.question || "Look at the question image.";
 
-  // FIX: Use FormData & POST instead of GET to allow massive image strings
   const formData = new FormData();
   formData.append('action', 'evaluateWithGemini');
   formData.append('question', encodeURIComponent(questionText));
@@ -14002,7 +14048,7 @@ async function checkWithGemini() {
       formData.append('userImageBase64', currentSubjectiveImageBase64);
   }
 
-  let evaluationSuccess = false; // Flag to prevent re-enabling the button if successful
+  let evaluationSuccess = false;
 
   try {
       const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
@@ -14010,10 +14056,7 @@ async function checkWithGemini() {
           body: formData
       });
 
-      if (!response.ok) {
-          throw new Error("HTTP " + response.status);
-      }
-
+      if (!response.ok) throw new Error("HTTP " + response.status);
       const data = await response.json();
 
       if (data.success) {
@@ -14022,36 +14065,36 @@ async function checkWithGemini() {
           feedbackBox.style.display = "block";
           feedbackBox.innerHTML = `<strong>AI Feedback:</strong><br>${data.explanation}<br><br><strong>Marks Awarded:</strong> ${data.marksAwarded} / ${maxMarks}`;
           
-          // --- NEW: STORE ANSWERS AND LOCK UI ---
-          if (typeof isIncorrectReviewMode !== 'undefined' && isIncorrectReviewMode) {
+          // SET THE MARKS BEFORE THE CLICK HANDLER RUNS!
+          if (isReattempt) {
               reattemptSubjectiveUserTexts[currentIndex] = answerText;
               reattemptSubjectiveUserImages[currentIndex] = currentSubjectiveImageBase64;
+              reattemptUserMarks[currentIndex] = data.marksAwarded; 
           } else {
               subjectiveUserTexts[currentIndex] = answerText;
               subjectiveUserImages[currentIndex] = currentSubjectiveImageBase64;
+              userMarks[currentIndex] = data.marksAwarded; 
           }
           
           document.getElementById('subjective-answer-text').disabled = true;
           const clearBtn = document.getElementById('subjective-clear-image');
           if (clearBtn) clearBtn.style.display = 'none';
-          // --------------------------------------
 
+          // Trigger physical UI update (will NOT overwrite the marks due to e.isTrusted check)
           if (data.isCorrect || data.marksAwarded > 0) {
               document.getElementById('subjective-correct-btn').click();
           } else {
               document.getElementById('subjective-incorrect-btn').click();
           }
           
-          userMarks[currentIndex] = data.marksAwarded;
-          // Safely update score
           if (typeof score !== 'undefined') {
-              score = userMarks.reduce((a, b) => a + (b || 0), 0);
+              const targetArray = isReattempt ? reattemptUserMarks : userMarks;
+              score = targetArray.reduce((a, b) => a + (b || 0), 0);
               if (document.getElementById('total-score-value')) {
                  document.getElementById('total-score-value').textContent = score;
               }
           }
       } else {
-          // ENHANCED ERROR LOGGING
           console.error("Gemini Backend Error:", data.error, data.details);
           window.showCustomAlert("Error", "AI Evaluation failed: " + (data.details || data.error || ""));
       }
@@ -14060,13 +14103,69 @@ async function checkWithGemini() {
       window.showCustomAlert("Error", "Network error while contacting AI. Check console for details.");
   } finally {
       btn.innerHTML = originalHtml;
-      
-      // Only re-enable the button if the evaluation failed or errored out
-      // If it succeeded, it stays disabled to prevent re-answering
-      if (!evaluationSuccess) {
-          btn.disabled = false;
-      }
+      if (!evaluationSuccess) btn.disabled = false;
   }
+}
+
+async function checkMCQWithGemini() {
+    const isReattempt = (typeof isIncorrectReviewMode !== 'undefined' && isIncorrectReviewMode);
+    const currentAnswers = isReattempt ? reattemptUserAnswers : userAnswers;
+    const selectedAnswerIndex = currentAnswers[currentIndex];
+
+    if (selectedAnswerIndex === undefined || selectedAnswerIndex === null) {
+        window.showCustomAlert("Wait", "Please select an option first before asking AI to explain.");
+        return;
+    }
+
+    const q = questions[currentIndex];
+    const questionText = q.question || "Read the question and options carefully.";
+    
+    let optionsText = "";
+    q.options.forEach((opt, idx) => {
+        optionsText += `${String.fromCharCode(65 + idx)}. ${opt}\n`;
+    });
+
+    const expectedAnswerText = q.options[q.correctIndex] || "No Expected Answer";
+    const expectedExp = q.explanation || "";
+    const userSelectedText = q.options[selectedAnswerIndex];
+
+    const btn = document.getElementById('mcq-gemini-icon');
+    const originalColor = btn.style.color;
+    btn.style.color = "#ccc";
+    btn.style.pointerEvents = "none";
+
+    const promptQ = `MCQ Question: ${questionText}\nOptions:\n${optionsText}`;
+    const promptExpected = `Admin claims the Correct Option is: ${expectedAnswerText}. Admin Explanation: ${expectedExp} (Verify if the Admin is factually correct!)`;
+    const promptUser = `I selected: ${userSelectedText}`;
+
+    const formData = new FormData();
+    formData.append('action', 'evaluateWithGemini');
+    formData.append('question', encodeURIComponent(promptQ));
+    formData.append('expected', encodeURIComponent(promptExpected));
+    formData.append('maxMarks', encodeURIComponent(q.marks || 1));
+    formData.append('userText', encodeURIComponent(promptUser));
+
+    try {
+        const response = await fetch(MASTER_CONFIG_APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const data = await response.json();
+
+        if (data.success) {
+            window.showCustomAlert("AI Deep Verification", `<div style="text-align:left; font-size:14px; line-height:1.5;">${data.explanation}</div>`);
+        } else {
+            window.showCustomAlert("Error", "AI Evaluation failed: " + (data.details || data.error || ""));
+        }
+    } catch (error) {
+        console.error(error);
+        window.showCustomAlert("Error", "Network error contacting AI.");
+    } finally {
+        btn.style.color = originalColor;
+        btn.style.pointerEvents = "auto";
+    }
 }
   </script>
   <div id="edit-pdf-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center;">
