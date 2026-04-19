@@ -13947,7 +13947,7 @@ function checkWithGemini() {
   // Construct the URL safely. Note: Base64 images can be long, so POST is typically better,
   // but since your architecture heavily relies on JSONP (GET), we will attempt it.
   // If the image string is too long for a GET request, it may fail.
-  let url = MASTER_CONFIG_URL + "?action=evaluateWithGemini&callback=" + callbackName +
+  let url = MASTER_CONFIG_APPS_SCRIPT_URL + "?action=evaluateWithGemini&callback=" + callbackName +
             "&question=" + encodeURIComponent(questionText) +
             "&expected=" + encodeURIComponent(expectedAnswer) +
             "&maxMarks=" + encodeURIComponent(maxMarks) +
