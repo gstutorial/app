@@ -11298,88 +11298,54 @@ if (isScreenVisible('video-container')) {
         questionTextEl.style.marginBottom = '8px'; // Restore normal spacing
       }
 
-      // Update icons visibility
+      // NEW: INLINE GEMINI ICON (Placed exactly after the text and marks badge!)
+      if (!q.isSubjective) {
+          let mcqGeminiWrapper = document.createElement('span');
+          mcqGeminiWrapper.id = 'mcq-gemini-wrapper';
+          // inline-flex makes it sit perfectly on the text line
+          mcqGeminiWrapper.style.cssText = "display: inline-flex; align-items: center; justify-content: center; position: relative; width: 24px; height: 24px; vertical-align: middle; margin-left: 12px;";
+          
+          let mcqGeminiRing = document.createElement('div');
+          mcqGeminiRing.id = 'mcq-gemini-ring';
+          mcqGeminiRing.style.cssText = "position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px; border-radius: 50%; border: 2px solid transparent; box-sizing: border-box;";
+          
+          let mcqGeminiBtn = document.createElement('img');
+          mcqGeminiBtn.id = 'mcq-gemini-icon';
+          mcqGeminiBtn.src = 'gemini.png';
+          mcqGeminiBtn.style.cssText = "width: 20px; height: 20px; cursor: pointer; object-fit: contain; z-index: 2;";
+          mcqGeminiBtn.title = "Ask AI to verify and explain";
+          
+          mcqGeminiWrapper.appendChild(mcqGeminiRing);
+          mcqGeminiWrapper.appendChild(mcqGeminiBtn);
+          
+          // Append to the very end of the question text
+          questionTextEl.appendChild(mcqGeminiWrapper);
+
+          // Click Event
+          mcqGeminiBtn.onclick = () => checkMCQWithGemini();
+
+          // Inject CSS for animation
+          if (!document.getElementById('gemini-spin-style')) {
+              const style = document.createElement('style');
+              style.id = 'gemini-spin-style';
+              style.innerHTML = `@keyframes geminiSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
+              document.head.appendChild(style);
+          }
+      }
+
+      // Clear any old AI feedback when changing questions
+      const oldAiFeedback = document.getElementById('mcq-ai-feedback-box');
+      if (oldAiFeedback) oldAiFeedback.remove();
+
+      // Clean up any lingering buggy CSS from previous steps
+      if (typeof questionTextEl !== 'undefined' && questionTextEl) {
+          questionTextEl.style.paddingRight = "0px";
+          questionTextEl.style.marginTop = "0px";
+      }
+
+      // Update icons visibility (Leaves WhatsApp and Edit/Delete in their ORIGINAL pristine corner)
       updateAdminControls();
 
-      // NEW: INVISIBLE WRAPPER LAYOUT (The Safest Method)
-      let mcqGeminiWrapper = document.getElementById('mcq-gemini-wrapper');
-      
-      if (!mcqGeminiWrapper) {
-          const whatsappIcon = document.getElementById('question-whatsapp-icon');
-          
-          if (whatsappIcon) {
-              // 1. Create a tiny invisible wrapper that mimics the WhatsApp icon's footprint
-              const invisibleWrapper = document.createElement('div');
-              invisibleWrapper.id = 'whatsapp-invisible-wrapper';
-              // inline-block keeps it safely in your normal layout flow
-              invisibleWrapper.style.cssText = "display: inline-block; position: relative; vertical-align: middle; margin-left: 15px;";
-              
-              // 2. Insert the wrapper right before the WhatsApp icon
-              whatsappIcon.parentNode.insertBefore(invisibleWrapper, whatsappIcon);
-              
-              // 3. Move the WhatsApp icon INTO the wrapper
-              invisibleWrapper.appendChild(whatsappIcon);
-              whatsappIcon.style.margin = "0"; // Wrapper handles the spacing now
-
-              // 4. Create the Gemini Wrapper
-              mcqGeminiWrapper = document.createElement('div');
-              mcqGeminiWrapper.id = 'mcq-gemini-wrapper';
-              // Absolute positioning relative to the wrapper means it hangs off the bottom without pushing text down!
-              mcqGeminiWrapper.style.cssText = "position: absolute; top: 100%; right: 50%; transform: translateX(50%); margin-top: 8px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; z-index: 50;";
-              
-              // 5. Create the Ring (This rotates)
-              let mcqGeminiRing = document.createElement('div');
-              mcqGeminiRing.id = 'mcq-gemini-ring';
-              mcqGeminiRing.style.cssText = "position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px; border-radius: 50%; border: 2px solid transparent; box-sizing: border-box;";
-              
-              // 6. Create the Image (This stays perfectly still)
-              let mcqGeminiBtn = document.createElement('img');
-              mcqGeminiBtn.id = 'mcq-gemini-icon';
-              mcqGeminiBtn.src = 'gemini.png';
-              mcqGeminiBtn.style.cssText = "width: 20px; height: 20px; cursor: pointer; object-fit: contain; z-index: 2;";
-              mcqGeminiBtn.title = "Ask AI to verify and explain";
-              
-              // Assemble
-              mcqGeminiWrapper.appendChild(mcqGeminiRing);
-              mcqGeminiWrapper.appendChild(mcqGeminiBtn);
-              invisibleWrapper.appendChild(mcqGeminiWrapper);
-
-              // Inject CSS for the spin animation
-              if (!document.getElementById('gemini-spin-style')) {
-                  const style = document.createElement('style');
-                  style.id = 'gemini-spin-style';
-                  style.innerHTML = `@keyframes geminiSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
-                  document.head.appendChild(style);
-              }
-          }
-      }
-
-      // Toggle visibility depending on question type
-      if (mcqGeminiWrapper) {
-          let ring = document.getElementById('mcq-gemini-ring');
-          let btn = document.getElementById('mcq-gemini-icon');
-          
-          if (q.isSubjective) {
-              mcqGeminiWrapper.style.display = 'none'; // Hide on Subjective
-          } else {
-              mcqGeminiWrapper.style.display = 'flex'; // Show on MCQ
-              
-              // Reset ring state for new question
-              if (ring) {
-                  ring.style.border = "2px solid transparent";
-                  ring.style.animation = "none";
-              }
-              
-              // Assign click function
-              if (btn) btn.onclick = () => checkMCQWithGemini();
-          }
-          
-          // Clear any old AI feedback when changing questions
-          const oldAiFeedback = document.getElementById('mcq-ai-feedback-box');
-          if (oldAiFeedback) oldAiFeedback.remove();
-      }
-
-      // Handle question image
       // Handle question image
       if (q.imageUrl && q.imageUrl.trim() && q.imageUrl.trim() !== 'null' && q.imageUrl.trim() !== 'undefined') {
         const imageUrl = convertImageUrl(q.imageUrl.trim());
@@ -11448,7 +11414,7 @@ if (isScreenVisible('video-container')) {
           subjectiveIncorrectBtn.classList.add('selected-incorrect');
         }
         
-       subjectiveCorrectBtn.onclick = (e) => {
+        subjectiveCorrectBtn.onclick = (e) => {
           const isReattempt = (typeof isIncorrectReviewMode !== 'undefined' && isIncorrectReviewMode);
           if (hasAnswered || (!isQuizActive && !isReattempt)) return;
           resetInactivityTimer();
