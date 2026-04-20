@@ -11301,38 +11301,31 @@ if (isScreenVisible('video-container')) {
       // Update icons visibility
       updateAdminControls();
 
-      // NEW: DYNAMIC ANCHORED LAYOUT (Fixes overlaps for both Admin and User)
+      // NEW: INVISIBLE WRAPPER LAYOUT (The Safest Method)
       let mcqGeminiWrapper = document.getElementById('mcq-gemini-wrapper');
       
       if (!mcqGeminiWrapper) {
           const whatsappIcon = document.getElementById('question-whatsapp-icon');
           
           if (whatsappIcon) {
-              // 1. Get the original container that holds Edit, Delete, and WhatsApp
-              const iconContainer = whatsappIcon.parentNode;
+              // 1. Create a tiny invisible wrapper that mimics the WhatsApp icon's footprint
+              const invisibleWrapper = document.createElement('div');
+              invisibleWrapper.id = 'whatsapp-invisible-wrapper';
+              // inline-block keeps it safely in your normal layout flow
+              invisibleWrapper.style.cssText = "display: inline-block; position: relative; vertical-align: middle; margin-left: 15px;";
               
-              // 2. Fix the original container to absolute top-right (Reclaims top empty space)
-              iconContainer.style.position = 'absolute';
-              iconContainer.style.top = '8px';
-              iconContainer.style.right = '12px';
-              iconContainer.style.zIndex = '50';
-              iconContainer.style.display = 'flex';
-              iconContainer.style.gap = '12px'; // Space between Edit, Delete, WhatsApp
-              iconContainer.style.alignItems = 'center';
+              // 2. Insert the wrapper right before the WhatsApp icon
+              whatsappIcon.parentNode.insertBefore(invisibleWrapper, whatsappIcon);
               
-              // 3. Protect question text from hiding under the absolute container
-              const questionBox = document.getElementById('question-box');
-              if (questionBox) questionBox.style.position = 'relative';
-              if (typeof questionTextEl !== 'undefined' && questionTextEl) {
-                  questionTextEl.style.marginTop = "0px";
-                  questionTextEl.style.paddingRight = "85px"; // Gives room for admin icons
-              }
+              // 3. Move the WhatsApp icon INTO the wrapper
+              invisibleWrapper.appendChild(whatsappIcon);
+              whatsappIcon.style.margin = "0"; // Wrapper handles the spacing now
 
               // 4. Create the Gemini Wrapper
               mcqGeminiWrapper = document.createElement('div');
               mcqGeminiWrapper.id = 'mcq-gemini-wrapper';
-              // Anchor it to the bottom-right of the entire icon container!
-              mcqGeminiWrapper.style.cssText = "position: absolute; top: 100%; right: 0; margin-top: 10px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;";
+              // Absolute positioning relative to the wrapper means it hangs off the bottom without pushing text down!
+              mcqGeminiWrapper.style.cssText = "position: absolute; top: 100%; right: 50%; transform: translateX(50%); margin-top: 8px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; z-index: 50;";
               
               // 5. Create the Ring (This rotates)
               let mcqGeminiRing = document.createElement('div');
@@ -11349,7 +11342,7 @@ if (isScreenVisible('video-container')) {
               // Assemble
               mcqGeminiWrapper.appendChild(mcqGeminiRing);
               mcqGeminiWrapper.appendChild(mcqGeminiBtn);
-              iconContainer.appendChild(mcqGeminiWrapper);
+              invisibleWrapper.appendChild(mcqGeminiWrapper);
 
               // Inject CSS for the spin animation
               if (!document.getElementById('gemini-spin-style')) {
@@ -11358,10 +11351,6 @@ if (isScreenVisible('video-container')) {
                   style.innerHTML = `@keyframes geminiSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
                   document.head.appendChild(style);
               }
-              
-              // Clean up the old bad container if it still exists in your DOM
-              const oldStack = document.getElementById('right-corner-stack');
-              if (oldStack) oldStack.remove();
           }
       }
 
