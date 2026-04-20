@@ -14200,7 +14200,8 @@ async function checkMCQWithGemini() {
                 if (!aiFeedbackDiv) {
                     aiFeedbackDiv = document.createElement('div');
                     aiFeedbackDiv.id = 'mcq-ai-feedback-box';
-                    aiFeedbackDiv.style.cssText = "margin-bottom: 12px; padding: 12px; background: rgba(168, 85, 247, 0.1); border-left: 4px solid #a855f7; border-radius: 4px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #e2e8f0;";
+                    // EXACT MATCH to Subjective gemini-feedback styles
+                    aiFeedbackDiv.style.cssText = "margin-bottom: 15px; padding: 15px; background: #1e293b; border: 1px solid #3b82f6; border-radius: 8px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #f8fafc;";
                     
                     // Insert it directly inside the feedback area
                     if (feedbackEl.firstChild) {
@@ -14209,7 +14210,8 @@ async function checkMCQWithGemini() {
                         feedbackEl.appendChild(aiFeedbackDiv);
                     }
                 }
-                aiFeedbackDiv.innerHTML = `<strong style="color: #a855f7;">AI Verification:</strong><br>${data.explanation}`;
+                // Changed text to match subjective exactly
+                aiFeedbackDiv.innerHTML = `<strong>AI Feedback:</strong><br>${data.explanation}`;
             }
 
         } else {
