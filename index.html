@@ -11301,47 +11301,45 @@ if (isScreenVisible('video-container')) {
       // Update icons visibility
       updateAdminControls();
 
-      // NEW: ABSOLUTE TOP-RIGHT LAYOUT (Reclaims wasted top space)
+      // NEW: DYNAMIC ANCHORED LAYOUT (Fixes overlaps for both Admin and User)
       let mcqGeminiWrapper = document.getElementById('mcq-gemini-wrapper');
-      let rightCornerStack = document.getElementById('right-corner-stack');
       
-      if (!rightCornerStack) {
+      if (!mcqGeminiWrapper) {
           const whatsappIcon = document.getElementById('question-whatsapp-icon');
-          const questionBox = document.getElementById('question-box');
           
-          if (whatsappIcon && questionBox) {
-              // 1. Make the main question box the anchor for absolute positioning
-              questionBox.style.position = 'relative';
+          if (whatsappIcon) {
+              // 1. Get the original container that holds Edit, Delete, and WhatsApp
+              const iconContainer = whatsappIcon.parentNode;
               
-              // 2. Create the floating top-right stack (Takes up ZERO space in text flow)
-              rightCornerStack = document.createElement('div');
-              rightCornerStack.id = 'right-corner-stack';
-              rightCornerStack.style.cssText = "position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 50;";
+              // 2. Fix the original container to absolute top-right (Reclaims top empty space)
+              iconContainer.style.position = 'absolute';
+              iconContainer.style.top = '8px';
+              iconContainer.style.right = '12px';
+              iconContainer.style.zIndex = '50';
+              iconContainer.style.display = 'flex';
+              iconContainer.style.gap = '12px'; // Space between Edit, Delete, WhatsApp
+              iconContainer.style.alignItems = 'center';
               
-              // 3. Attach it to the question box
-              questionBox.appendChild(rightCornerStack);
-              
-              // 4. Move the WhatsApp icon into this floating stack
-              rightCornerStack.appendChild(whatsappIcon);
-              whatsappIcon.style.margin = "0"; // Strip old margins
-              
-              // 5. Ensure question text starts at the very top, but avoids the icons
+              // 3. Protect question text from hiding under the absolute container
+              const questionBox = document.getElementById('question-box');
+              if (questionBox) questionBox.style.position = 'relative';
               if (typeof questionTextEl !== 'undefined' && questionTextEl) {
                   questionTextEl.style.marginTop = "0px";
-                  questionTextEl.style.paddingRight = "45px"; // Protects text from hiding under icons
+                  questionTextEl.style.paddingRight = "85px"; // Gives room for admin icons
               }
 
-              // 6. Create the Gemini Wrapper
+              // 4. Create the Gemini Wrapper
               mcqGeminiWrapper = document.createElement('div');
               mcqGeminiWrapper.id = 'mcq-gemini-wrapper';
-              mcqGeminiWrapper.style.cssText = "position: relative; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;";
+              // Anchor it to the bottom-right of the entire icon container!
+              mcqGeminiWrapper.style.cssText = "position: absolute; top: 100%; right: 0; margin-top: 10px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;";
               
-              // 7. Create the Ring (This rotates)
+              // 5. Create the Ring (This rotates)
               let mcqGeminiRing = document.createElement('div');
               mcqGeminiRing.id = 'mcq-gemini-ring';
               mcqGeminiRing.style.cssText = "position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px; border-radius: 50%; border: 2px solid transparent; box-sizing: border-box;";
               
-              // 8. Create the Image (This stays perfectly still)
+              // 6. Create the Image (This stays perfectly still)
               let mcqGeminiBtn = document.createElement('img');
               mcqGeminiBtn.id = 'mcq-gemini-icon';
               mcqGeminiBtn.src = 'gemini.png';
@@ -11351,7 +11349,7 @@ if (isScreenVisible('video-container')) {
               // Assemble
               mcqGeminiWrapper.appendChild(mcqGeminiRing);
               mcqGeminiWrapper.appendChild(mcqGeminiBtn);
-              rightCornerStack.appendChild(mcqGeminiWrapper);
+              iconContainer.appendChild(mcqGeminiWrapper);
 
               // Inject CSS for the spin animation
               if (!document.getElementById('gemini-spin-style')) {
@@ -11360,6 +11358,10 @@ if (isScreenVisible('video-container')) {
                   style.innerHTML = `@keyframes geminiSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
                   document.head.appendChild(style);
               }
+              
+              // Clean up the old bad container if it still exists in your DOM
+              const oldStack = document.getElementById('right-corner-stack');
+              if (oldStack) oldStack.remove();
           }
       }
 
