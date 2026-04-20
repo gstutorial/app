@@ -14166,9 +14166,15 @@ async function checkMCQWithGemini() {
         btn.style.opacity = "0.7";
     }
 
+    // NEW PROMPT: Forces the exact structure and 100% verification rule
     const promptQ = `MCQ Question: ${questionText}\nOptions:\n${optionsText}`;
-    const promptExpected = `Admin claims the Correct Option is: ${expectedAnswerText}. Admin Explanation: ${expectedExp} (Verify if the Admin is factually correct!)`;
-    const promptUser = `I selected: ${userSelectedText}`;
+    const promptExpected = `Admin claims Correct Option is: ${expectedAnswerText}. Admin Explanation: ${expectedExp}. Ignore Admin if factually wrong. Verify 100% using your own knowledge.`;
+    const promptUser = `I selected: ${userSelectedText}
+
+CRITICAL FORMATTING INSTRUCTIONS FOR YOUR EXPLANATION:
+1. The VERY FIRST line of your explanation MUST be exactly: "Correct Option: [Insert the actual correct option text here] ✅".
+2. Then add a <br><br> tag for spacing.
+3. Then provide a highly systematic, step-by-step explanation of the proper answer and why it is 100% factually correct.`;
 
     const formData = new FormData();
     formData.append('action', 'evaluateWithGemini');
@@ -14200,8 +14206,10 @@ async function checkMCQWithGemini() {
                 if (!aiFeedbackDiv) {
                     aiFeedbackDiv = document.createElement('div');
                     aiFeedbackDiv.id = 'mcq-ai-feedback-box';
+                    
                     // EXACT MATCH to Subjective gemini-feedback styles
-                    aiFeedbackDiv.style.cssText = "margin-bottom: 15px; padding: 15px; background: #1e293b; border: 1px solid #3b82f6; border-radius: 8px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #f8fafc;";
+                    // Uses the light blue background with a thick blue left-border
+                    aiFeedbackDiv.style.cssText = "margin-bottom: 15px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 4px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #e2e8f0;";
                     
                     // Insert it directly inside the feedback area
                     if (feedbackEl.firstChild) {
@@ -14210,8 +14218,8 @@ async function checkMCQWithGemini() {
                         feedbackEl.appendChild(aiFeedbackDiv);
                     }
                 }
-                // Changed text to match subjective exactly
-                aiFeedbackDiv.innerHTML = `<strong>AI Feedback:</strong><br>${data.explanation}`;
+                // Sets the title exactly like the subjective box
+                aiFeedbackDiv.innerHTML = `<strong>AI Feedback:</strong><br><br>${data.explanation}`;
             }
 
         } else {
