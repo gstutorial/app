@@ -11301,55 +11301,43 @@ if (isScreenVisible('video-container')) {
       // Update icons visibility
       updateAdminControls();
 
-      // NEW: INJECT MCQ GEMINI BUTTON (FIXED LAYOUT & NON-ROTATING IMAGE)
+      // NEW: INJECT MCQ GEMINI BUTTON (SAFE LAYOUT)
       let mcqGeminiWrapper = document.getElementById('mcq-gemini-wrapper');
-      let mcqGeminiRing = document.getElementById('mcq-gemini-ring');
-      let mcqGeminiBtn = document.getElementById('mcq-gemini-icon');
       
       if (!mcqGeminiWrapper) {
           const whatsappIcon = document.getElementById('question-whatsapp-icon');
           if (whatsappIcon) {
-              const iconContainer = whatsappIcon.parentNode;
+              // 1. Create a safe vertical stack JUST for WhatsApp and Gemini
+              const columnStack = document.createElement('div');
+              columnStack.id = 'whatsapp-gemini-stack';
+              columnStack.style.cssText = "display: inline-flex; flex-direction: column; align-items: center; gap: 8px; vertical-align: top;";
               
-              // 1. FIX LAYOUT: Make the container absolute so it doesn't push text down
-              document.getElementById('question-box').style.position = 'relative'; // Anchor for the absolute icons
-              iconContainer.style.position = 'absolute';
-              iconContainer.style.top = '12px';
-              iconContainer.style.right = '12px';
-              iconContainer.style.display = 'flex';
-              iconContainer.style.flexDirection = 'column'; // Stack icons vertically
-              iconContainer.style.alignItems = 'center';
-              iconContainer.style.gap = '12px';
-              iconContainer.style.zIndex = '10';
+              // 2. Insert the stack where the WhatsApp icon is, then move WhatsApp inside it
+              whatsappIcon.parentNode.insertBefore(columnStack, whatsappIcon);
+              columnStack.appendChild(whatsappIcon);
+              whatsappIcon.style.margin = "0"; // Remove any old margins that push it off-center
 
-              // Prevent question text from hiding under the corner icons
-              if (questionTextEl) {
-                  questionTextEl.style.paddingRight = '35px';
-                  questionTextEl.style.marginTop = '0px';
-              }
-
-              // 2. CREATE WRAPPER: Separate the image from the spinning ring!
+              // 3. Create the Gemini Wrapper (Non-rotating container)
               mcqGeminiWrapper = document.createElement('div');
               mcqGeminiWrapper.id = 'mcq-gemini-wrapper';
-              mcqGeminiWrapper.style.cssText = "position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;";
+              mcqGeminiWrapper.style.cssText = "position: relative; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;";
               
-              // 3. THE RING: This rotates
-              mcqGeminiRing = document.createElement('div');
+              // 4. Create the Ring (This rotates)
+              let mcqGeminiRing = document.createElement('div');
               mcqGeminiRing.id = 'mcq-gemini-ring';
-              mcqGeminiRing.style.cssText = "position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; border: 2px solid transparent; box-sizing: border-box;";
+              mcqGeminiRing.style.cssText = "position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px; border-radius: 50%; border: 2px solid transparent; box-sizing: border-box;";
               
-              // 4. THE IMAGE: This stays perfectly still
-              mcqGeminiBtn = document.createElement('img');
+              // 5. Create the Image (This stays perfectly still)
+              let mcqGeminiBtn = document.createElement('img');
               mcqGeminiBtn.id = 'mcq-gemini-icon';
               mcqGeminiBtn.src = 'gemini.png';
               mcqGeminiBtn.style.cssText = "width: 20px; height: 20px; cursor: pointer; object-fit: contain; z-index: 2;";
               mcqGeminiBtn.title = "Ask AI to verify and explain";
               
+              // Assemble the pieces
               mcqGeminiWrapper.appendChild(mcqGeminiRing);
               mcqGeminiWrapper.appendChild(mcqGeminiBtn);
-              
-              // Add to the vertical icon stack below WhatsApp
-              iconContainer.appendChild(mcqGeminiWrapper);
+              columnStack.appendChild(mcqGeminiWrapper);
 
               // Inject CSS for the spin animation into the document head
               if (!document.getElementById('gemini-spin-style')) {
@@ -11363,15 +11351,22 @@ if (isScreenVisible('video-container')) {
 
       // Toggle visibility depending on question type
       if (mcqGeminiWrapper) {
+          let ring = document.getElementById('mcq-gemini-ring');
+          let btn = document.getElementById('mcq-gemini-icon');
+          
           if (q.isSubjective) {
               mcqGeminiWrapper.style.display = 'none'; // Hide on Subjective
           } else {
               mcqGeminiWrapper.style.display = 'flex'; // Show on MCQ
-              // Reset ring state for new question
-              mcqGeminiRing.style.border = "2px solid transparent";
-              mcqGeminiRing.style.animation = "none";
               
-              mcqGeminiBtn.onclick = () => checkMCQWithGemini();
+              // Reset ring state for new question
+              if (ring) {
+                  ring.style.border = "2px solid transparent";
+                  ring.style.animation = "none";
+              }
+              
+              // Assign click function
+              if (btn) btn.onclick = () => checkMCQWithGemini();
           }
           
           // Clear any old AI feedback when changing questions
@@ -11379,6 +11374,7 @@ if (isScreenVisible('video-container')) {
           if (oldAiFeedback) oldAiFeedback.remove();
       }
 
+      
       // Handle question image
       // Handle question image
       if (q.imageUrl && q.imageUrl.trim() && q.imageUrl.trim() !== 'null' && q.imageUrl.trim() !== 'undefined') {
