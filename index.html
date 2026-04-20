@@ -11301,45 +11301,59 @@ if (isScreenVisible('video-container')) {
       // Update icons visibility
       updateAdminControls();
 
-      // NEW: INJECT MCQ GEMINI BUTTON (SAFE LAYOUT)
+      // NEW: ABSOLUTE TOP-RIGHT LAYOUT (Reclaims wasted top space)
       let mcqGeminiWrapper = document.getElementById('mcq-gemini-wrapper');
+      let rightCornerStack = document.getElementById('right-corner-stack');
       
-      if (!mcqGeminiWrapper) {
+      if (!rightCornerStack) {
           const whatsappIcon = document.getElementById('question-whatsapp-icon');
-          if (whatsappIcon) {
-              // 1. Create a safe vertical stack JUST for WhatsApp and Gemini
-              const columnStack = document.createElement('div');
-              columnStack.id = 'whatsapp-gemini-stack';
-              columnStack.style.cssText = "display: inline-flex; flex-direction: column; align-items: center; gap: 8px; vertical-align: top;";
+          const questionBox = document.getElementById('question-box');
+          
+          if (whatsappIcon && questionBox) {
+              // 1. Make the main question box the anchor for absolute positioning
+              questionBox.style.position = 'relative';
               
-              // 2. Insert the stack where the WhatsApp icon is, then move WhatsApp inside it
-              whatsappIcon.parentNode.insertBefore(columnStack, whatsappIcon);
-              columnStack.appendChild(whatsappIcon);
-              whatsappIcon.style.margin = "0"; // Remove any old margins that push it off-center
+              // 2. Create the floating top-right stack (Takes up ZERO space in text flow)
+              rightCornerStack = document.createElement('div');
+              rightCornerStack.id = 'right-corner-stack';
+              rightCornerStack.style.cssText = "position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 50;";
+              
+              // 3. Attach it to the question box
+              questionBox.appendChild(rightCornerStack);
+              
+              // 4. Move the WhatsApp icon into this floating stack
+              rightCornerStack.appendChild(whatsappIcon);
+              whatsappIcon.style.margin = "0"; // Strip old margins
+              
+              // 5. Ensure question text starts at the very top, but avoids the icons
+              if (typeof questionTextEl !== 'undefined' && questionTextEl) {
+                  questionTextEl.style.marginTop = "0px";
+                  questionTextEl.style.paddingRight = "45px"; // Protects text from hiding under icons
+              }
 
-              // 3. Create the Gemini Wrapper (Non-rotating container)
+              // 6. Create the Gemini Wrapper
               mcqGeminiWrapper = document.createElement('div');
               mcqGeminiWrapper.id = 'mcq-gemini-wrapper';
               mcqGeminiWrapper.style.cssText = "position: relative; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;";
               
-              // 4. Create the Ring (This rotates)
+              // 7. Create the Ring (This rotates)
               let mcqGeminiRing = document.createElement('div');
               mcqGeminiRing.id = 'mcq-gemini-ring';
               mcqGeminiRing.style.cssText = "position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px; border-radius: 50%; border: 2px solid transparent; box-sizing: border-box;";
               
-              // 5. Create the Image (This stays perfectly still)
+              // 8. Create the Image (This stays perfectly still)
               let mcqGeminiBtn = document.createElement('img');
               mcqGeminiBtn.id = 'mcq-gemini-icon';
               mcqGeminiBtn.src = 'gemini.png';
               mcqGeminiBtn.style.cssText = "width: 20px; height: 20px; cursor: pointer; object-fit: contain; z-index: 2;";
               mcqGeminiBtn.title = "Ask AI to verify and explain";
               
-              // Assemble the pieces
+              // Assemble
               mcqGeminiWrapper.appendChild(mcqGeminiRing);
               mcqGeminiWrapper.appendChild(mcqGeminiBtn);
-              columnStack.appendChild(mcqGeminiWrapper);
+              rightCornerStack.appendChild(mcqGeminiWrapper);
 
-              // Inject CSS for the spin animation into the document head
+              // Inject CSS for the spin animation
               if (!document.getElementById('gemini-spin-style')) {
                   const style = document.createElement('style');
                   style.id = 'gemini-spin-style';
@@ -11374,7 +11388,6 @@ if (isScreenVisible('video-container')) {
           if (oldAiFeedback) oldAiFeedback.remove();
       }
 
-      
       // Handle question image
       // Handle question image
       if (q.imageUrl && q.imageUrl.trim() && q.imageUrl.trim() !== 'null' && q.imageUrl.trim() !== 'undefined') {
