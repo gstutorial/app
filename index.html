@@ -11456,6 +11456,40 @@ if (isScreenVisible('video-container')) {
     }
     finishBtn.disabled = false;
 
+      // HELPER TO RESTORE PERSISTENT AI FEEDBACK AND RENDER BUTTON
+      const renderMcqAiButton = () => {
+        if (!q.isSubjective) {
+          const mcqBtn = document.createElement("button");
+          mcqBtn.id = "mcq-gemini-full-btn";
+          
+          if (window.mcqAiExplanations && window.mcqAiExplanations[currentIndex]) {
+             // ALREADY VERIFIED STATE
+             mcqBtn.style.cssText = "margin-top: 15px; width: 100%; background: #0f172a; color: #cbd5e1; border: 1px solid #334155; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;";
+             mcqBtn.innerHTML = `<img src="gemini.png" style="width:20px;height:20px;filter: grayscale(100%);"> AI Verified`;
+             mcqBtn.disabled = true;
+             feedbackEl.appendChild(mcqBtn);
+
+             // RESTORE FEEDBACK BOX
+             let aiFeedbackDiv = document.createElement('div');
+             aiFeedbackDiv.id = 'mcq-ai-feedback-box';
+             aiFeedbackDiv.style.cssText = "margin-bottom: 15px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 4px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #e2e8f0; max-height: 350px; overflow-y: auto;";
+             aiFeedbackDiv.innerHTML = `<strong>AI Feedback:</strong><br><br>${window.mcqAiExplanations[currentIndex]}`;
+             
+             if (feedbackEl.firstChild) {
+                 feedbackEl.insertBefore(aiFeedbackDiv, feedbackEl.firstChild);
+             } else {
+                 feedbackEl.appendChild(aiFeedbackDiv);
+             }
+          } else {
+             // UNVERIFIED STATE (Black Gradient + Blue Glow)
+             mcqBtn.style.cssText = "margin-top: 15px; width: 100%; background: linear-gradient(135deg, #111827 0%, #000000 100%); color: white; border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); transition: all 0.3s ease;";
+             mcqBtn.innerHTML = `<img src="gemini.png" alt="Gemini" style="width:20px;height:20px;object-fit:contain;"> Check with AI`;
+             mcqBtn.onclick = () => checkMCQWithGemini();
+             feedbackEl.appendChild(mcqBtn);
+          }
+        }
+      };
+
       if (userAnswers[currentIndex] !== undefined) {
         if (q.isSubjective) {
           const isCorrect = userAnswers[currentIndex] === 'correct';
@@ -11488,15 +11522,7 @@ if (isScreenVisible('video-container')) {
           feedbackEl.appendChild(exp);
         }
 
-        // FULL MCQ GEMINI BUTTON WITH EXACT SUBJECTIVE STYLE
-        if (!q.isSubjective) {
-          const mcqBtn = document.createElement("button");
-          mcqBtn.id = "mcq-gemini-full-btn";
-          mcqBtn.style.cssText = "margin-top: 15px; width: 100%; background: #a855f7; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;";
-          mcqBtn.innerHTML = `<img src="gemini.png" alt="Gemini" style="width:20px;height:20px;object-fit:contain;"> Check with AI`;
-          mcqBtn.onclick = () => checkMCQWithGemini();
-          feedbackEl.appendChild(mcqBtn);
-        }
+        renderMcqAiButton(); // Render Persistent Button/Feedback
 
         if (!isReviewMode && !isIncorrectReviewMode) {
           nextBtn.disabled = false;
@@ -11524,13 +11550,7 @@ if (isScreenVisible('video-container')) {
           feedbackEl.className = "feedback correct";
           lockOptions();
 
-          // ADD BUTTON FOR UNANSWERED QUESTIONS IN REVIEW MODE
-          const mcqBtn = document.createElement("button");
-          mcqBtn.id = "mcq-gemini-full-btn";
-          mcqBtn.style.cssText = "margin-top: 15px; width: 100%; background: #a855f7; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;";
-          mcqBtn.innerHTML = `<img src="gemini.png" alt="Gemini" style="width:20px;height:20px;object-fit:contain;"> Check with AI`;
-          mcqBtn.onclick = () => checkMCQWithGemini();
-          feedbackEl.appendChild(mcqBtn);
+          renderMcqAiButton(); // Render Persistent Button/Feedback for Review Mode
 
         } else {
           if (q.explanation) {
@@ -11609,12 +11629,11 @@ if (isScreenVisible('video-container')) {
         feedbackEl.appendChild(exp);
       }
 
-      // NEW: INJECT MCQ GEMINI BUTTON WITH EXACT SUBJECTIVE STYLE
+      // NEW: BLACK GRADIENT + BLUE GLOW BUTTON
       if (!q.isSubjective) {
         const mcqBtn = document.createElement("button");
         mcqBtn.id = "mcq-gemini-full-btn";
-        // Exact styling to match the subjective purple button
-        mcqBtn.style.cssText = "margin-top: 15px; width: 100%; background: #a855f7; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;";
+        mcqBtn.style.cssText = "margin-top: 15px; width: 100%; background: linear-gradient(135deg, #111827 0%, #000000 100%); color: white; border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); transition: all 0.3s ease;";
         mcqBtn.innerHTML = `<img src="gemini.png" alt="Gemini" style="width:20px;height:20px;object-fit:contain;"> Check with AI`;
         mcqBtn.onclick = () => checkMCQWithGemini();
         feedbackEl.appendChild(mcqBtn);
@@ -14130,25 +14149,25 @@ async function checkMCQWithGemini() {
     
     if (btn) {
         originalHtml = btn.innerHTML;
-        // Keep flex layout during loading animation
         btn.innerHTML = `<svg class="loading-spinner-small" style="width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);border-top:2px solid #fff;animation:spin 1s linear infinite;" viewBox="0 0 24 24"></svg> Checking...`;
+        btn.style.boxShadow = "none"; // Remove glow while loading
         btn.disabled = true;
         btn.style.opacity = "0.8";
     }
 
     const promptQ = `MCQ Question: ${questionText}\nOptions:\n${optionsText}`;
-    const promptExpected = `Admin claims Correct Option is: ${expectedAnswerText}. Admin Explanation: ${expectedExp}. IMPORTANT: The Admin is often wrong! You must critically verify this claim using strict, universally accepted factual knowledge before responding.`;
+    const promptExpected = `Admin claims Correct Option is: ${expectedAnswerText}. Admin Explanation: ${expectedExp}. Critically verify this.`;
     
-    // UPDATED PROMPT: Forces exact "Correct Answer: ✅ [Option]" and next line explanation
+    // EXTREMELY STRICT PROMPT FOR EXACT FORMATTING
     const promptUser = `I selected: ${userSelectedText}
 
-CRITICAL INSTRUCTIONS FOR MAXIMUM ACCURACY & FORMATTING:
-1. Act as a strict, top-tier expert examiner. Do NOT guess.
-2. Mentally evaluate ALL given options logically before determining the absolute truth.
-3. The VERY FIRST line of your response MUST exactly follow this format: "Correct Answer: ✅ [Option Letter]. [Full Option Text]" (Example: Correct Answer: ✅ B. Paris).
-4. Then add exactly ONE <br><br> tag for spacing to start the next line.
-5. On the next line, provide a definitive, highly systematic explanation proving exactly WHY the correct option is right. 
-6. Briefly explain why the other options are factually or logically incorrect to prove your accuracy.`;
+ABSOLUTE STRICT FORMATTING RULES:
+1. You MUST start your response with EXACTLY this line (No bold tags on this first line):
+Correct Answer: ✅ [Option Letter]. [Full Option Text]
+(Example: Correct Answer: ✅ B. Paris)
+2. If you do not start with exactly that format, the system will break.
+3. Immediately after that line, add ONE <br><br> tag.
+4. Then, provide a highly detailed step-by-step explanation.`;
 
     const formData = new FormData();
     formData.append('action', 'evaluateWithGemini');
@@ -14167,25 +14186,29 @@ CRITICAL INSTRUCTIONS FOR MAXIMUM ACCURACY & FORMATTING:
         const data = await response.json();
 
         if (data.success) {
-            // SUCCESS - Gray out button and keep flex layout
+            // SAVE TO MEMORY FOR PERSISTENCE
+            window.mcqAiExplanations = window.mcqAiExplanations || {};
+            window.mcqAiExplanations[currentIndex] = data.explanation;
+
+            // SUCCESS - Gray out button, remove glow
             if (btn) {
                 btn.innerHTML = `<img src="gemini.png" style="width:20px;height:20px;filter: grayscale(100%);"> AI Verified`;
-                btn.style.background = "#475569"; 
+                btn.style.background = "#0f172a"; 
                 btn.style.color = "#cbd5e1";
+                btn.style.border = "1px solid #334155";
+                btn.style.boxShadow = "none";
                 btn.style.cursor = "not-allowed";
                 btn.style.opacity = "1";
             }
             
-            // INJECT SCROLLABLE INLINE AI FEEDBACK
             const feedbackEl = document.getElementById('feedback');
             if (feedbackEl) {
                 let aiFeedbackDiv = document.getElementById('mcq-ai-feedback-box');
                 if (!aiFeedbackDiv) {
                     aiFeedbackDiv = document.createElement('div');
                     aiFeedbackDiv.id = 'mcq-ai-feedback-box';
-                    
-                    // Added SCROLL CSS: max-height: 200px; overflow-y: auto;
-                    aiFeedbackDiv.style.cssText = "margin-bottom: 15px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 4px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #e2e8f0; max-height: 200px; overflow-y: auto;";
+                    // INCREASED HEIGHT TO 350px
+                    aiFeedbackDiv.style.cssText = "margin-bottom: 15px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 4px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #e2e8f0; max-height: 350px; overflow-y: auto;";
                     
                     if (feedbackEl.firstChild) {
                         feedbackEl.insertBefore(aiFeedbackDiv, feedbackEl.firstChild);
@@ -14201,6 +14224,7 @@ CRITICAL INSTRUCTIONS FOR MAXIMUM ACCURACY & FORMATTING:
                 btn.innerHTML = originalHtml;
                 btn.disabled = false;
                 btn.style.opacity = "1";
+                btn.style.boxShadow = "0 0 12px rgba(59, 130, 246, 0.6)"; // restore glow
             }
             window.showCustomAlert("Error", "AI Evaluation failed: " + (data.details || data.error || ""));
         }
@@ -14210,6 +14234,7 @@ CRITICAL INSTRUCTIONS FOR MAXIMUM ACCURACY & FORMATTING:
             btn.innerHTML = originalHtml;
             btn.disabled = false;
             btn.style.opacity = "1";
+            btn.style.boxShadow = "0 0 12px rgba(59, 130, 246, 0.6)";
         }
         window.showCustomAlert("Error", "Network error contacting AI.");
     }
