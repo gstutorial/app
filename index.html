@@ -10965,20 +10965,19 @@ if (isScreenVisible('video-container')) {
         if (idx === selectedIndex && selectedIndex !== q.correctIndex) optEl.classList.add("incorrect");
       });
 
-      // 🔥 CRITICAL FIX: Remove any old inline buttons trapped inside the green/red box
       const oldInlineBtn = document.getElementById('mcq-gemini-full-btn');
       if (oldInlineBtn && oldInlineBtn.parentNode === feedbackEl) {
           oldInlineBtn.remove();
       }
 
-      // 🔥 CRITICAL FIX: Build the proper isolated dark slate AI card immediately
+      // Build the isolated dark slate AI card immediately with tighter heights
       if (!q.isSubjective) {
           if (typeof hideAIFeedbackCard === 'function') hideAIFeedbackCard(); 
           let aiBox = document.getElementById('universal-ai-feedback-box');
           if (!aiBox) {
               aiBox = document.createElement('div');
               aiBox.id = 'universal-ai-feedback-box';
-              aiBox.style.cssText = "margin-top: 15px; padding: 20px; background: #1e293b; border: 1px solid #3b82f6; border-radius: 8px; text-align: left; font-size: 1rem; line-height: 1.6; color: #f1f5f9; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); width: 100%; box-sizing: border-box;";
+              aiBox.style.cssText = "margin-top: 12px; padding: 12px; background: #1e293b; border: 1px solid #3b82f6; border-radius: 8px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #f1f5f9; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); width: 100%; box-sizing: border-box;";
               const fEl = document.getElementById('feedback');
               if (fEl && fEl.parentNode) {
                   fEl.parentNode.insertBefore(aiBox, fEl.nextSibling);
@@ -10986,12 +10985,12 @@ if (isScreenVisible('video-container')) {
           }
           aiBox.style.display = 'block';
           aiBox.innerHTML = `
-              <div style="display:flex; align-items:center; margin-bottom:12px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
-                  <img src="gemini.png" style="width:24px;height:24px;margin-right:10px; object-fit:contain;"> 
-                  <strong style="font-size:1.15rem; color:#93c5fd; letter-spacing: 0.5px;">AI Verification:</strong>
+              <div style="display:flex; align-items:center; margin-bottom:10px; border-bottom: 1px solid #334155; padding-bottom: 8px;">
+                  <img src="gemini.png" style="width:20px;height:20px;margin-right:8px; object-fit:contain;"> 
+                  <strong style="font-size:1.05rem; color:#93c5fd; letter-spacing: 0.5px;">AI Verification:</strong>
               </div>
-              <button id="mcq-gemini-full-btn" onclick="checkMCQWithGemini()" style="width: 100%; background: linear-gradient(135deg, #111827 0%, #000000 100%); color: white; border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); transition: all 0.3s ease;">
-                  <img src="gemini.png" alt="Gemini" style="width:20px;height:20px;object-fit:contain;"> Check with AI
+              <button id="mcq-gemini-full-btn" onclick="checkMCQWithGemini()" style="width: 100%; background: linear-gradient(135deg, #111827 0%, #000000 100%); color: white; border: 1px solid #3b82f6; padding: 10px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); transition: all 0.3s ease;">
+                  <img src="gemini.png" alt="Gemini" style="width:18px;height:18px;object-fit:contain;"> Check with AI
                </button>
           `;
       }
@@ -11014,7 +11013,7 @@ if (isScreenVisible('video-container')) {
           reattemptStatusBanner.innerHTML = `🔄 Reattempting: ${answeredCount}/${reattemptQuestions.length} questions answered.`;
         }
       }
-    }
+}
 
     // ========== LOAD QUESTIONS FROM GOOGLE SHEET ==========
     async function loadQuestionsFromGoogleSheet(chapterName) {
@@ -11565,14 +11564,14 @@ if (isScreenVisible('video-container')) {
       }
       finishBtn.disabled = false;
 
-      // FIX: Creates the AI Card natively and injects the button inside it
+      // Implements smaller padding and 250px max-height scrollable div
       const renderMcqAiButton = () => {
         if (!q.isSubjective) {
           let aiBox = document.getElementById('universal-ai-feedback-box');
           if (!aiBox) {
               aiBox = document.createElement('div');
               aiBox.id = 'universal-ai-feedback-box';
-              aiBox.style.cssText = "margin-top: 15px; padding: 20px; background: #1e293b; border: 1px solid #3b82f6; border-radius: 8px; text-align: left; font-size: 1rem; line-height: 1.6; color: #f1f5f9; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); width: 100%; box-sizing: border-box;";
+              aiBox.style.cssText = "margin-top: 12px; padding: 12px; background: #1e293b; border: 1px solid #3b82f6; border-radius: 8px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #f1f5f9; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); width: 100%; box-sizing: border-box;";
               const fEl = document.getElementById('feedback');
               if (fEl && fEl.parentNode) {
                   fEl.parentNode.insertBefore(aiBox, fEl.nextSibling);
@@ -11581,26 +11580,24 @@ if (isScreenVisible('video-container')) {
           aiBox.style.display = 'block';
 
           if (window.mcqAiExplanations && window.mcqAiExplanations[currentIndex]) {
-             // Fully Verified UI inside Card
              aiBox.innerHTML = `
-                <div style="display:flex; align-items:center; margin-bottom:12px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
-                    <img src="gemini.png" style="width:24px;height:24px;margin-right:10px; object-fit:contain;"> 
-                    <strong style="font-size:1.15rem; color:#93c5fd; letter-spacing: 0.5px;">AI Feedback:</strong>
+                <div style="display:flex; align-items:center; margin-bottom:10px; border-bottom: 1px solid #334155; padding-bottom: 8px;">
+                    <img src="gemini.png" style="width:20px;height:20px;margin-right:8px; object-fit:contain;"> 
+                    <strong style="font-size:1.05rem; color:#93c5fd; letter-spacing: 0.5px;">AI Feedback:</strong>
                 </div>
-                <button id="mcq-gemini-full-btn" disabled style="margin-bottom: 15px; width: 100%; background: #0f172a; color: #cbd5e1; border: 1px solid #334155; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;">
-                    <img src="gemini.png" style="width:20px;height:20px;filter: grayscale(100%);"> AI Verified
+                <button id="mcq-gemini-full-btn" disabled style="margin-bottom: 12px; width: 100%; background: #0f172a; color: #cbd5e1; border: 1px solid #334155; padding: 10px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;">
+                    <img src="gemini.png" style="width:18px;height:18px;filter: grayscale(100%);"> AI Verified
                 </button>
-                <div style="padding-top: 5px;">${window.mcqAiExplanations[currentIndex]}</div>
+                <div style="max-height: 250px; overflow-y: auto; padding-right: 5px; padding-bottom: 5px;">${window.mcqAiExplanations[currentIndex]}</div>
              `;
           } else {
-             // Button Mode inside Card
              aiBox.innerHTML = `
-                <div style="display:flex; align-items:center; margin-bottom:12px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
-                    <img src="gemini.png" style="width:24px;height:24px;margin-right:10px; object-fit:contain;"> 
-                    <strong style="font-size:1.15rem; color:#93c5fd; letter-spacing: 0.5px;">AI Verification:</strong>
+                <div style="display:flex; align-items:center; margin-bottom:10px; border-bottom: 1px solid #334155; padding-bottom: 8px;">
+                    <img src="gemini.png" style="width:20px;height:20px;margin-right:8px; object-fit:contain;"> 
+                    <strong style="font-size:1.05rem; color:#93c5fd; letter-spacing: 0.5px;">AI Verification:</strong>
                 </div>
-                <button id="mcq-gemini-full-btn" onclick="checkMCQWithGemini()" style="width: 100%; background: linear-gradient(135deg, #111827 0%, #000000 100%); color: white; border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); transition: all 0.3s ease;">
-                    <img src="gemini.png" alt="Gemini" style="width:20px;height:20px;object-fit:contain;"> Check with AI
+                <button id="mcq-gemini-full-btn" onclick="checkMCQWithGemini()" style="width: 100%; background: linear-gradient(135deg, #111827 0%, #000000 100%); color: white; border: 1px solid #3b82f6; padding: 10px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); transition: all 0.3s ease;">
+                    <img src="gemini.png" alt="Gemini" style="width:18px;height:18px;object-fit:contain;"> Check with AI
                 </button>
              `;
           }
@@ -11773,14 +11770,19 @@ if (isScreenVisible('video-container')) {
         feedbackEl.appendChild(exp);
       }
 
-      // 🔥 CRITICAL FIX: Build the proper isolated dark slate AI card immediately
+      const oldInlineBtn = document.getElementById('mcq-gemini-full-btn');
+      if (oldInlineBtn && oldInlineBtn.parentNode === feedbackEl) {
+          oldInlineBtn.remove();
+      }
+
+      // Build the isolated dark slate AI card with tighter heights
       if (!q.isSubjective) {
           if (typeof hideAIFeedbackCard === 'function') hideAIFeedbackCard(); 
           let aiBox = document.getElementById('universal-ai-feedback-box');
           if (!aiBox) {
               aiBox = document.createElement('div');
               aiBox.id = 'universal-ai-feedback-box';
-              aiBox.style.cssText = "margin-top: 15px; padding: 20px; background: #1e293b; border: 1px solid #3b82f6; border-radius: 8px; text-align: left; font-size: 1rem; line-height: 1.6; color: #f1f5f9; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); width: 100%; box-sizing: border-box;";
+              aiBox.style.cssText = "margin-top: 12px; padding: 12px; background: #1e293b; border: 1px solid #3b82f6; border-radius: 8px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #f1f5f9; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); width: 100%; box-sizing: border-box;";
               const fEl = document.getElementById('feedback');
               if (fEl && fEl.parentNode) {
                   fEl.parentNode.insertBefore(aiBox, fEl.nextSibling);
@@ -11788,12 +11790,12 @@ if (isScreenVisible('video-container')) {
           }
           aiBox.style.display = 'block';
           aiBox.innerHTML = `
-              <div style="display:flex; align-items:center; margin-bottom:12px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
-                  <img src="gemini.png" style="width:24px;height:24px;margin-right:10px; object-fit:contain;"> 
-                  <strong style="font-size:1.15rem; color:#93c5fd; letter-spacing: 0.5px;">AI Verification:</strong>
+              <div style="display:flex; align-items:center; margin-bottom:10px; border-bottom: 1px solid #334155; padding-bottom: 8px;">
+                  <img src="gemini.png" style="width:20px;height:20px;margin-right:8px; object-fit:contain;"> 
+                  <strong style="font-size:1.05rem; color:#93c5fd; letter-spacing: 0.5px;">AI Verification:</strong>
               </div>
-              <button id="mcq-gemini-full-btn" onclick="checkMCQWithGemini()" style="width: 100%; background: linear-gradient(135deg, #111827 0%, #000000 100%); color: white; border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); transition: all 0.3s ease;">
-                  <img src="gemini.png" alt="Gemini" style="width:20px;height:20px;object-fit:contain;"> Check with AI
+              <button id="mcq-gemini-full-btn" onclick="checkMCQWithGemini()" style="width: 100%; background: linear-gradient(135deg, #111827 0%, #000000 100%); color: white; border: 1px solid #3b82f6; padding: 10px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); transition: all 0.3s ease;">
+                  <img src="gemini.png" alt="Gemini" style="width:18px;height:18px;object-fit:contain;"> Check with AI
               </button>
           `;
       }
@@ -11802,7 +11804,7 @@ if (isScreenVisible('video-container')) {
       lockOptions();
       nextBtn.disabled = false;
       updateQuestionNavigation();
-    }
+}
 
     function lockOptions() {
       document.querySelectorAll(".option").forEach(opt => opt.classList.add("disabled"));
@@ -14215,21 +14217,20 @@ function showAIFeedbackCard(htmlContent) {
     if (!aiBox) {
         aiBox = document.createElement('div');
         aiBox.id = 'universal-ai-feedback-box';
-        // Matches the rounded corner aesthetic but with a sleek dark slate background below the explanation
-        aiBox.style.cssText = "margin-top: 15px; padding: 20px; background: #1e293b; border: 1px solid #3b82f6; border-radius: 8px; text-align: left; font-size: 1rem; line-height: 1.6; color: #f1f5f9; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); width: 100%; box-sizing: border-box;";
+        // Reduced padding from 20px to 12px to minimize empty space
+        aiBox.style.cssText = "margin-top: 12px; padding: 12px; background: #1e293b; border: 1px solid #3b82f6; border-radius: 8px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #f1f5f9; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); width: 100%; box-sizing: border-box;";
         const feedbackEl = document.getElementById('feedback');
-        // Inserts it directly AFTER the feedback box, separating them completely
         if (feedbackEl && feedbackEl.parentNode) {
             feedbackEl.parentNode.insertBefore(aiBox, feedbackEl.nextSibling);
         }
     }
     aiBox.style.display = 'block';
     aiBox.innerHTML = `
-        <div style="display:flex; align-items:center; margin-bottom:12px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
-            <img src="gemini.png" style="width:24px;height:24px;margin-right:10px; object-fit:contain;"> 
-            <strong style="font-size:1.15rem; color:#93c5fd; letter-spacing: 0.5px;">AI Feedback:</strong>
+        <div style="display:flex; align-items:center; margin-bottom:10px; border-bottom: 1px solid #334155; padding-bottom: 8px;">
+            <img src="gemini.png" style="width:20px;height:20px;margin-right:8px; object-fit:contain;"> 
+            <strong style="font-size:1.05rem; color:#93c5fd; letter-spacing: 0.5px;">AI Feedback:</strong>
         </div>
-        <div style="padding-top: 5px;">${htmlContent}</div>
+        <div style="max-height: 250px; overflow-y: auto; padding-right: 5px; padding-bottom: 5px;">${htmlContent}</div>
     `;
 }
 
@@ -14420,18 +14421,18 @@ FORMATTING RULES:
             window.mcqAiExplanations = window.mcqAiExplanations || {};
             window.mcqAiExplanations[currentIndex] = formattedText;
 
-            // FIX: Update the unified AI card natively so the button stays inside it alongside the text!
+            // Apply scrollable limits inside the native AI Box rendering
             const aiBox = document.getElementById('universal-ai-feedback-box');
             if (aiBox) {
                 aiBox.innerHTML = `
-                    <div style="display:flex; align-items:center; margin-bottom:12px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
-                        <img src="gemini.png" style="width:24px;height:24px;margin-right:10px; object-fit:contain;"> 
-                        <strong style="font-size:1.15rem; color:#93c5fd; letter-spacing: 0.5px;">AI Feedback:</strong>
+                    <div style="display:flex; align-items:center; margin-bottom:10px; border-bottom: 1px solid #334155; padding-bottom: 8px;">
+                        <img src="gemini.png" style="width:20px;height:20px;margin-right:8px; object-fit:contain;"> 
+                        <strong style="font-size:1.05rem; color:#93c5fd; letter-spacing: 0.5px;">AI Feedback:</strong>
                     </div>
-                    <button id="mcq-gemini-full-btn" disabled style="margin-bottom: 15px; width: 100%; background: #0f172a; color: #cbd5e1; border: 1px solid #334155; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;">
-                        <img src="gemini.png" style="width:20px;height:20px;filter: grayscale(100%);"> AI Verified
+                    <button id="mcq-gemini-full-btn" disabled style="margin-bottom: 12px; width: 100%; background: #0f172a; color: #cbd5e1; border: 1px solid #334155; padding: 10px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;">
+                        <img src="gemini.png" style="width:18px;height:18px;filter: grayscale(100%);"> AI Verified
                     </button>
-                    <div style="padding-top: 5px;">${formattedText}</div>
+                    <div style="max-height: 250px; overflow-y: auto; padding-right: 5px; padding-bottom: 5px;">${formattedText}</div>
                 `;
             }
 
@@ -14440,7 +14441,7 @@ FORMATTING RULES:
                 btn.innerHTML = originalHtml;
                 btn.disabled = false;
                 btn.style.opacity = "1";
-                btn.style.boxShadow = "0 0 12px rgba(59, 130, 246, 0.6)";
+                btn.style.boxShadow = "0 0 10px rgba(59, 130, 246, 0.5)";
             }
             window.showCustomAlert("Error", "AI Evaluation failed: " + (data.details || data.error || ""));
         }
@@ -14450,7 +14451,7 @@ FORMATTING RULES:
             btn.innerHTML = originalHtml;
             btn.disabled = false;
             btn.style.opacity = "1";
-            btn.style.boxShadow = "0 0 12px rgba(59, 130, 246, 0.6)";
+            btn.style.boxShadow = "0 0 10px rgba(59, 130, 246, 0.5)";
         }
         window.showCustomAlert("Error", "Network error contacting AI.");
     }
