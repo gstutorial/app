@@ -10965,20 +10965,51 @@ if (isScreenVisible('video-container')) {
         if (idx === selectedIndex && selectedIndex !== q.correctIndex) optEl.classList.add("incorrect");
       });
 
+      // 🔥 CRITICAL FIX: Remove any old inline buttons trapped inside the green/red box
+      const oldInlineBtn = document.getElementById('mcq-gemini-full-btn');
+      if (oldInlineBtn && oldInlineBtn.parentNode === feedbackEl) {
+          oldInlineBtn.remove();
+      }
+
+      // 🔥 CRITICAL FIX: Build the proper isolated dark slate AI card immediately
+      if (!q.isSubjective) {
+          if (typeof hideAIFeedbackCard === 'function') hideAIFeedbackCard(); 
+          let aiBox = document.getElementById('universal-ai-feedback-box');
+          if (!aiBox) {
+              aiBox = document.createElement('div');
+              aiBox.id = 'universal-ai-feedback-box';
+              aiBox.style.cssText = "margin-top: 15px; padding: 20px; background: #1e293b; border: 1px solid #3b82f6; border-radius: 8px; text-align: left; font-size: 1rem; line-height: 1.6; color: #f1f5f9; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); width: 100%; box-sizing: border-box;";
+              const fEl = document.getElementById('feedback');
+              if (fEl && fEl.parentNode) {
+                  fEl.parentNode.insertBefore(aiBox, fEl.nextSibling);
+              }
+          }
+          aiBox.style.display = 'block';
+          aiBox.innerHTML = `
+              <div style="display:flex; align-items:center; margin-bottom:12px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+                  <img src="gemini.png" style="width:24px;height:24px;margin-right:10px; object-fit:contain;"> 
+                  <strong style="font-size:1.15rem; color:#93c5fd; letter-spacing: 0.5px;">AI Verification:</strong>
+              </div>
+              <button id="mcq-gemini-full-btn" onclick="checkMCQWithGemini()" style="width: 100%; background: linear-gradient(135deg, #111827 0%, #000000 100%); color: white; border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); transition: all 0.3s ease;">
+                  <img src="gemini.png" alt="Gemini" style="width:20px;height:20px;object-fit:contain;"> Check with AI
+               </button>
+          `;
+      }
+
       hasAnswered = true;
       lockOptions();
-      nextBtn.disabled = false;
-      updateQuestionNavigation();
+      if (typeof nextBtn !== 'undefined' && nextBtn) nextBtn.disabled = false;
+      if (typeof updateQuestionNavigation === 'function') updateQuestionNavigation();
       
       const allAnswered = reattemptUserAnswers.every(ans => ans !== undefined);
       if (allAnswered) {
-        if (reattemptStatusBanner) {
+        if (typeof reattemptStatusBanner !== 'undefined' && reattemptStatusBanner) {
           reattemptStatusBanner.className = 'reattempt-status completed';
           reattemptStatusBanner.innerHTML = `✅ All ${reattemptQuestions.length} questions answered! Click "Finish Reattempt" to see results.`;
         }
       } else {
         const answeredCount = reattemptUserAnswers.filter(ans => ans !== undefined).length;
-        if (reattemptStatusBanner) {
+        if (typeof reattemptStatusBanner !== 'undefined' && reattemptStatusBanner) {
           reattemptStatusBanner.className = 'reattempt-status in-progress';
           reattemptStatusBanner.innerHTML = `🔄 Reattempting: ${answeredCount}/${reattemptQuestions.length} questions answered.`;
         }
@@ -11742,14 +11773,29 @@ if (isScreenVisible('video-container')) {
         feedbackEl.appendChild(exp);
       }
 
-      // NEW: BLACK GRADIENT + BLUE GLOW BUTTON
+      // 🔥 CRITICAL FIX: Build the proper isolated dark slate AI card immediately
       if (!q.isSubjective) {
-        const mcqBtn = document.createElement("button");
-        mcqBtn.id = "mcq-gemini-full-btn";
-        mcqBtn.style.cssText = "margin-top: 15px; width: 100%; background: linear-gradient(135deg, #111827 0%, #000000 100%); color: white; border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); transition: all 0.3s ease;";
-        mcqBtn.innerHTML = `<img src="gemini.png" alt="Gemini" style="width:20px;height:20px;object-fit:contain;"> Check with AI`;
-        mcqBtn.onclick = () => checkMCQWithGemini();
-        feedbackEl.appendChild(mcqBtn);
+          if (typeof hideAIFeedbackCard === 'function') hideAIFeedbackCard(); 
+          let aiBox = document.getElementById('universal-ai-feedback-box');
+          if (!aiBox) {
+              aiBox = document.createElement('div');
+              aiBox.id = 'universal-ai-feedback-box';
+              aiBox.style.cssText = "margin-top: 15px; padding: 20px; background: #1e293b; border: 1px solid #3b82f6; border-radius: 8px; text-align: left; font-size: 1rem; line-height: 1.6; color: #f1f5f9; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); width: 100%; box-sizing: border-box;";
+              const fEl = document.getElementById('feedback');
+              if (fEl && fEl.parentNode) {
+                  fEl.parentNode.insertBefore(aiBox, fEl.nextSibling);
+              }
+          }
+          aiBox.style.display = 'block';
+          aiBox.innerHTML = `
+              <div style="display:flex; align-items:center; margin-bottom:12px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+                  <img src="gemini.png" style="width:24px;height:24px;margin-right:10px; object-fit:contain;"> 
+                  <strong style="font-size:1.15rem; color:#93c5fd; letter-spacing: 0.5px;">AI Verification:</strong>
+              </div>
+              <button id="mcq-gemini-full-btn" onclick="checkMCQWithGemini()" style="width: 100%; background: linear-gradient(135deg, #111827 0%, #000000 100%); color: white; border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); transition: all 0.3s ease;">
+                  <img src="gemini.png" alt="Gemini" style="width:20px;height:20px;object-fit:contain;"> Check with AI
+              </button>
+          `;
       }
 
       showCorrectness(selectedIndex);
