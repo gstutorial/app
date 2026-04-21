@@ -10334,6 +10334,8 @@ if (isScreenVisible('video-container')) {
   userMarks = [];
   subjectiveUserTexts = [];
   subjectiveUserImages = [];
+      window.subjectiveAiExplanations = {};
+  window.reattemptSubjectiveAiExplanations = {};
       timeRemaining = 0;
       timerDuration = 0;
       currentTopicName = "";
@@ -10673,17 +10675,17 @@ if (isScreenVisible('video-container')) {
       questionCounterEl.textContent = `Q${currentIndex + 1}/${reattemptQuestions.length}`;
       progressBarFillEl.style.width = `${((currentIndex + 1) / reattemptQuestions.length) * 100}%`;
 
-      // MODIFICATION: Collapse the text space if there is no question text, allowing the image to slide up
+      // Collapse the text space if there is no question text, allowing the image to slide up
       const marksHtml = `<span class="question-marks-badge">${q.marks || 1} mark${(q.marks || 1) > 1 ? 's' : ''}</span>`;
       const rawQ = q.question || '';
       const cleanedQ = rawQ.replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>').replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>').replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim();
       
       if (cleanedQ === '') {
         questionTextEl.innerHTML = marksHtml;
-        questionTextEl.style.marginBottom = '0'; // Remove space below the invisible text
+        questionTextEl.style.marginBottom = '0'; 
       } else {
         questionTextEl.innerHTML = cleanedQ + ' ' + marksHtml;
-        questionTextEl.style.marginBottom = '8px'; // Restore normal spacing
+        questionTextEl.style.marginBottom = '8px'; 
       }
 
       questionWhatsappIconEl.style.display = "block";
@@ -10718,12 +10720,42 @@ if (isScreenVisible('video-container')) {
         optionsListEl.style.display = 'none';
         subjectiveContainerEl.style.display = 'block';
 
-        // --- ADDED FOR AI FEATURE ---
         if (document.getElementById('subjective-input-area')) {
             document.getElementById('subjective-input-area').style.display = 'block';
         }
         if (typeof clearSubjectiveInputs === 'function') clearSubjectiveInputs();
-        // ----------------------------
+
+        // FIX: Restore User Input & AI Feedback for Subjective Questions in Reattempt
+        if (reattemptSubjectiveUserTexts[currentIndex] || reattemptSubjectiveUserImages[currentIndex]) {
+            const textInput = document.getElementById('subjective-answer-text');
+            const previewContainer = document.getElementById('subjective-image-preview-container');
+            const preview = document.getElementById('subjective-image-preview');
+            const geminiBtn = document.getElementById('check-gemini-btn');
+            const clearBtn = document.getElementById('subjective-clear-image');
+            
+            if (textInput && reattemptSubjectiveUserTexts[currentIndex]) {
+                textInput.value = reattemptSubjectiveUserTexts[currentIndex];
+                textInput.disabled = true;
+            } else if (textInput) {
+                textInput.disabled = true;
+            }
+            if (reattemptSubjectiveUserImages[currentIndex]) {
+                preview.src = "data:image/jpeg;base64," + reattemptSubjectiveUserImages[currentIndex];
+                previewContainer.style.display = 'block';
+                currentSubjectiveImageBase64 = reattemptSubjectiveUserImages[currentIndex];
+                if (clearBtn) clearBtn.style.display = 'none';
+            }
+            if (geminiBtn) geminiBtn.disabled = true;
+            
+            // Restoring AI Feedback properly
+            if (window.reattemptSubjectiveAiExplanations && window.reattemptSubjectiveAiExplanations[currentIndex]) {
+                const feedbackBox = document.getElementById('gemini-feedback');
+                if (feedbackBox) {
+                    feedbackBox.style.display = "block";
+                    feedbackBox.innerHTML = window.reattemptSubjectiveAiExplanations[currentIndex];
+                }
+            }
+        }
 
         subjectiveCorrectBtn.classList.remove('selected-correct', 'selected-incorrect');
         subjectiveIncorrectBtn.classList.remove('selected-correct', 'selected-incorrect');
@@ -10736,6 +10768,28 @@ if (isScreenVisible('video-container')) {
         }
         
         feedbackEl.innerHTML = "";
+
+        // FIX: Add missing click handlers for subjective manual grading during reattempt
+        subjectiveCorrectBtn.onclick = (e) => {
+          if (hasAnswered || !isReattemptMode) return;
+          resetInactivityTimer();
+          subjectiveCorrectBtn.classList.add('selected-correct');
+          subjectiveIncorrectBtn.classList.remove('selected-incorrect');
+          reattemptUserAnswers[currentIndex] = 'correct';
+          if (e && e.isTrusted) reattemptUserMarks[currentIndex] = q.marks || 1;
+          handleSubjectiveAnswer('correct');
+        };
+
+        subjectiveIncorrectBtn.onclick = (e) => {
+          if (hasAnswered || !isReattemptMode) return;
+          resetInactivityTimer();
+          subjectiveIncorrectBtn.classList.add('selected-incorrect');
+          subjectiveCorrectBtn.classList.remove('selected-correct');
+          reattemptUserAnswers[currentIndex] = 'incorrect';
+          if (e && e.isTrusted) reattemptUserMarks[currentIndex] = 0;
+          handleSubjectiveAnswer('incorrect');
+        };
+
       } else {
         optionsListEl.style.display = 'grid';
         subjectiveContainerEl.style.display = 'none';
@@ -10753,7 +10807,6 @@ if (isScreenVisible('video-container')) {
           const contentDiv = document.createElement("div");
           contentDiv.className = "option-content";
 
-          // Handle option images
           if (q.optionImages && q.optionImages[idx] && q.optionImages[idx].trim() && q.optionImages[idx].trim() !== 'null' && q.optionImages[idx].trim() !== 'undefined') {
             const optionImageUrl = convertImageUrl(q.optionImages[idx].trim());
             if (optionImageUrl) {
@@ -10792,14 +10845,19 @@ if (isScreenVisible('video-container')) {
       if (reattemptUserAnswers[currentIndex] !== undefined) {
         const selectedIdx = reattemptUserAnswers[currentIndex];
         if (q.isSubjective) {
-          if (selectedIdx === 'correct') {
+          const isCorrect = selectedIdx === 'correct';
+          
+          // FIX: Dynamically fetch partial marks (or 0) instead of hardcoding max marks
+          const awarded = reattemptUserMarks[currentIndex] !== undefined ? reattemptUserMarks[currentIndex] : (isCorrect ? (q.marks || 1) : 0);
+
+          if (isCorrect) {
             subjectiveCorrectBtn.classList.add('selected-correct');
-            feedbackEl.textContent = `Marked as Correct! (${q.marks || 1} marks)`;
+            feedbackEl.textContent = `Marked as Correct! (${awarded} / ${q.marks || 1} marks)`;
             feedbackEl.className = "feedback correct";
             hasAnswered = true;
           } else if (selectedIdx === 'incorrect') {
             subjectiveIncorrectBtn.classList.add('selected-incorrect');
-            feedbackEl.textContent = `Marked as Incorrect.`;
+            feedbackEl.textContent = `Marked as Incorrect. (${awarded} / ${q.marks || 1} marks)`;
             feedbackEl.className = "feedback incorrect";
             hasAnswered = true;
           }
@@ -10839,10 +10897,9 @@ if (isScreenVisible('video-container')) {
       }
 
       previousBtn.disabled = (currentIndex === 0);
-      if (isReviewMode || isIncorrectReviewMode) {
+      if (isReviewMode || (typeof isIncorrectReviewMode !== 'undefined' && isIncorrectReviewMode)) {
         nextBtn.disabled = false;
       } else {
-        // FIX: Next button is ALWAYS active for Subjective (so they can skip), but LOCKED for MCQ until answered
         nextBtn.disabled = q.isSubjective ? false : (reattemptUserAnswers[currentIndex] === undefined);
       }
       finishBtn.disabled = false;
@@ -10852,13 +10909,13 @@ if (isScreenVisible('video-container')) {
       if (isReattemptMode) {
         const allAnswered = reattemptUserAnswers.every(ans => ans !== undefined);
         if (allAnswered) {
-          if (reattemptStatusBanner) {
+          if (typeof reattemptStatusBanner !== 'undefined' && reattemptStatusBanner) {
             reattemptStatusBanner.className = 'reattempt-status completed';
             reattemptStatusBanner.innerHTML = `✅ All ${reattemptQuestions.length} questions answered! Click "Finish Reattempt" to see results.`;
           }
         } else {
           const answeredCount = reattemptUserAnswers.filter(ans => ans !== undefined).length;
-          if (reattemptStatusBanner) {
+          if (typeof reattemptStatusBanner !== 'undefined' && reattemptStatusBanner) {
             reattemptStatusBanner.className = 'reattempt-status in-progress';
             reattemptStatusBanner.innerHTML = `🔄 Reattempting: ${answeredCount}/${reattemptQuestions.length} questions answered.`;
           }
@@ -11342,12 +11399,14 @@ if (isScreenVisible('video-container')) {
         }
         if (typeof clearSubjectiveInputs === 'function') clearSubjectiveInputs();
 
+        // FIX: Restore User Input & AI Feedback for Subjective Questions
         if (subjectiveUserTexts[currentIndex] || subjectiveUserImages[currentIndex]) {
             const textInput = document.getElementById('subjective-answer-text');
             const previewContainer = document.getElementById('subjective-image-preview-container');
             const preview = document.getElementById('subjective-image-preview');
             const geminiBtn = document.getElementById('check-gemini-btn');
             const clearBtn = document.getElementById('subjective-clear-image');
+            
             if (textInput && subjectiveUserTexts[currentIndex]) {
                 textInput.value = subjectiveUserTexts[currentIndex];
                 textInput.disabled = true;
@@ -11361,6 +11420,15 @@ if (isScreenVisible('video-container')) {
                 if (clearBtn) clearBtn.style.display = 'none';
             }
             if (geminiBtn) geminiBtn.disabled = true;
+            
+            // Restoring AI Feedback properly
+            if (window.subjectiveAiExplanations && window.subjectiveAiExplanations[currentIndex]) {
+                const feedbackBox = document.getElementById('gemini-feedback');
+                if (feedbackBox) {
+                    feedbackBox.style.display = "block";
+                    feedbackBox.innerHTML = window.subjectiveAiExplanations[currentIndex];
+                }
+            }
         }
 
         subjectiveCorrectBtn.classList.remove('selected-correct', 'selected-incorrect');
@@ -11374,7 +11442,7 @@ if (isScreenVisible('video-container')) {
         }
         
         subjectiveCorrectBtn.onclick = (e) => {
-          const isReattempt = (typeof isIncorrectReviewMode !== 'undefined' && isIncorrectReviewMode);
+          const isReattempt = (typeof isReattemptMode !== 'undefined' && isReattemptMode);
           if (hasAnswered || (!isQuizActive && !isReattempt)) return;
           resetInactivityTimer();
           subjectiveCorrectBtn.classList.add('selected-correct');
@@ -11389,7 +11457,7 @@ if (isScreenVisible('video-container')) {
         };
         
         subjectiveIncorrectBtn.onclick = (e) => {
-          const isReattempt = (typeof isIncorrectReviewMode !== 'undefined' && isIncorrectReviewMode);
+          const isReattempt = (typeof isReattemptMode !== 'undefined' && isReattemptMode);
           if (hasAnswered || (!isQuizActive && !isReattempt)) return;
           resetInactivityTimer();
           subjectiveIncorrectBtn.classList.add('selected-incorrect');
@@ -11448,13 +11516,15 @@ if (isScreenVisible('video-container')) {
         });
       }
 
-     previousBtn.disabled = (currentIndex === 0);
-    if (isReviewMode || isIncorrectReviewMode) {
-      nextBtn.disabled = false;
-    } else {
-      nextBtn.disabled = q.isSubjective ? false : true;
-    }
-    finishBtn.disabled = false;
+      previousBtn.disabled = (currentIndex === 0);
+      
+      // FIX: Proper Reattempt Mode Check
+      if (isReviewMode || (typeof isReattemptMode !== 'undefined' && isReattemptMode)) {
+        nextBtn.disabled = false;
+      } else {
+        nextBtn.disabled = q.isSubjective ? false : true;
+      }
+      finishBtn.disabled = false;
 
       // HELPER TO RESTORE PERSISTENT AI FEEDBACK AND RENDER BUTTON
       const renderMcqAiButton = () => {
@@ -11493,11 +11563,15 @@ if (isScreenVisible('video-container')) {
       if (userAnswers[currentIndex] !== undefined) {
         if (q.isSubjective) {
           const isCorrect = userAnswers[currentIndex] === 'correct';
+          
+          // FIX: Dynamically fetch partial marks (or 0) instead of hardcoding max marks
+          const awarded = userMarks[currentIndex] !== undefined ? userMarks[currentIndex] : (isCorrect ? (q.marks || 1) : 0);
+          
           if (isCorrect) {
-            feedbackEl.textContent = `Marked as Correct! (${q.marks || 1} marks)`;
+            feedbackEl.textContent = `Marked as Correct! (${awarded} / ${q.marks || 1} marks)`;
             feedbackEl.className = "feedback correct";
           } else {
-            feedbackEl.textContent = `Marked as Incorrect.`;
+            feedbackEl.textContent = `Marked as Incorrect. (${awarded} / ${q.marks || 1} marks)`;
             feedbackEl.className = "feedback incorrect";
           }
         } else {
@@ -11524,7 +11598,8 @@ if (isScreenVisible('video-container')) {
 
         renderMcqAiButton(); // Render Persistent Button/Feedback
 
-        if (!isReviewMode && !isIncorrectReviewMode) {
+        // FIX: Proper Reattempt Mode Check
+        if (!isReviewMode && !(typeof isReattemptMode !== 'undefined' && isReattemptMode)) {
           nextBtn.disabled = false;
         }
       }
@@ -11574,33 +11649,58 @@ if (isScreenVisible('video-container')) {
       resetInactivityTimer();
     }
     function handleSubjectiveAnswer(result) {
-      const q = questions[currentIndex];
-      hasAnswered = true;
-      attempted++;
-      
-      if (result === 'correct') {
-        score += (q.marks || 1);
-        totalMarks += (q.marks || 1);
-        totalScoreValueEl.textContent = score;
-        feedbackEl.textContent = `Marked as Correct! (${q.marks || 1} marks)`;
-        feedbackEl.className = "feedback correct";
-      } else {
-        totalMarks += (q.marks || 1);
-        feedbackEl.textContent = `Marked as Incorrect.`;
-        feedbackEl.className = "feedback incorrect";
-      }
+  const isReattempt = (typeof isReattemptMode !== 'undefined' && isReattemptMode);
+  const q = isReattempt ? reattemptQuestions[currentIndex] : questions[currentIndex];
+  const currentMarksArray = isReattempt ? reattemptUserMarks : userMarks;
+  
+  // Fetch exact partial marks awarded by AI, fallback to max marks if clicked manually
+  const awarded = currentMarksArray[currentIndex] !== undefined ? currentMarksArray[currentIndex] : (result === 'correct' ? (q.marks || 1) : 0);
 
-      if (q.explanation) {
-        const exp = document.createElement("div");
-        exp.className = "explanation";
-        exp.innerHTML = `<strong>Explanation:</strong> ${q.explanation}`;
-        feedbackEl.appendChild(exp);
-      }
+  hasAnswered = true;
+  if (!isReattempt) attempted++;
 
-      nextBtn.disabled = false;
-      updateQuestionNavigation();
+  if (result === 'correct') {
+    if (!isReattempt) {
+        totalMarks += (q.marks || 1);
+        score = currentMarksArray.reduce((a, b) => a + (b || 0), 0);
+        if (typeof totalScoreValueEl !== 'undefined' && totalScoreValueEl) totalScoreValueEl.textContent = score;
     }
+    feedbackEl.textContent = `Marked as Correct! (${awarded} / ${q.marks || 1} marks)`;
+    feedbackEl.className = "feedback correct";
+  } else {
+    if (!isReattempt) {
+        totalMarks += (q.marks || 1);
+        score = currentMarksArray.reduce((a, b) => a + (b || 0), 0);
+        if (typeof totalScoreValueEl !== 'undefined' && totalScoreValueEl) totalScoreValueEl.textContent = score;
+    }
+    feedbackEl.textContent = `Marked as Incorrect. (${awarded} / ${q.marks || 1} marks)`;
+    feedbackEl.className = "feedback incorrect";
+  }
 
+  if (q.explanation) {
+    const exp = document.createElement("div");
+    exp.className = "explanation";
+    exp.innerHTML = `<strong>Explanation:</strong> ${q.explanation}`;
+    feedbackEl.appendChild(exp);
+  }
+  
+  if (typeof nextBtn !== 'undefined' && nextBtn) nextBtn.disabled = false;
+  if (typeof updateQuestionNavigation === 'function') updateQuestionNavigation();
+
+  if (isReattempt) {
+      const allAnswered = reattemptUserAnswers.every(ans => ans !== undefined);
+      if (typeof reattemptStatusBanner !== 'undefined' && reattemptStatusBanner) {
+        if (allAnswered) {
+          reattemptStatusBanner.className = 'reattempt-status completed';
+          reattemptStatusBanner.innerHTML = `✅ All ${reattemptQuestions.length} questions answered! Click "Finish Reattempt" to see results.`;
+        } else {
+          const answeredCount = reattemptUserAnswers.filter(ans => ans !== undefined).length;
+          reattemptStatusBanner.className = 'reattempt-status in-progress';
+          reattemptStatusBanner.innerHTML = `🔄 Reattempting: ${answeredCount}/${reattemptQuestions.length} questions answered.`;
+        }
+      }
+  }
+}
     function handleOptionClick(selectedIndex) {
       if (hasAnswered || isReviewMode) return;
       const q = questions[currentIndex];
@@ -13978,14 +14078,20 @@ function clearSubjectiveInputs() {
     textInput.placeholder = "Type your answer here...";
     textInput.style.opacity = '1';
   }
+  
   if (fileInput) fileInput.value = '';
-  if (preview) { preview.src = ''; }
-  if (previewContainer) { previewContainer.style.display = 'none'; }
-  if (feedback) { feedback.style.display = 'none'; feedback.innerHTML = ''; }
+  if (preview) preview.src = '';
+  if (previewContainer) previewContainer.style.display = 'none';
+  
+  // Crucial: Hide and clear the AI feedback box so it doesn't leak into the next question
+  if (feedback) { 
+      feedback.style.display = 'none'; 
+      feedback.innerHTML = ''; 
+  }
   
   // Re-enable buttons for the new question
-  if (clearBtn) { clearBtn.style.display = 'block'; }
-  if (geminiBtn) { geminiBtn.disabled = false; }
+  if (clearBtn) clearBtn.style.display = 'inline-block'; // Or 'block' depending on your CSS
+  if (geminiBtn) geminiBtn.disabled = false;
   
   currentSubjectiveImageBase64 = null;
 }
@@ -14032,10 +14138,12 @@ function clearSubjectiveImage() {
 }
 
 async function checkWithGemini() {
-  const isReattempt = (typeof isIncorrectReviewMode !== 'undefined' && isIncorrectReviewMode);
+  // FIX 1: Use isReattemptMode so the AI button works during reattempts
+  const isReattempt = (typeof isReattemptMode !== 'undefined' && isReattemptMode);
   if (hasAnswered || (!isQuizActive && !isReattempt)) return;
 
-  const q = questions[currentIndex];
+  // FIX 2: Send the correct question array to the AI based on the current mode
+  const q = isReattempt ? reattemptQuestions[currentIndex] : questions[currentIndex];
   const answerText = document.getElementById('subjective-answer-text').value.trim();
   
   if (!answerText && !currentSubjectiveImageBase64) {
@@ -14080,14 +14188,20 @@ async function checkWithGemini() {
           feedbackBox.style.display = "block";
           feedbackBox.innerHTML = `<strong>AI Feedback:</strong><br>${data.explanation}<br><br><strong>Marks Awarded:</strong> ${data.marksAwarded} / ${maxMarks}`;
           
-          // SET THE MARKS BEFORE THE CLICK HANDLER RUNS!
+          // FIX 3: Save the exact HTML output globally so it persists when returning to previous questions
           if (isReattempt) {
+              window.reattemptSubjectiveAiExplanations = window.reattemptSubjectiveAiExplanations || {};
+              window.reattemptSubjectiveAiExplanations[currentIndex] = feedbackBox.innerHTML;
               reattemptSubjectiveUserTexts[currentIndex] = answerText;
               reattemptSubjectiveUserImages[currentIndex] = currentSubjectiveImageBase64;
+              // Saves exact partial marks (e.g., 3 out of 5) awarded by AI
               reattemptUserMarks[currentIndex] = data.marksAwarded; 
           } else {
+              window.subjectiveAiExplanations = window.subjectiveAiExplanations || {};
+              window.subjectiveAiExplanations[currentIndex] = feedbackBox.innerHTML;
               subjectiveUserTexts[currentIndex] = answerText;
               subjectiveUserImages[currentIndex] = currentSubjectiveImageBase64;
+              // Saves exact partial marks (e.g., 3 out of 5) awarded by AI
               userMarks[currentIndex] = data.marksAwarded; 
           }
           
@@ -14095,7 +14209,7 @@ async function checkWithGemini() {
           const clearBtn = document.getElementById('subjective-clear-image');
           if (clearBtn) clearBtn.style.display = 'none';
 
-          // Trigger physical UI update (will NOT overwrite the marks due to e.isTrusted check)
+          // Trigger physical UI update
           if (data.isCorrect || data.marksAwarded > 0) {
               document.getElementById('subjective-correct-btn').click();
           } else {
@@ -14123,8 +14237,11 @@ async function checkWithGemini() {
 }
 
 async function checkMCQWithGemini() {
-    const isReattempt = (typeof isIncorrectReviewMode !== 'undefined' && isIncorrectReviewMode);
+    // FIX: Use proper reattempt mode variable
+    const isReattempt = (typeof isReattemptMode !== 'undefined' && isReattemptMode);
+    const currentQuestions = isReattempt ? reattemptQuestions : questions;
     const currentAnswers = isReattempt ? reattemptUserAnswers : userAnswers;
+    
     const selectedAnswerIndex = currentAnswers[currentIndex];
 
     if (selectedAnswerIndex === undefined || selectedAnswerIndex === null) {
@@ -14132,17 +14249,19 @@ async function checkMCQWithGemini() {
         return;
     }
 
-    const q = questions[currentIndex];
-    const questionText = q.question || "Read the question and options carefully.";
+    const q = currentQuestions[currentIndex];
+    const questionText = q.question || "Look at the question image provided.";
     
     let optionsText = "";
-    q.options.forEach((opt, idx) => {
-        optionsText += `${String.fromCharCode(65 + idx)}. ${opt}\n`;
-    });
+    if (q.options && q.options.length > 0) {
+        q.options.forEach((opt, idx) => {
+            optionsText += `${String.fromCharCode(65 + idx)}. ${opt}\n`;
+        });
+    }
 
-    const expectedAnswerText = q.options[q.correctIndex] || "No Expected Answer";
+    const expectedAnswerText = (q.options && q.options[q.correctIndex]) ? q.options[q.correctIndex] : "See explanation for correct answer";
     const expectedExp = q.explanation || "";
-    const userSelectedText = q.options[selectedAnswerIndex];
+    const userSelectedText = (q.options && q.options[selectedAnswerIndex]) ? q.options[selectedAnswerIndex] : "Selected Option Index: " + selectedAnswerIndex;
 
     const btn = document.getElementById('mcq-gemini-full-btn');
     let originalHtml = "";
@@ -14150,24 +14269,27 @@ async function checkMCQWithGemini() {
     if (btn) {
         originalHtml = btn.innerHTML;
         btn.innerHTML = `<svg class="loading-spinner-small" style="width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);border-top:2px solid #fff;animation:spin 1s linear infinite;" viewBox="0 0 24 24"></svg> Checking...`;
-        btn.style.boxShadow = "none"; // Remove glow while loading
+        btn.style.boxShadow = "none";
         btn.disabled = true;
         btn.style.opacity = "0.8";
     }
 
     const promptQ = `MCQ Question: ${questionText}\nOptions:\n${optionsText}`;
-    const promptExpected = `Admin claims Correct Option is: ${expectedAnswerText}. Admin Explanation: ${expectedExp}. Critically verify this.`;
+    const promptExpected = `Admin Correct Option: ${expectedAnswerText}. Admin Explanation: ${expectedExp}.`;
     
-    // EXTREMELY STRICT PROMPT FOR EXACT FORMATTING
+    // STRICT PROMPT WITH DOMAIN VERIFICATION (RDSO/CAMTECH/NCERT)
     const promptUser = `I selected: ${userSelectedText}
 
-ABSOLUTE STRICT FORMATTING RULES:
-1. You MUST start your response with EXACTLY this line (No bold tags on this first line):
-Correct Answer: ✅ [Option Letter]. [Full Option Text]
-(Example: Correct Answer: ✅ B. Paris)
-2. If you do not start with exactly that format, the system will break.
-3. Immediately after that line, add ONE <br><br> tag.
-4. Then, provide a highly detailed step-by-step explanation.`;
+VERIFICATION RULES (100% ACCURACY REQUIRED):
+1. For Railways/Mechanical: Verify against official Railway Board, RDSO, and CAMTECH guidelines.
+2. For Class 1-12: Verify against NCERT/CBSE sources.
+3. If Admin answer is wrong, provide the FACTUALLY CORRECT answer.
+
+FORMATTING RULES:
+1. Start response with EXACTLY: Correct Answer: ✅ [Letter]. [Text]
+2. Use <br><br> for line breaks.
+3. Use <b> tags for headings.
+4. If Admin is wrong, add: <br><br><span style="color:red;"><b>Admin Key Error:</b></span> [Reason]`;
 
     const formData = new FormData();
     formData.append('action', 'evaluateWithGemini');
@@ -14190,7 +14312,6 @@ Correct Answer: ✅ [Option Letter]. [Full Option Text]
             window.mcqAiExplanations = window.mcqAiExplanations || {};
             window.mcqAiExplanations[currentIndex] = data.explanation;
 
-            // SUCCESS - Gray out button, remove glow
             if (btn) {
                 btn.innerHTML = `<img src="gemini.png" style="width:20px;height:20px;filter: grayscale(100%);"> AI Verified`;
                 btn.style.background = "#0f172a"; 
@@ -14207,7 +14328,6 @@ Correct Answer: ✅ [Option Letter]. [Full Option Text]
                 if (!aiFeedbackDiv) {
                     aiFeedbackDiv = document.createElement('div');
                     aiFeedbackDiv.id = 'mcq-ai-feedback-box';
-                    // INCREASED HEIGHT TO 350px
                     aiFeedbackDiv.style.cssText = "margin-bottom: 15px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 4px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #e2e8f0; max-height: 350px; overflow-y: auto;";
                     
                     if (feedbackEl.firstChild) {
@@ -14224,7 +14344,7 @@ Correct Answer: ✅ [Option Letter]. [Full Option Text]
                 btn.innerHTML = originalHtml;
                 btn.disabled = false;
                 btn.style.opacity = "1";
-                btn.style.boxShadow = "0 0 12px rgba(59, 130, 246, 0.6)"; // restore glow
+                btn.style.boxShadow = "0 0 12px rgba(59, 130, 246, 0.6)";
             }
             window.showCustomAlert("Error", "AI Evaluation failed: " + (data.details || data.error || ""));
         }
