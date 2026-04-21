@@ -10331,11 +10331,20 @@ if (isScreenVisible('video-container')) {
       questionsLoaded = false;
       attempted = 0;
       userAnswers = [];
-  userMarks = [];
-  subjectiveUserTexts = [];
-  subjectiveUserImages = [];
+      userMarks = [];
+      subjectiveUserTexts = [];
+      subjectiveUserImages = [];
+      
+      // FIX: Clear ALL AI feedback memory so it doesn't leak into other subjects
       window.subjectiveAiExplanations = {};
-  window.reattemptSubjectiveAiExplanations = {};
+      window.reattemptSubjectiveAiExplanations = {};
+      window.mcqAiExplanations = {};
+      
+      // FIX: Hide the physical AI Card UI when exiting/changing subjects
+      if (typeof hideAIFeedbackCard === 'function') {
+          hideAIFeedbackCard();
+      }
+
       timeRemaining = 0;
       timerDuration = 0;
       currentTopicName = "";
@@ -10345,11 +10354,11 @@ if (isScreenVisible('video-container')) {
       isReattemptMode = false;
       isQuizActive = false;
       incorrectQuestionIndices = [];
-  reattemptQuestions = [];
-  reattemptUserAnswers = [];
-  reattemptUserMarks = [];
-  reattemptSubjectiveUserTexts = [];
-  reattemptSubjectiveUserImages = [];
+      reattemptQuestions = [];
+      reattemptUserAnswers = [];
+      reattemptUserMarks = [];
+      reattemptSubjectiveUserTexts = [];
+      reattemptSubjectiveUserImages = [];
 
       hasSentQuizResultNotification = false;
       currentQuizSessionId = Date.now().toString();
@@ -10361,6 +10370,7 @@ if (isScreenVisible('video-container')) {
       subjectiveContainerEl.style.display = 'none';
       feedbackEl.textContent = "";
       feedbackEl.className = "feedback";
+      
       nextBtn.disabled = true;
       previousBtn.disabled = true;
       finishBtn.disabled = true;
@@ -10377,6 +10387,7 @@ if (isScreenVisible('video-container')) {
           }
         );
       };
+      
       finalScoreEl.style.display = "none";
       progressBarFillEl.style.width = "0%";
       questionCounterEl.textContent = "Choose a chapter and click Start";
@@ -10400,6 +10411,7 @@ if (isScreenVisible('video-container')) {
 
       quizTopicNameEl.style.cssText = "";
       removeTimerNotification();
+      
       questionWhatsappIconEl.style.display = "none";
       questionEditIconEl.style.display = "none";
       questionDeleteIconEl.style.display = "none";
