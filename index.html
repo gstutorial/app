@@ -11285,30 +11285,26 @@ if (isScreenVisible('video-container')) {
       questionCounterEl.textContent = `Q${currentIndex + 1}/${questions.length}`;
       progressBarFillEl.style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
 
-      // MODIFICATION: Collapse the text space if there is no question text, allowing the image to slide up
       const marksHtml = `<span class="question-marks-badge">${q.marks || 1} mark${(q.marks || 1) > 1 ? 's' : ''}</span>`;
       const rawQ = q.question || '';
       const cleanedQ = rawQ.replace(/\r\n|\n|\r/g, '<br>').replace(/\\n/g, '<br>').replace(/\|\|/g, '<br><br>').replace(/\|/g, '<br>').replace(/<br\s*\/?>/gi, '<br>').replace(/ {2,}/g, ' ').trim();
       
       if (cleanedQ === '') {
         questionTextEl.innerHTML = marksHtml;
-        questionTextEl.style.marginBottom = '0'; // Remove space below the invisible text
+        questionTextEl.style.marginBottom = '0';
       } else {
         questionTextEl.innerHTML = cleanedQ + ' ' + marksHtml;
-        questionTextEl.style.marginBottom = '8px'; // Restore normal spacing
+        questionTextEl.style.marginBottom = '8px';
       }
 
-      // Clear any old AI feedback when changing questions
       const oldAiFeedback = document.getElementById('mcq-ai-feedback-box');
       if (oldAiFeedback) oldAiFeedback.remove();
 
-      // Clean up any lingering buggy CSS from previous steps
       if (typeof questionTextEl !== 'undefined' && questionTextEl) {
           questionTextEl.style.paddingRight = "0px";
           questionTextEl.style.marginTop = "0px";
       }
 
-      // Update icons visibility (Leaves WhatsApp and Edit/Delete in their ORIGINAL pristine corner)
       updateAdminControls();
 
       // Handle question image
@@ -11341,12 +11337,10 @@ if (isScreenVisible('video-container')) {
         optionsListEl.style.display = 'none';
         subjectiveContainerEl.style.display = 'block';
         
-        // --- ADDED FOR AI FEATURE ---
         if (document.getElementById('subjective-input-area')) {
             document.getElementById('subjective-input-area').style.display = 'block';
         }
         if (typeof clearSubjectiveInputs === 'function') clearSubjectiveInputs();
-        // ----------------------------
 
         if (subjectiveUserTexts[currentIndex] || subjectiveUserImages[currentIndex]) {
             const textInput = document.getElementById('subjective-answer-text');
@@ -11388,15 +11382,9 @@ if (isScreenVisible('video-container')) {
           
           const currentAnswers = isReattempt ? reattemptUserAnswers : userAnswers;
           const currentMarks = isReattempt ? reattemptUserMarks : userMarks;
-          
           currentAnswers[currentIndex] = 'correct';
           
-          // Only give full marks if a human clicked the button (e.isTrusted).
-          // If Gemini triggers the click, preserve Gemini's partial marks!
-          if (e && e.isTrusted) {
-             currentMarks[currentIndex] = q.marks || 1;
-          }
-          
+          if (e && e.isTrusted) currentMarks[currentIndex] = q.marks || 1;
           handleSubjectiveAnswer('correct');
         };
         
@@ -11409,13 +11397,9 @@ if (isScreenVisible('video-container')) {
           
           const currentAnswers = isReattempt ? reattemptUserAnswers : userAnswers;
           const currentMarks = isReattempt ? reattemptUserMarks : userMarks;
-
           currentAnswers[currentIndex] = 'incorrect';
           
-          if (e && e.isTrusted) {
-             currentMarks[currentIndex] = 0;
-          }
-          
+          if (e && e.isTrusted) currentMarks[currentIndex] = 0;
           handleSubjectiveAnswer('incorrect');
         };
       } else {
@@ -11435,7 +11419,6 @@ if (isScreenVisible('video-container')) {
           const contentDiv = document.createElement("div");
           contentDiv.className = "option-content";
 
-          // Handle option images
           if (q.optionImages && q.optionImages[idx] && q.optionImages[idx].trim() && q.optionImages[idx].trim() !== 'null' && q.optionImages[idx].trim() !== 'undefined') {
             const optionImageUrl = convertImageUrl(q.optionImages[idx].trim());
             if (optionImageUrl) {
@@ -11469,7 +11452,6 @@ if (isScreenVisible('video-container')) {
     if (isReviewMode || isIncorrectReviewMode) {
       nextBtn.disabled = false;
     } else {
-      // Allows user to skip subjective questions without answering
       nextBtn.disabled = q.isSubjective ? false : true;
     }
     finishBtn.disabled = false;
@@ -11506,14 +11488,12 @@ if (isScreenVisible('video-container')) {
           feedbackEl.appendChild(exp);
         }
 
-        // NEW: FULL MCQ GEMINI BUTTON (Matches Subjective Design)
+        // FULL MCQ GEMINI BUTTON WITH EXACT SUBJECTIVE STYLE
         if (!q.isSubjective) {
           const mcqBtn = document.createElement("button");
           mcqBtn.id = "mcq-gemini-full-btn";
-          mcqBtn.className = "gemini-btn"; // Uses your exact subjective button style
-          mcqBtn.innerHTML = `<img src="gemini.png" alt="Gemini" style="width:20px;height:20px;margin-right:8px;object-fit:contain;"> Check with AI`;
-          mcqBtn.style.marginTop = "15px";
-          mcqBtn.style.width = "100%"; 
+          mcqBtn.style.cssText = "margin-top: 15px; width: 100%; background: #a855f7; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;";
+          mcqBtn.innerHTML = `<img src="gemini.png" alt="Gemini" style="width:20px;height:20px;object-fit:contain;"> Check with AI`;
           mcqBtn.onclick = () => checkMCQWithGemini();
           feedbackEl.appendChild(mcqBtn);
         }
@@ -11547,10 +11527,8 @@ if (isScreenVisible('video-container')) {
           // ADD BUTTON FOR UNANSWERED QUESTIONS IN REVIEW MODE
           const mcqBtn = document.createElement("button");
           mcqBtn.id = "mcq-gemini-full-btn";
-          mcqBtn.className = "gemini-btn"; 
-          mcqBtn.innerHTML = `<img src="gemini.png" alt="Gemini" style="width:20px;height:20px;margin-right:8px;object-fit:contain;"> Check with AI`;
-          mcqBtn.style.marginTop = "15px";
-          mcqBtn.style.width = "100%"; 
+          mcqBtn.style.cssText = "margin-top: 15px; width: 100%; background: #a855f7; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;";
+          mcqBtn.innerHTML = `<img src="gemini.png" alt="Gemini" style="width:20px;height:20px;object-fit:contain;"> Check with AI`;
           mcqBtn.onclick = () => checkMCQWithGemini();
           feedbackEl.appendChild(mcqBtn);
 
@@ -11631,14 +11609,13 @@ if (isScreenVisible('video-container')) {
         feedbackEl.appendChild(exp);
       }
 
-      // NEW: INJECT MCQ GEMINI BUTTON IMMEDIATELY AFTER CLICKING
+      // NEW: INJECT MCQ GEMINI BUTTON WITH EXACT SUBJECTIVE STYLE
       if (!q.isSubjective) {
         const mcqBtn = document.createElement("button");
         mcqBtn.id = "mcq-gemini-full-btn";
-        mcqBtn.className = "gemini-btn"; 
-        mcqBtn.innerHTML = `<img src="gemini.png" alt="Gemini" style="width:20px;height:20px;margin-right:8px;object-fit:contain;"> Check with AI`;
-        mcqBtn.style.marginTop = "15px";
-        mcqBtn.style.width = "100%"; 
+        // Exact styling to match the subjective purple button
+        mcqBtn.style.cssText = "margin-top: 15px; width: 100%; background: #a855f7; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;";
+        mcqBtn.innerHTML = `<img src="gemini.png" alt="Gemini" style="width:20px;height:20px;object-fit:contain;"> Check with AI`;
         mcqBtn.onclick = () => checkMCQWithGemini();
         feedbackEl.appendChild(mcqBtn);
       }
@@ -14131,7 +14108,6 @@ async function checkMCQWithGemini() {
     const currentAnswers = isReattempt ? reattemptUserAnswers : userAnswers;
     const selectedAnswerIndex = currentAnswers[currentIndex];
 
-    // Show popup ONLY if they haven't selected an option yet
     if (selectedAnswerIndex === undefined || selectedAnswerIndex === null) {
         window.showCustomAlert("Wait", "Please select an option first before asking AI to explain.");
         return;
@@ -14149,28 +14125,27 @@ async function checkMCQWithGemini() {
     const expectedExp = q.explanation || "";
     const userSelectedText = q.options[selectedAnswerIndex];
 
-    // ANIMATE THE FULL BUTTON
     const btn = document.getElementById('mcq-gemini-full-btn');
     let originalHtml = "";
     
     if (btn) {
         originalHtml = btn.innerHTML;
-        btn.innerHTML = `<svg class="loading-spinner-small" style="width:20px;height:20px;margin-right:8px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);border-top:2px solid #fff;animation:spin 1s linear infinite;" viewBox="0 0 24 24"></svg> Checking...`;
+        // Keep flex layout during loading animation
+        btn.innerHTML = `<svg class="loading-spinner-small" style="width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);border-top:2px solid #fff;animation:spin 1s linear infinite;" viewBox="0 0 24 24"></svg> Checking...`;
         btn.disabled = true;
         btn.style.opacity = "0.8";
     }
 
     const promptQ = `MCQ Question: ${questionText}\nOptions:\n${optionsText}`;
-    
     const promptExpected = `Admin claims Correct Option is: ${expectedAnswerText}. Admin Explanation: ${expectedExp}. IMPORTANT: The Admin is often wrong! You must critically verify this claim using strict, universally accepted factual knowledge before responding.`;
     
-    // UPDATED PROMPT: Forces exact Option Letter + Text + ✅ on line 1, then explanation on next line
+    // UPDATED PROMPT: Forces exact "Correct Answer: ✅ [Option]" and next line explanation
     const promptUser = `I selected: ${userSelectedText}
 
 CRITICAL INSTRUCTIONS FOR MAXIMUM ACCURACY & FORMATTING:
 1. Act as a strict, top-tier expert examiner. Do NOT guess.
 2. Mentally evaluate ALL given options logically before determining the absolute truth.
-3. The VERY FIRST line of your response MUST exactly follow this format: "Correct Option: [Option Letter]. [Full Option Text] ✅" (Example: Correct Option: B. Paris ✅).
+3. The VERY FIRST line of your response MUST exactly follow this format: "Correct Answer: ✅ [Option Letter]. [Full Option Text]" (Example: Correct Answer: ✅ B. Paris).
 4. Then add exactly ONE <br><br> tag for spacing to start the next line.
 5. On the next line, provide a definitive, highly systematic explanation proving exactly WHY the correct option is right. 
 6. Briefly explain why the other options are factually or logically incorrect to prove your accuracy.`;
@@ -14192,15 +14167,16 @@ CRITICAL INSTRUCTIONS FOR MAXIMUM ACCURACY & FORMATTING:
         const data = await response.json();
 
         if (data.success) {
-            // SUCCESS - Change Button State
+            // SUCCESS - Gray out button and keep flex layout
             if (btn) {
-                btn.innerHTML = `<img src="gemini.png" style="width:20px;height:20px;margin-right:8px;filter: grayscale(100%);"> AI Verified`;
-                btn.style.background = "#475569"; // Grayed out disabled look
+                btn.innerHTML = `<img src="gemini.png" style="width:20px;height:20px;filter: grayscale(100%);"> AI Verified`;
+                btn.style.background = "#475569"; 
+                btn.style.color = "#cbd5e1";
                 btn.style.cursor = "not-allowed";
                 btn.style.opacity = "1";
             }
             
-            // INJECT INLINE AI FEEDBACK
+            // INJECT SCROLLABLE INLINE AI FEEDBACK
             const feedbackEl = document.getElementById('feedback');
             if (feedbackEl) {
                 let aiFeedbackDiv = document.getElementById('mcq-ai-feedback-box');
@@ -14208,8 +14184,8 @@ CRITICAL INSTRUCTIONS FOR MAXIMUM ACCURACY & FORMATTING:
                     aiFeedbackDiv = document.createElement('div');
                     aiFeedbackDiv.id = 'mcq-ai-feedback-box';
                     
-                    // EXACT MATCH to Subjective gemini-feedback styles
-                    aiFeedbackDiv.style.cssText = "margin-bottom: 15px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 4px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #e2e8f0;";
+                    // Added SCROLL CSS: max-height: 200px; overflow-y: auto;
+                    aiFeedbackDiv.style.cssText = "margin-bottom: 15px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 4px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #e2e8f0; max-height: 200px; overflow-y: auto;";
                     
                     if (feedbackEl.firstChild) {
                         feedbackEl.insertBefore(aiFeedbackDiv, feedbackEl.firstChild);
@@ -14221,7 +14197,6 @@ CRITICAL INSTRUCTIONS FOR MAXIMUM ACCURACY & FORMATTING:
             }
 
         } else {
-            // ERROR - Reset Button
             if (btn) {
                 btn.innerHTML = originalHtml;
                 btn.disabled = false;
