@@ -14386,18 +14386,20 @@ async function checkMCQWithGemini() {
     const promptQ = `MCQ Question: ${questionText}\nOptions:\n${optionsText}`;
     const promptExpected = `Admin Correct Option: ${expectedAnswerText}. Admin Explanation: ${expectedExp}.`;
     
+    // FIX: Much stricter prompt to prevent AI from hallucinating fake Admin Key Errors
     const promptUser = `I selected: ${userSelectedText}
 
 VERIFICATION RULES (100% ACCURACY REQUIRED):
 1. For Railways/Mechanical: Verify against official Railway Board, RDSO, and CAMTECH guidelines.
 2. For Class 1-12: Verify against NCERT/CBSE sources.
-3. If Admin answer is wrong, provide the FACTUALLY CORRECT answer.
+3. Evaluate the Admin's answer objectively. DO NOT invent or hallucinate errors.
 
 FORMATTING RULES:
 1. Start response with EXACTLY: Correct Answer: ✅ [Letter]. [Text]
 2. Use <br><br> for line breaks.
 3. Use <b> tags for headings.
-4. If Admin is wrong, add: <br><br><span style="color:red;"><b>Admin Key Error:</b></span> [Reason]`;
+4. ONLY if the Admin's chosen option is COMPLETELY FACTUALLY WRONG, add: <br><br><span style="color:red;"><b>Admin Key Error:</b></span> [Reason]. 
+5. If the Admin's answer is correct, DO NOT include the Admin Key Error tag, even if their explanation is brief or phrased differently.`;
 
     const formData = new FormData();
     formData.append('action', 'evaluateWithGemini');
