@@ -11542,7 +11542,7 @@ if (isScreenVisible('video-container')) {
              // RESTORE FEEDBACK BOX
              let aiFeedbackDiv = document.createElement('div');
              aiFeedbackDiv.id = 'mcq-ai-feedback-box';
-             aiFeedbackDiv.style.cssText = "margin-bottom: 15px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 4px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #e2e8f0; max-height: 350px; overflow-y: auto;";
+             aiFeedbackDiv.style.cssText = "margin-bottom: 15px; padding: 15px; background: rgb(46 175 155 / 28%); border-left: 4px solid #1EF6BF; border-radius: 4px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #e2e8f0; max-height: 350px; overflow-y: auto;";
              aiFeedbackDiv.innerHTML = `<strong>AI Feedback:</strong><br><br>${window.mcqAiExplanations[currentIndex]}`;
              
              if (feedbackEl.firstChild) {
