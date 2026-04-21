@@ -11575,7 +11575,6 @@ if (isScreenVisible('video-container')) {
       updateQuestionNavigation();
       resetInactivityTimer();
     }
-
     function handleSubjectiveAnswer(result) {
       const q = questions[currentIndex];
       hasAnswered = true;
@@ -11630,6 +11629,18 @@ if (isScreenVisible('video-container')) {
         exp.className = "explanation";
         exp.innerHTML = `<strong>Explanation:</strong> ${q.explanation}`;
         feedbackEl.appendChild(exp);
+      }
+
+      // NEW: INJECT MCQ GEMINI BUTTON IMMEDIATELY AFTER CLICKING
+      if (!q.isSubjective) {
+        const mcqBtn = document.createElement("button");
+        mcqBtn.id = "mcq-gemini-full-btn";
+        mcqBtn.className = "gemini-btn"; 
+        mcqBtn.innerHTML = `<img src="gemini.png" alt="Gemini" style="width:20px;height:20px;margin-right:8px;object-fit:contain;"> Check with AI`;
+        mcqBtn.style.marginTop = "15px";
+        mcqBtn.style.width = "100%"; 
+        mcqBtn.onclick = () => checkMCQWithGemini();
+        feedbackEl.appendChild(mcqBtn);
       }
 
       showCorrectness(selectedIndex);
