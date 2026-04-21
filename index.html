@@ -11354,7 +11354,6 @@ if (isScreenVisible('video-container')) {
         feedbackEl.querySelector('.explanation').remove();
       }
 
-      // Hide the AI card completely when moving to a new question
       if (typeof hideAIFeedbackCard === 'function') hideAIFeedbackCard();
 
       questionCounterEl.textContent = `Q${currentIndex + 1}/${questions.length}`;
@@ -11434,7 +11433,6 @@ if (isScreenVisible('video-container')) {
             }
             if (geminiBtn) geminiBtn.disabled = true;
             
-            // Restoring AI Feedback properly below the explanation using the new visual card
             if (window.subjectiveAiExplanations && window.subjectiveAiExplanations[currentIndex]) {
                 if (typeof showAIFeedbackCard === 'function') {
                     showAIFeedbackCard(window.subjectiveAiExplanations[currentIndex]);
@@ -11536,25 +11534,44 @@ if (isScreenVisible('video-container')) {
       }
       finishBtn.disabled = false;
 
+      // FIX: Creates the AI Card natively and injects the button inside it
       const renderMcqAiButton = () => {
         if (!q.isSubjective) {
-          const mcqBtn = document.createElement("button");
-          mcqBtn.id = "mcq-gemini-full-btn";
-          
-          if (window.mcqAiExplanations && window.mcqAiExplanations[currentIndex]) {
-             mcqBtn.style.cssText = "margin-top: 15px; width: 100%; background: #0f172a; color: #cbd5e1; border: 1px solid #334155; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;";
-             mcqBtn.innerHTML = `<img src="gemini.png" style="width:20px;height:20px;filter: grayscale(100%);"> AI Verified`;
-             mcqBtn.disabled = true;
-             feedbackEl.appendChild(mcqBtn);
+          let aiBox = document.getElementById('universal-ai-feedback-box');
+          if (!aiBox) {
+              aiBox = document.createElement('div');
+              aiBox.id = 'universal-ai-feedback-box';
+              aiBox.style.cssText = "margin-top: 15px; padding: 20px; background: #1e293b; border: 1px solid #3b82f6; border-radius: 8px; text-align: left; font-size: 1rem; line-height: 1.6; color: #f1f5f9; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); width: 100%; box-sizing: border-box;";
+              const fEl = document.getElementById('feedback');
+              if (fEl && fEl.parentNode) {
+                  fEl.parentNode.insertBefore(aiBox, fEl.nextSibling);
+              }
+          }
+          aiBox.style.display = 'block';
 
-             if (typeof showAIFeedbackCard === 'function') {
-                 showAIFeedbackCard(window.mcqAiExplanations[currentIndex]);
-             }
+          if (window.mcqAiExplanations && window.mcqAiExplanations[currentIndex]) {
+             // Fully Verified UI inside Card
+             aiBox.innerHTML = `
+                <div style="display:flex; align-items:center; margin-bottom:12px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+                    <img src="gemini.png" style="width:24px;height:24px;margin-right:10px; object-fit:contain;"> 
+                    <strong style="font-size:1.15rem; color:#93c5fd; letter-spacing: 0.5px;">AI Feedback:</strong>
+                </div>
+                <button id="mcq-gemini-full-btn" disabled style="margin-bottom: 15px; width: 100%; background: #0f172a; color: #cbd5e1; border: 1px solid #334155; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;">
+                    <img src="gemini.png" style="width:20px;height:20px;filter: grayscale(100%);"> AI Verified
+                </button>
+                <div style="padding-top: 5px;">${window.mcqAiExplanations[currentIndex]}</div>
+             `;
           } else {
-             mcqBtn.style.cssText = "margin-top: 15px; width: 100%; background: linear-gradient(135deg, #111827 0%, #000000 100%); color: white; border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); transition: all 0.3s ease;";
-             mcqBtn.innerHTML = `<img src="gemini.png" alt="Gemini" style="width:20px;height:20px;object-fit:contain;"> Check with AI`;
-             mcqBtn.onclick = () => checkMCQWithGemini();
-             feedbackEl.appendChild(mcqBtn);
+             // Button Mode inside Card
+             aiBox.innerHTML = `
+                <div style="display:flex; align-items:center; margin-bottom:12px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+                    <img src="gemini.png" style="width:24px;height:24px;margin-right:10px; object-fit:contain;"> 
+                    <strong style="font-size:1.15rem; color:#93c5fd; letter-spacing: 0.5px;">AI Verification:</strong>
+                </div>
+                <button id="mcq-gemini-full-btn" onclick="checkMCQWithGemini()" style="width: 100%; background: linear-gradient(135deg, #111827 0%, #000000 100%); color: white; border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); transition: all 0.3s ease;">
+                    <img src="gemini.png" alt="Gemini" style="width:20px;height:20px;object-fit:contain;"> Check with AI
+                </button>
+             `;
           }
         }
       };
@@ -14322,7 +14339,6 @@ async function checkMCQWithGemini() {
     const promptQ = `MCQ Question: ${questionText}\nOptions:\n${optionsText}`;
     const promptExpected = `Admin Correct Option: ${expectedAnswerText}. Admin Explanation: ${expectedExp}.`;
     
-    // STRICT PROMPT WITH DOMAIN VERIFICATION (RDSO/CAMTECH/NCERT)
     const promptUser = `I selected: ${userSelectedText}
 
 VERIFICATION RULES (100% ACCURACY REQUIRED):
@@ -14353,26 +14369,24 @@ FORMATTING RULES:
         const data = await response.json();
 
         if (data.success) {
-            // Apply new visual formatter for categories (Correct Answer, Explanation, etc.)
             const formattedText = typeof formatAIFeedbackText === 'function' ? formatAIFeedbackText(data.explanation) : data.explanation;
             
-            // SAVE TO MEMORY FOR PERSISTENCE
             window.mcqAiExplanations = window.mcqAiExplanations || {};
             window.mcqAiExplanations[currentIndex] = formattedText;
 
-            if (btn) {
-                btn.innerHTML = `<img src="gemini.png" style="width:20px;height:20px;filter: grayscale(100%);"> AI Verified`;
-                btn.style.background = "#0f172a"; 
-                btn.style.color = "#cbd5e1";
-                btn.style.border = "1px solid #334155";
-                btn.style.boxShadow = "none";
-                btn.style.cursor = "not-allowed";
-                btn.style.opacity = "1";
-            }
-            
-            // Render the new AI separate card instead of the old inline box
-            if (typeof showAIFeedbackCard === 'function') {
-                showAIFeedbackCard(formattedText);
+            // FIX: Update the unified AI card natively so the button stays inside it alongside the text!
+            const aiBox = document.getElementById('universal-ai-feedback-box');
+            if (aiBox) {
+                aiBox.innerHTML = `
+                    <div style="display:flex; align-items:center; margin-bottom:12px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+                        <img src="gemini.png" style="width:24px;height:24px;margin-right:10px; object-fit:contain;"> 
+                        <strong style="font-size:1.15rem; color:#93c5fd; letter-spacing: 0.5px;">AI Feedback:</strong>
+                    </div>
+                    <button id="mcq-gemini-full-btn" disabled style="margin-bottom: 15px; width: 100%; background: #0f172a; color: #cbd5e1; border: 1px solid #334155; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;">
+                        <img src="gemini.png" style="width:20px;height:20px;filter: grayscale(100%);"> AI Verified
+                    </button>
+                    <div style="padding-top: 5px;">${formattedText}</div>
+                `;
             }
 
         } else {
