@@ -10675,6 +10675,9 @@ if (isScreenVisible('video-container')) {
       questionCounterEl.textContent = `Q${currentIndex + 1}/${reattemptQuestions.length}`;
       progressBarFillEl.style.width = `${((currentIndex + 1) / reattemptQuestions.length) * 100}%`;
 
+      // Hide the AI card completely when moving to a new reattempt question
+      if (typeof hideAIFeedbackCard === 'function') hideAIFeedbackCard();
+
       // Collapse the text space if there is no question text, allowing the image to slide up
       const marksHtml = `<span class="question-marks-badge">${q.marks || 1} mark${(q.marks || 1) > 1 ? 's' : ''}</span>`;
       const rawQ = q.question || '';
@@ -10725,7 +10728,7 @@ if (isScreenVisible('video-container')) {
         }
         if (typeof clearSubjectiveInputs === 'function') clearSubjectiveInputs();
 
-        // FIX: Restore User Input & AI Feedback for Subjective Questions in Reattempt
+        // Restore User Input & AI Feedback for Subjective Questions in Reattempt
         if (reattemptSubjectiveUserTexts[currentIndex] || reattemptSubjectiveUserImages[currentIndex]) {
             const textInput = document.getElementById('subjective-answer-text');
             const previewContainer = document.getElementById('subjective-image-preview-container');
@@ -10747,12 +10750,10 @@ if (isScreenVisible('video-container')) {
             }
             if (geminiBtn) geminiBtn.disabled = true;
             
-            // Restoring AI Feedback properly
+            // Restoring AI Feedback properly using the new visual card
             if (window.reattemptSubjectiveAiExplanations && window.reattemptSubjectiveAiExplanations[currentIndex]) {
-                const feedbackBox = document.getElementById('gemini-feedback');
-                if (feedbackBox) {
-                    feedbackBox.style.display = "block";
-                    feedbackBox.innerHTML = window.reattemptSubjectiveAiExplanations[currentIndex];
+                if (typeof showAIFeedbackCard === 'function') {
+                    showAIFeedbackCard(window.reattemptSubjectiveAiExplanations[currentIndex]);
                 }
             }
         }
@@ -10769,7 +10770,7 @@ if (isScreenVisible('video-container')) {
         
         feedbackEl.innerHTML = "";
 
-        // FIX: Add missing click handlers for subjective manual grading during reattempt
+        // Add missing click handlers for subjective manual grading during reattempt
         subjectiveCorrectBtn.onclick = (e) => {
           if (hasAnswered || !isReattemptMode) return;
           resetInactivityTimer();
@@ -10847,7 +10848,7 @@ if (isScreenVisible('video-container')) {
         if (q.isSubjective) {
           const isCorrect = selectedIdx === 'correct';
           
-          // FIX: Dynamically fetch partial marks (or 0) instead of hardcoding max marks
+          // Dynamically fetch partial marks (or 0) instead of hardcoding max marks
           const awarded = reattemptUserMarks[currentIndex] !== undefined ? reattemptUserMarks[currentIndex] : (isCorrect ? (q.marks || 1) : 0);
 
           if (isCorrect) {
@@ -10897,7 +10898,9 @@ if (isScreenVisible('video-container')) {
       }
 
       previousBtn.disabled = (currentIndex === 0);
-      if (isReviewMode || (typeof isIncorrectReviewMode !== 'undefined' && isIncorrectReviewMode)) {
+      
+      // Fixed isIncorrectReviewMode to isReattemptMode for consistency
+      if (isReviewMode || (typeof isReattemptMode !== 'undefined' && isReattemptMode)) {
         nextBtn.disabled = false;
       } else {
         nextBtn.disabled = q.isSubjective ? false : (reattemptUserAnswers[currentIndex] === undefined);
@@ -11339,6 +11342,9 @@ if (isScreenVisible('video-container')) {
         feedbackEl.querySelector('.explanation').remove();
       }
 
+      // Hide the AI card completely when moving to a new question
+      if (typeof hideAIFeedbackCard === 'function') hideAIFeedbackCard();
+
       questionCounterEl.textContent = `Q${currentIndex + 1}/${questions.length}`;
       progressBarFillEl.style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
 
@@ -11354,9 +11360,6 @@ if (isScreenVisible('video-container')) {
         questionTextEl.style.marginBottom = '8px';
       }
 
-      const oldAiFeedback = document.getElementById('mcq-ai-feedback-box');
-      if (oldAiFeedback) oldAiFeedback.remove();
-
       if (typeof questionTextEl !== 'undefined' && questionTextEl) {
           questionTextEl.style.paddingRight = "0px";
           questionTextEl.style.marginTop = "0px";
@@ -11364,7 +11367,6 @@ if (isScreenVisible('video-container')) {
 
       updateAdminControls();
 
-      // Handle question image
       if (q.imageUrl && q.imageUrl.trim() && q.imageUrl.trim() !== 'null' && q.imageUrl.trim() !== 'undefined') {
         const imageUrl = convertImageUrl(q.imageUrl.trim());
         if (imageUrl) {
@@ -11399,7 +11401,6 @@ if (isScreenVisible('video-container')) {
         }
         if (typeof clearSubjectiveInputs === 'function') clearSubjectiveInputs();
 
-        // FIX: Restore User Input & AI Feedback for Subjective Questions
         if (subjectiveUserTexts[currentIndex] || subjectiveUserImages[currentIndex]) {
             const textInput = document.getElementById('subjective-answer-text');
             const previewContainer = document.getElementById('subjective-image-preview-container');
@@ -11421,12 +11422,10 @@ if (isScreenVisible('video-container')) {
             }
             if (geminiBtn) geminiBtn.disabled = true;
             
-            // Restoring AI Feedback properly
+            // Restoring AI Feedback properly below the explanation using the new visual card
             if (window.subjectiveAiExplanations && window.subjectiveAiExplanations[currentIndex]) {
-                const feedbackBox = document.getElementById('gemini-feedback');
-                if (feedbackBox) {
-                    feedbackBox.style.display = "block";
-                    feedbackBox.innerHTML = window.subjectiveAiExplanations[currentIndex];
+                if (typeof showAIFeedbackCard === 'function') {
+                    showAIFeedbackCard(window.subjectiveAiExplanations[currentIndex]);
                 }
             }
         }
@@ -11518,7 +11517,6 @@ if (isScreenVisible('video-container')) {
 
       previousBtn.disabled = (currentIndex === 0);
       
-      // FIX: Proper Reattempt Mode Check
       if (isReviewMode || (typeof isReattemptMode !== 'undefined' && isReattemptMode)) {
         nextBtn.disabled = false;
       } else {
@@ -11526,32 +11524,21 @@ if (isScreenVisible('video-container')) {
       }
       finishBtn.disabled = false;
 
-      // HELPER TO RESTORE PERSISTENT AI FEEDBACK AND RENDER BUTTON
       const renderMcqAiButton = () => {
         if (!q.isSubjective) {
           const mcqBtn = document.createElement("button");
           mcqBtn.id = "mcq-gemini-full-btn";
           
           if (window.mcqAiExplanations && window.mcqAiExplanations[currentIndex]) {
-             // ALREADY VERIFIED STATE
              mcqBtn.style.cssText = "margin-top: 15px; width: 100%; background: #0f172a; color: #cbd5e1; border: 1px solid #334155; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;";
              mcqBtn.innerHTML = `<img src="gemini.png" style="width:20px;height:20px;filter: grayscale(100%);"> AI Verified`;
              mcqBtn.disabled = true;
              feedbackEl.appendChild(mcqBtn);
 
-             // RESTORE FEEDBACK BOX
-             let aiFeedbackDiv = document.createElement('div');
-             aiFeedbackDiv.id = 'mcq-ai-feedback-box';
-             aiFeedbackDiv.style.cssText = "margin-bottom: 15px; padding: 15px; background: rgb(46 175 155 / 28%); border-left: 4px solid #1EF6BF; border-radius: 4px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #e2e8f0; max-height: 350px; overflow-y: auto;";
-             aiFeedbackDiv.innerHTML = `<strong>AI Feedback:</strong><br><br>${window.mcqAiExplanations[currentIndex]}`;
-             
-             if (feedbackEl.firstChild) {
-                 feedbackEl.insertBefore(aiFeedbackDiv, feedbackEl.firstChild);
-             } else {
-                 feedbackEl.appendChild(aiFeedbackDiv);
+             if (typeof showAIFeedbackCard === 'function') {
+                 showAIFeedbackCard(window.mcqAiExplanations[currentIndex]);
              }
           } else {
-             // UNVERIFIED STATE (Black Gradient + Blue Glow)
              mcqBtn.style.cssText = "margin-top: 15px; width: 100%; background: linear-gradient(135deg, #111827 0%, #000000 100%); color: white; border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); transition: all 0.3s ease;";
              mcqBtn.innerHTML = `<img src="gemini.png" alt="Gemini" style="width:20px;height:20px;object-fit:contain;"> Check with AI`;
              mcqBtn.onclick = () => checkMCQWithGemini();
@@ -11563,8 +11550,6 @@ if (isScreenVisible('video-container')) {
       if (userAnswers[currentIndex] !== undefined) {
         if (q.isSubjective) {
           const isCorrect = userAnswers[currentIndex] === 'correct';
-          
-          // FIX: Dynamically fetch partial marks (or 0) instead of hardcoding max marks
           const awarded = userMarks[currentIndex] !== undefined ? userMarks[currentIndex] : (isCorrect ? (q.marks || 1) : 0);
           
           if (isCorrect) {
@@ -11596,9 +11581,8 @@ if (isScreenVisible('video-container')) {
           feedbackEl.appendChild(exp);
         }
 
-        renderMcqAiButton(); // Render Persistent Button/Feedback
+        renderMcqAiButton(); 
 
-        // FIX: Proper Reattempt Mode Check
         if (!isReviewMode && !(typeof isReattemptMode !== 'undefined' && isReattemptMode)) {
           nextBtn.disabled = false;
         }
@@ -11625,7 +11609,7 @@ if (isScreenVisible('video-container')) {
           feedbackEl.className = "feedback correct";
           lockOptions();
 
-          renderMcqAiButton(); // Render Persistent Button/Feedback for Review Mode
+          renderMcqAiButton(); 
 
         } else {
           if (q.explanation) {
@@ -14072,6 +14056,11 @@ function clearSubjectiveInputs() {
   const clearBtn = document.getElementById('subjective-clear-image');
   const geminiBtn = document.getElementById('check-gemini-btn');
   
+  // FIX: Hide the new universal AI card when moving to a new question
+  if (typeof hideAIFeedbackCard === 'function') {
+      hideAIFeedbackCard();
+  }
+  
   if (textInput) {
     textInput.value = '';
     textInput.disabled = false;
@@ -14083,14 +14072,14 @@ function clearSubjectiveInputs() {
   if (preview) preview.src = '';
   if (previewContainer) previewContainer.style.display = 'none';
   
-  // Crucial: Hide and clear the AI feedback box so it doesn't leak into the next question
+  // Crucial: Hide and clear the old legacy AI feedback box just in case
   if (feedback) { 
       feedback.style.display = 'none'; 
       feedback.innerHTML = ''; 
   }
   
   // Re-enable buttons for the new question
-  if (clearBtn) clearBtn.style.display = 'inline-block'; // Or 'block' depending on your CSS
+  if (clearBtn) clearBtn.style.display = 'inline-block'; 
   if (geminiBtn) geminiBtn.disabled = false;
   
   currentSubjectiveImageBase64 = null;
@@ -14135,6 +14124,46 @@ function clearSubjectiveImage() {
   }
   
   currentSubjectiveImageBase64 = null;
+}
+    // ========== AI UI FORMATTING HELPERS ==========
+function formatAIFeedbackText(text) {
+    if (!text) return "";
+    return text
+        .replace(/(?:<b>)?Correct Answer:(?:<\/b>)?/gi, '<span style="color: #34d399; text-decoration: underline; font-weight: bold; font-size: 1.05rem;">Correct Answer:</span>')
+        .replace(/(?:<b>)?Explanation:(?:<\/b>)?/gi, '<span style="color: #60a5fa; text-decoration: underline; font-weight: bold; font-size: 1.05rem;">Explanation:</span>')
+        .replace(/(?:<b>)?Student Analysis:(?:<\/b>)?/gi, '<span style="color: #c084fc; text-decoration: underline; font-weight: bold; font-size: 1.05rem;">Student Analysis:</span>')
+        .replace(/(?:<span[^>]*>)?(?:<b>)?Admin Key Error:(?:<\/b>)?(?:<\/span>)?/gi, '<span style="color: #f87171; text-decoration: underline; font-weight: bold; font-size: 1.05rem;">Admin Key Error:</span>');
+}
+
+function showAIFeedbackCard(htmlContent) {
+    let aiBox = document.getElementById('universal-ai-feedback-box');
+    if (!aiBox) {
+        aiBox = document.createElement('div');
+        aiBox.id = 'universal-ai-feedback-box';
+        // Matches the rounded corner aesthetic but with a sleek dark slate background below the explanation
+        aiBox.style.cssText = "margin-top: 15px; padding: 20px; background: #1e293b; border: 1px solid #3b82f6; border-radius: 8px; text-align: left; font-size: 1rem; line-height: 1.6; color: #f1f5f9; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); width: 100%; box-sizing: border-box;";
+        const feedbackEl = document.getElementById('feedback');
+        // Inserts it directly AFTER the feedback box, separating them completely
+        if (feedbackEl && feedbackEl.parentNode) {
+            feedbackEl.parentNode.insertBefore(aiBox, feedbackEl.nextSibling);
+        }
+    }
+    aiBox.style.display = 'block';
+    aiBox.innerHTML = `
+        <div style="display:flex; align-items:center; margin-bottom:12px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+            <img src="gemini.png" style="width:24px;height:24px;margin-right:10px; object-fit:contain;"> 
+            <strong style="font-size:1.15rem; color:#93c5fd; letter-spacing: 0.5px;">AI Feedback:</strong>
+        </div>
+        <div style="padding-top: 5px;">${htmlContent}</div>
+    `;
+}
+
+function hideAIFeedbackCard() {
+    const aiBox = document.getElementById('universal-ai-feedback-box');
+    if (aiBox) {
+        aiBox.style.display = 'none';
+        aiBox.innerHTML = '';
+    }
 }
 
 async function checkWithGemini() {
@@ -14184,21 +14213,26 @@ async function checkWithGemini() {
 
       if (data.success) {
           evaluationSuccess = true;
-          const feedbackBox = document.getElementById('gemini-feedback');
-          feedbackBox.style.display = "block";
-          feedbackBox.innerHTML = `<strong>AI Feedback:</strong><br>${data.explanation}<br><br><strong>Marks Awarded:</strong> ${data.marksAwarded} / ${maxMarks}`;
           
-          // FIX 3: Save the exact HTML output globally so it persists when returning to previous questions
+          // FIX 3: Apply the new visual formatter and styled AI Card rendering
+          const formattedText = typeof formatAIFeedbackText === 'function' ? formatAIFeedbackText(data.explanation) : data.explanation;
+          const finalHtml = `${formattedText}<br><br><div style="display:inline-block; padding:8px 14px; background:rgba(0,0,0,0.2); border-radius:6px; border:1px solid #475569;"><strong>Marks Awarded:</strong> <span style="color:#fbbf24; font-size:1.1rem; margin-left:5px;">${data.marksAwarded} / ${maxMarks}</span></div>`;
+
+          if (typeof showAIFeedbackCard === 'function') {
+              showAIFeedbackCard(finalHtml);
+          }
+          
+          // FIX 4: Save the EXACT HTML output globally so it persists when returning
           if (isReattempt) {
               window.reattemptSubjectiveAiExplanations = window.reattemptSubjectiveAiExplanations || {};
-              window.reattemptSubjectiveAiExplanations[currentIndex] = feedbackBox.innerHTML;
+              window.reattemptSubjectiveAiExplanations[currentIndex] = finalHtml;
               reattemptSubjectiveUserTexts[currentIndex] = answerText;
               reattemptSubjectiveUserImages[currentIndex] = currentSubjectiveImageBase64;
               // Saves exact partial marks (e.g., 3 out of 5) awarded by AI
               reattemptUserMarks[currentIndex] = data.marksAwarded; 
           } else {
               window.subjectiveAiExplanations = window.subjectiveAiExplanations || {};
-              window.subjectiveAiExplanations[currentIndex] = feedbackBox.innerHTML;
+              window.subjectiveAiExplanations[currentIndex] = finalHtml;
               subjectiveUserTexts[currentIndex] = answerText;
               subjectiveUserImages[currentIndex] = currentSubjectiveImageBase64;
               // Saves exact partial marks (e.g., 3 out of 5) awarded by AI
@@ -14237,7 +14271,6 @@ async function checkWithGemini() {
 }
 
 async function checkMCQWithGemini() {
-    // FIX: Use proper reattempt mode variable
     const isReattempt = (typeof isReattemptMode !== 'undefined' && isReattemptMode);
     const currentQuestions = isReattempt ? reattemptQuestions : questions;
     const currentAnswers = isReattempt ? reattemptUserAnswers : userAnswers;
@@ -14308,9 +14341,12 @@ FORMATTING RULES:
         const data = await response.json();
 
         if (data.success) {
+            // Apply new visual formatter for categories (Correct Answer, Explanation, etc.)
+            const formattedText = typeof formatAIFeedbackText === 'function' ? formatAIFeedbackText(data.explanation) : data.explanation;
+            
             // SAVE TO MEMORY FOR PERSISTENCE
             window.mcqAiExplanations = window.mcqAiExplanations || {};
-            window.mcqAiExplanations[currentIndex] = data.explanation;
+            window.mcqAiExplanations[currentIndex] = formattedText;
 
             if (btn) {
                 btn.innerHTML = `<img src="gemini.png" style="width:20px;height:20px;filter: grayscale(100%);"> AI Verified`;
@@ -14322,21 +14358,9 @@ FORMATTING RULES:
                 btn.style.opacity = "1";
             }
             
-            const feedbackEl = document.getElementById('feedback');
-            if (feedbackEl) {
-                let aiFeedbackDiv = document.getElementById('mcq-ai-feedback-box');
-                if (!aiFeedbackDiv) {
-                    aiFeedbackDiv = document.createElement('div');
-                    aiFeedbackDiv.id = 'mcq-ai-feedback-box';
-                    aiFeedbackDiv.style.cssText = "margin-bottom: 15px; padding: 15px; background: rgb(31 155 144 / 18%); border-left: 2px solid #31856D; border-radius: 3px; text-align: left; font-size: 0.95rem; line-height: 1.5; color: #e2e8f0; max-height: 350px; overflow-y: auto;";
-                    
-                    if (feedbackEl.firstChild) {
-                        feedbackEl.insertBefore(aiFeedbackDiv, feedbackEl.firstChild);
-                    } else {
-                        feedbackEl.appendChild(aiFeedbackDiv);
-                    }
-                }
-                aiFeedbackDiv.innerHTML = `<strong>AI Feedback:</strong><br><br>${data.explanation}`;
+            // Render the new AI separate card instead of the old inline box
+            if (typeof showAIFeedbackCard === 'function') {
+                showAIFeedbackCard(formattedText);
             }
 
         } else {
